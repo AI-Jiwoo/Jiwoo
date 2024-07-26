@@ -1,0 +1,53 @@
+.landing-container {
+    background-color: #162238;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+    text-align: center;
+}
+
+.landing-logo {
+    width: 50vw;
+    height: auto;
+}
+
+.landing-typing-effect {
+    font-size: 3vw;
+    margin-top: 2vh;
+}
+
+.landing-container {
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.animated-section {
+    width: 100%;
+    min-height: 100vh;
+}
+
+.landing-logo {
+    height: auto;
+}
+
+.landing-typing-effect {
+    font-size: 3vw;
+    margin-top: 2vh;
+    color: white;
+}
+
+.date-picker-wrapper {
+    width: 100%;
+}
+
+.react-datepicker-wrapper {
+    width: 100%;
+}
+
+.react-datepicker__input-container {
+    width: 100%;
+    color: black;
+}

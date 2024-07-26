@@ -1,19 +1,23 @@
 import React from 'react';
-import { ChakraProvider, Box } from '@chakra-ui/react';
-import Layout from '../src/component/common/PageLayout';
-import './App.css';
+import { ChakraProvider } from '@chakra-ui/react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import PageLayout from './component/common/PageLayout';
+import Home from './pages/Home';
 
 function App() {
     return (
         <ChakraProvider>
-            <Box minHeight="100vh" display="flex" flexDirection="column">
-                <Layout>
-                    <Box flex="1" p={4}>
-                        <h1>Welcome to JIWOO</h1>
-                        {/* 여기에 메인 콘텐츠를 추가하세요 */}
-                    </Box>
-                </Layout>
-            </Box>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/home" element={
+                        <PageLayout>
+                            <Home />
+                        </PageLayout>
+                    } />
+                </Routes>
+            </Router>
         </ChakraProvider>
     );
 }
