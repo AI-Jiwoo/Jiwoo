@@ -13,11 +13,12 @@ Python기반 VectorDB 유사도 검증 서버입니다.
 ```
 # Request
 {
-  "company_name": "테크스타트업",
+  "company_name": "Jiwoo",
   "info": {
     "business_type": "SaaS",
-    "business_scale": "중소기업",
-    "founding_date": "2020-01-01",
+    "business_scale": "스타트업",
+    "business_field": "AI",
+    "founding_date": "2024-07-04",
     "investment_status": "시리즈 A",
     "customer_type": "B2B"
   }
@@ -39,6 +40,7 @@ Python기반 VectorDB 유사도 검증 서버입니다.
 {
   "business_type": "SaaS",
   "business_scale": "중소기업",
+  "business_field": "인공지능",
   "founding_date": "2021-05-15",
   "investment_status": "시리즈 A",
   "customer_type": "B2B"
@@ -49,15 +51,16 @@ Python기반 VectorDB 유사도 검증 서버입니다.
 # Response
 [
     {
-        "company_name": "테크스타트업",
+        "company_name": "지우",
         "info": {
             "business_type": "SaaS",
-            "business_scale": "중소기업",
-            "founding_date": "2020-01-01",
+            "business_scale": "스타트업",
+            "business_field": "AI",
+            "founding_date": "2024-03-15",
             "investment_status": "시리즈 A",
             "customer_type": "B2B"
         },
-        "similarity_score": 0.9364195689558983
+        "similarity_score": 0.8809317797422409
     }
 ]
 ```
