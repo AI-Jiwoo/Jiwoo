@@ -9,7 +9,7 @@ Python기반 VectorDB 유사도 검증 서버입니다.
 
 ## API 명세서 (UPDATE 예정)
 > ## 기업 사업 정보 저장
-> URL: POST /search_similar_companies
+> URL: POST /insert_company
 ```
 # Request
 {
