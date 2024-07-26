@@ -86,3 +86,15 @@ Jiwoo-AI-Server
 
 
 ```
+
+## How to use
+### 프로젝트 Root directory에서 terminal 실행하여 하위 명령어 수행
+
+```
+% conda create -n <환경이름> python=3.10
+% conda activate <환경이름>
+% docker-compose up -d
+% python create_collection.py
+% python main.py
+```
+이후 POSTMAN 또는 FastAPI로 테스팅 진행
