@@ -5,6 +5,7 @@ from typing import List
 class CompanyInfo(BaseModel):
     business_type: str       # 사업 유형 (예: SaaS, 제조업 등)
     business_scale: str      # 사업 규모 (예: 스타트업, 중소기업, 대기업 등)
+    business_field: str      # 사업 분야 (예: IT, 바이오, 금융, 교육 등)
     founding_date: str       # 창업일
     investment_status: str   # 투자 상태 (예: 시드, 시리즈 A, 시리즈 B 등)
     customer_type: str       # 고객 유형 (예: B2B, B2C, B2G 등)
