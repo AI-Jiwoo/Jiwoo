@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+pymilvus
+sentence_transformers
+python-dotenv
