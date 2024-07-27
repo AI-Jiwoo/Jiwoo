@@ -1,6 +1,7 @@
 import React from 'react';
 import logo from '../../logo/headerLogo.png';
 import { Box, Flex, Image, Text, Link } from '@chakra-ui/react';
+import { Link as RouterLink } from 'react-router-dom';
 
 function Header() {
     return (
@@ -18,9 +19,9 @@ function Header() {
                 <Flex alignItems="center" height="60px" ml="1000px">
                     <Link>전체메뉴보기</Link>
                     <Text mx={2} color="gray.300">|</Text>
-                    <Link>로그인</Link>
+                    <Link as={RouterLink} to="/login">로그인</Link>
                     <Text mx={2} color="gray.300">|</Text>
-                    <Link>회원가입</Link>
+                    <Link as={RouterLink} to="/join">회원가입</Link>
                 </Flex>
             </Flex>
 
