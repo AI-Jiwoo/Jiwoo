@@ -23,7 +23,7 @@ import {
     FormControl,
     FormLabel,
     InputGroup,
-    InputRightElement,
+    InputRightElement, RadioGroup, Radio,
 } from '@chakra-ui/react';
 import termsText from '../component/TextTerms';
 import privacyText from '../component/PrivacyText';
@@ -52,6 +52,8 @@ function Join() {
     const [businessInfo, setBusinessInfo] = useState(null);
     const [showConfetti, setShowConfetti] = useState(false);
     const navigate = useNavigate();
+    const [hasBusiness, setHasBusiness] = useState(false);
+    const [birthDate, setBirthDate] = useState('');
 
 
     useEffect(() => {
@@ -66,6 +68,7 @@ function Join() {
     const handleNextStep = () => {
         setActiveStep((prevStep) => prevStep + 1);
     };
+
 
     const handleBusinessInfoSubmit = (info) => {
         setBusinessInfo(info);
@@ -160,19 +163,77 @@ function Join() {
                                 </InputRightElement>
                             </InputGroup>
                         </FormControl>
-                        <Button
-                            colorScheme="teal"
-                            size="lg"
-                            onClick={handleNextStep}
-                            isDisabled={!name || !email || !password}
-                        >
-                            다음단계
-                        </Button>
+                        <FormControl isRequired>
+                            <FormLabel>생년월일</FormLabel>
+                            <Input
+                                type="date"
+                                value={birthDate}
+                                onChange={ (e) => setBirthDate(e.target.value)}
+                                />
+                        </FormControl>
+
+                        <Flex justify="space-between" mt={4}>
+                            <Button
+                                colorScheme="gray"
+                                onClick={() => setActiveStep((prevStep) => prevStep - 1)}
+                            >
+                                이전단계
+                            </Button>
+                            <Button
+                                colorScheme="teal"
+                                onClick={handleNextStep}
+                                isDisabled={!name || !email || !password || !birthDate}
+                            >
+                                다음단계
+                            </Button>
+                        </Flex>
                     </VStack>
                 );
 
             case 2:
-                return <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />;
+                return (
+                    <VStack spacing={6} align="stretch">
+                        <Heading as="h3" size="lg" textAlign="center">
+                            사업자 정보
+                        </Heading>
+                        <Box
+                            borderWidth="1px"
+                            borderRadius="lg"
+                            p={6}
+                            boxShadow="md"
+                            >
+                        <RadioGroup onChange={(value) => setHasBusiness(value === 'yes')} mb={6}>
+                            <VStack align="start" spacing={4}>
+                                <Text fontSize="lg" fontWeight="bold">사업자이신가요?</Text>
+                                <Radio value="yes">네, 사업자 입니다.</Radio>
+                                <Radio value="no">아니오, 사업자가 아닙니다.</Radio>
+                            </VStack>
+                        </RadioGroup>
+                        { hasBusiness === true && (
+                            <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />
+                        )}
+
+                        {hasBusiness === false && (
+                            <Flex justify="space-between" mt={4}>
+                                <Button
+                                    colorScheme="gray"
+                                    onClick={() => setActiveStep((prevStep) => prevStep - 1)}
+                                >
+                                    이전단계
+                                </Button>
+                                <Button
+                                    colorScheme="teal"
+                                    onClick={handleNextStep}
+                                    isDisabled={!name || !email || !password || !birthDate}
+                                >
+                                    다음단계
+                                </Button>
+                            </Flex>
+
+                )}
+                        </Box>
+                    </VStack>
+                );
 
             case steps.length - 1:
                 return (
