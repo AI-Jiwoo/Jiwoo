@@ -1,9 +1,18 @@
 import React from 'react';
 import logo from '../../logo/headerLogo.png';
 import { Box, Flex, Image, Text, Link } from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router-dom';
+import {Link as RouterLink, useLocation} from 'react-router-dom';
+import MainHeader from "./MainHeader";
 
 function Header() {
+
+    const location = useLocation();
+
+    if (location.pathname === "/") {
+        return <MainHeader />;
+    }
+
+
     return (
         <Box as="header" borderBottom="1px solid" borderColor="gray.200" py={2}>
             <Flex align="center" maxWidth="100%" px={4}>
@@ -18,6 +27,8 @@ function Header() {
                 </Flex>
                 <Flex alignItems="center" height="60px" ml="1000px">
                     <Link>전체메뉴보기</Link>
+                    <Text mx={2} color="gray.300">|</Text>
+                    <Link as={RouterLink} to="/">메인페이지</Link>
                     <Text mx={2} color="gray.300">|</Text>
                     <Link as={RouterLink} to="/login">로그인</Link>
                     <Text mx={2} color="gray.300">|</Text>
