@@ -53,6 +53,7 @@ function Join() {
     const [showConfetti, setShowConfetti] = useState(false);
     const navigate = useNavigate();
     const [hasBusiness, setHasBusiness] = useState(false);
+    const [birthDate, setBirthDate] = useState('');
 
 
     useEffect(() => {
@@ -67,6 +68,7 @@ function Join() {
     const handleNextStep = () => {
         setActiveStep((prevStep) => prevStep + 1);
     };
+
 
     const handleBusinessInfoSubmit = (info) => {
         setBusinessInfo(info);
@@ -161,14 +163,30 @@ function Join() {
                                 </InputRightElement>
                             </InputGroup>
                         </FormControl>
-                        <Button
-                            colorScheme="teal"
-                            size="lg"
-                            onClick={handleNextStep}
-                            isDisabled={!name || !email || !password}
-                        >
-                            다음단계
-                        </Button>
+                        <FormControl isRequired>
+                            <FormLabel>생년월일</FormLabel>
+                            <Input
+                                type="date"
+                                value={birthDate}
+                                onChange={ (e) => setBirthDate(e.target.value)}
+                                />
+                        </FormControl>
+
+                        <Flex justify="space-between" mt={4}>
+                            <Button
+                                colorScheme="gray"
+                                onClick={() => setActiveStep((prevStep) => prevStep - 1)}
+                            >
+                                이전단계
+                            </Button>
+                            <Button
+                                colorScheme="teal"
+                                onClick={handleNextStep}
+                                isDisabled={!name || !email || !password || !birthDate}
+                            >
+                                다음단계
+                            </Button>
+                        </Flex>
                     </VStack>
                 );
 
@@ -196,15 +214,21 @@ function Join() {
                         )}
 
                         {hasBusiness === false && (
-                            <Button
-                                colorScheme="teal"
-                                size="lg"
-                                width="full"
-                                mt={4}
-                                onClick={handleNextStep}
+                            <Flex justify="space-between" mt={4}>
+                                <Button
+                                    colorScheme="gray"
+                                    onClick={() => setActiveStep((prevStep) => prevStep - 1)}
                                 >
-                                다음단계
-                            </Button>
+                                    이전단계
+                                </Button>
+                                <Button
+                                    colorScheme="teal"
+                                    onClick={handleNextStep}
+                                    isDisabled={!name || !email || !password || !birthDate}
+                                >
+                                    다음단계
+                                </Button>
+                            </Flex>
 
                 )}
                         </Box>
