@@ -17,7 +17,7 @@ def create_collection():
     # 컬렉션의 스키마 정의
     fields = [
         FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),  # 자동 생성되는 고유 ID
-        FieldSchema(name="company_name", dtype=DataType.VARCHAR, max_length=255),     # 회사명 (최대 255자)
+        FieldSchema(name="businessName", dtype=DataType.VARCHAR, max_length=255),     # 회사명 (최대 255자)
         FieldSchema(name="info", dtype=DataType.JSON),                                # 회사 정보 (JSON 형식)
         FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=768)           # 임베딩 벡터 (768차원)
     ]

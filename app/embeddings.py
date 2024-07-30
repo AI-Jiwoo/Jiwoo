@@ -8,7 +8,7 @@ model = SentenceTransformer('intfloat/multilingual-e5-base')
 # CompanyInfo 객체를 텍스트 문자열로 변환하는 함수
 def company_info_to_text(info: CompanyInfo) -> str:
     # 회사 정보를 공백으로 구분된 문자열로 변환
-    return f"{info.business_type} {info.business_scale} {info.business_field} {info.founding_date} {info.investment_status} {info.customer_type}"
+    return f"{info.businessPlatform} {info.businessScale} {info.business_field} {info.businessStartDate} {info.investmentStatus} {info.customerType}"
 
 # 텍스트를 임베딩 벡터로 변환하는 함수
 def get_embedding(text: str):
