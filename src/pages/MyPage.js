@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import BusinessInfoForm from '../component/BusinessInfoForm';
+import axios from 'axios';
+import { useAuth } from '../AuthContext'; // AuthContext 임포트
 
 const MyPage = () => {
+    const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
     const [userInfo, setUserInfo] = useState({
-        id: 'JIWOO',
-        name: '이기연',
-        phone: '010112119',
-        birthdate: new Date('1990-01-01')
+        name: '',
+        email: '',
+        phoneNo: '',
+        birthDate: null,
+        gender: ''
     });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [passwordForm, setPasswordForm] = useState({
-        currentPassword: '',
+        oldPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
@@ -22,12 +26,34 @@ const MyPage = () => {
     ]);
     const [isAddingBusiness, setIsAddingBusiness] = useState(false);
 
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
+
+    const fetchUserInfo = async () => {
+        try {
+            const response = await axios.get('http://localhost:8000/auth/profile', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
+            });
+            const userData = response.data;
+            setUserInfo({
+                name: userData.name,
+                email: userData.email,
+                phoneNo: userData.phoneNo,
+                birthDate: userData.birthDate ? new Date(userData.birthDate) : null,  // null 체크 추가
+                gender: userData.gender
+            });
+        } catch (error) {
+            console.error('Failed to fetch user info:', error);
+            alert('사용자 정보를 불러오는데 실패했습니다.');
+        }
+    };
     const handleInfoChange = (e) => {
         setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
     };
 
     const handleDateChange = (date) => {
-        setUserInfo({ ...userInfo, birthdate: date });
+        setUserInfo({ ...userInfo, birthDate: date });
     };
 
     const handlePasswordChange = (e) => {
@@ -37,19 +63,40 @@ const MyPage = () => {
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
 
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
             alert('새 비밀번호가 일치하지 않습니다.');
             return;
         }
-        alert('비밀번호가 변경되었습니다. 다시 로그인해주세요.');
-        // 로그인 페이지로 리다이렉트
-        // window.location.href = '/login';
+        try {
+            await axios.post('http://localhost:8000/auth/edit/password', {
+                oldPassword: passwordForm.oldPassword,
+                newPassword: passwordForm.newPassword
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
+            });
+            alert('비밀번호가 성공적으로 변경되었습니다.');
+            closeModal();
+        } catch (error) {
+            console.error('Failed to change password:', error);
+            alert('비밀번호 변경에 실패했습니다.');
+        }
     };
 
-    const handleSaveInfo = () => {
-        alert('개인정보가 성공적으로 저장되었습니다.');
+    const handleSaveInfo = async () => {
+        try {
+            await axios.post('http://localhost:8000/auth/edit/info', {
+                gender: userInfo.gender,
+                phoneNo: userInfo.phoneNo
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
+            });
+            alert('개인정보가 성공적으로 저장되었습니다.');
+        } catch (error) {
+            console.error('Failed to save user info:', error);
+            alert('개인정보 저장에 실패했습니다.');
+        }
     };
 
     const handleAddBusiness = () => {
@@ -69,24 +116,33 @@ const MyPage = () => {
             <Section>
                 <InfoGrid>
                     <InfoItem>
-                        <Label>아이디</Label>
-                        <Input name="id" value={userInfo.id} onChange={handleInfoChange} />
+                        <Label>아이디 (이메일)</Label>
+                        <Input name="email" value={userInfo.email} readOnly />
                     </InfoItem>
                     <InfoItem>
                         <Label>이름</Label>
-                        <Input name="name" value={userInfo.name} onChange={handleInfoChange} />
+                        <Input name="name" value={userInfo.name} readOnly />
                     </InfoItem>
                     <InfoItem>
                         <Label>전화번호</Label>
-                        <Input name="phone" value={userInfo.phone} onChange={handleInfoChange} />
+                        <Input name="phoneNo" value={userInfo.phoneNo} onChange={handleInfoChange} />
                     </InfoItem>
                     <InfoItem>
                         <Label>생년월일</Label>
                         <StyledDatePicker
-                            selected={userInfo.birthdate}
+                            selected={userInfo.birthDate}
                             onChange={handleDateChange}
                             dateFormat="yyyy-MM-dd"
-                        />
+                            readOnly
+                            placeholderText="생년월일"
+                            />
+                    </InfoItem>
+                    <InfoItem>
+                        <Label>성별</Label>
+                        <select name="gender" value={userInfo.gender} onChange={handleInfoChange}>
+                            <option value="MALE">남성</option>
+                            <option value="FEMALE">여성</option>
+                        </select>
                     </InfoItem>
                 </InfoGrid>
                 <ButtonContainer>
@@ -126,9 +182,9 @@ const MyPage = () => {
                         <form onSubmit={handlePasswordSubmit}>
                             <Input
                                 type="password"
-                                name="currentPassword"
+                                name="oldPassword"
                                 placeholder="현재 비밀번호"
-                                value={passwordForm.currentPassword}
+                                value={passwordForm.oldPassword}
                                 onChange={handlePasswordChange}
                             />
                             <Input
