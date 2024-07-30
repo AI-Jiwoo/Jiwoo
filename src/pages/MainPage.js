@@ -19,7 +19,7 @@ import banner3 from '../images/banner3.png';
 import banner4 from '../images/banner4.png';
 import banner5 from '../images/banner5.png';
 import {useNavigate} from "react-router-dom";
-import {useAuth} from "../AuthContext";
+import {useAuth} from "../context/AuthContext";
 
 function MainPage() {
     const { user, loading } = useAuth();

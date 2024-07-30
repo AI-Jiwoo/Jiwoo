@@ -3,7 +3,7 @@ import logo from '../../logo/headerLogo.png';
 import { Box, Flex, Image, Text, Link } from '@chakra-ui/react';
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 import MainHeader from "./MainHeader";
-import {useAuth} from "../../AuthContext";
+import {useAuth} from "../../context/AuthContext";
 
 function Header() {
 

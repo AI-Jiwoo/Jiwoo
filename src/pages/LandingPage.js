@@ -5,7 +5,7 @@ import {Button, ChakraProvider, Flex, Box, Text, Image, SimpleGrid, VStack} from
 import logo from '../logo/jiwooLanding.png';
 import backgroundVideo from '../video/1118545_4k_Form_1280x720.mp4';
 import useIntersectionObserver from '../hooks/useIntersectionObserver';
-import '../LandingPage.css';
+import '../style/LandingPage.css';
 import { EditIcon, LockIcon } from "@chakra-ui/icons";
 import FallingLogo from "../component/FallingLogo";
 
@@ -15,7 +15,7 @@ import businessIcon from '../images/business.png';
 import marketResearchIcon from '../images/marketResearch.png';
 import taxIcon from '../images/semu.png';
 import infoIcon from '../images/information.png';
-import {useAuth} from "../AuthContext";
+import {useAuth} from "../context/AuthContext";
 
 const AnimatedSection = ({ children, delay = 0, backgroundColor = 'transparent' }) => {
     const ref = useRef(null);

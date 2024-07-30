@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import axios from 'axios';
-import { useAuth } from '../AuthContext';
-import '../MyPage.css';
+import { useAuth } from '../context/AuthContext';
+import '../style/MyPage.css';
 import {
     Modal,
     ModalOverlay,

@@ -3,7 +3,7 @@ import {Flex, Image, Input, InputGroup, InputRightElement, Button, Text, Link} f
 import { SearchIcon } from '@chakra-ui/icons';
 import logo from '../../logo/headerLogo.png';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 function MainHeader() {
     const { user, setUser } = useAuth();

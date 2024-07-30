@@ -3,7 +3,7 @@ import {
     Box, Flex, Input, Button, VStack, Checkbox, Text, Link, Heading, useToast,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../apis/api';
 import { saveToken, isLogin } from '../utils/TokenUtils';
 import {jwtDecode} from 'jwt-decode';

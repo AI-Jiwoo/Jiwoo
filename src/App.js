@@ -8,7 +8,7 @@ import Login from "./pages/Login";
 import Join from "./pages/Join";
 import MainPage from "./pages/MainPage";
 import MyPage from "./pages/MyPage";
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth();
