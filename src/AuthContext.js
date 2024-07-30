@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { jwtDecode } from "jwt-decode";
+import {jwtDecode} from 'jwt-decode';
 
 const AuthContext = createContext(null);
 
@@ -40,8 +40,14 @@ export const AuthProvider = ({ children }) => {
         checkLoggedIn();
     }, [memoizedSetUser]);
 
+    const logout = useCallback(() => {
+        localStorage.removeItem('access-token');
+        localStorage.removeItem('refresh-token');
+        memoizedSetUser(null);
+    }, [memoizedSetUser]);
+
     return (
-        <AuthContext.Provider value={{ user, setUser: memoizedSetUser, loading }}>
+        <AuthContext.Provider value={{ user, setUser: memoizedSetUser, loading, logout }}>
             {children}
         </AuthContext.Provider>
     );
