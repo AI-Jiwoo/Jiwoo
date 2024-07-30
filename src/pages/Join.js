@@ -23,13 +23,17 @@ import {
     FormControl,
     FormLabel,
     InputGroup,
-    InputRightElement, RadioGroup, Radio,
+    InputRightElement,
+    RadioGroup,
+    Radio,
+    useToast,
 } from '@chakra-ui/react';
 import termsText from '../component/TextTerms';
 import privacyText from '../component/PrivacyText';
 import BusinessInfoForm from '../component/BusinessInfoForm';
 import Confetti from 'react-confetti';
 import {useNavigate} from "react-router-dom";
+import axios from 'axios';
 
 const steps = [
     { title: '약관동의', description: '01' },
@@ -54,21 +58,102 @@ function Join() {
     const navigate = useNavigate();
     const [hasBusiness, setHasBusiness] = useState(false);
     const [birthDate, setBirthDate] = useState('');
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const toast = useToast();
 
+    const handleEmailCheck = async () => {
+        if (!email) {
+            toast({
+                title: "이메일을 입력해주세요.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+                position: "top",
+            });
+            return;
+        }
+        try {
+            const response = await axios.post('http://localhost:8000/auth/exist/email', { email: email });
+            setIsEmailVerified(true);
+            toast({
+                title: "사용 가능한 이메일입니다.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+                position: "top",
+            });
+        } catch (error) {
+            console.error('Email check error:', error);
+            if (error.response && error.response.status === 400) {
+                setIsEmailVerified(false);
+                toast({
+                    title: "중복된 이메일입니다.",
+                    description: "다른 이메일을 사용해주세요.",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                    position: "top",
+                });
+            } else {
+                toast({
+                    title: "이메일 확인 중 오류가 발생했습니다.",
+                    description: "잠시 후 다시 시도해주세요.",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                    position: "top",
+                });
+            }
+        }
+    };
+    const handleEmailChange = (e) => {
+        setEmail(e.target.value);
+        setIsEmailVerified(false);  // 이메일이 변경되면 검증 상태 초기화
+    };
+
+    const handleSignup = async () => {
+        if (!isEmailVerified) {
+            toast({
+                title: "이메일 중복 확인을 해주세요.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+        try {
+            const response = await axios.post('http://localhost:8000/auth/signup', {
+                name: name,
+                email: email,
+                password: password,
+                birthDate: birthDate
+            });
+
+            if (response.status === 200) {
+                handleNextStep();
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            toast({
+                title: "회원가입 중 오류가 발생했습니다.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
 
     useEffect(() => {
         if (activeStep === steps.length - 1) {
             setShowConfetti(true);
-            const timer = setTimeout(() => setShowConfetti(false), 5000); // 5초 후 폭죽 효과 제거
+            const timer = setTimeout(() => setShowConfetti(false), 5000);
             return () => clearTimeout(timer);
         }
     }, [activeStep]);
 
-
     const handleNextStep = () => {
         setActiveStep((prevStep) => prevStep + 1);
     };
-
 
     const handleBusinessInfoSubmit = (info) => {
         setBusinessInfo(info);
@@ -76,7 +161,7 @@ function Join() {
     };
 
     const handleLogin = () => {
-        navigate('/login'); // 로그인 페이지로 이동
+        navigate('/login');
     };
 
     const renderStepContent = () => {
@@ -140,12 +225,18 @@ function Join() {
                         </FormControl>
                         <FormControl isRequired>
                             <FormLabel>이메일</FormLabel>
-                            <Input
-                                type="email"
-                                placeholder="이메일을 입력해주세요"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
+                            <Flex>
+                                <Input
+                                    type="email"
+                                    placeholder="이메일을 입력해주세요"
+                                    value={email}
+                                    onChange={handleEmailChange}
+                                    mr={2}
+                                />
+                                <Button onClick={handleEmailCheck} colorScheme="blue">
+                                    중복 확인
+                                </Button>
+                            </Flex>
                         </FormControl>
                         <FormControl isRequired>
                             <FormLabel>비밀번호</FormLabel>
@@ -168,8 +259,8 @@ function Join() {
                             <Input
                                 type="date"
                                 value={birthDate}
-                                onChange={ (e) => setBirthDate(e.target.value)}
-                                />
+                                onChange={(e) => setBirthDate(e.target.value)}
+                            />
                         </FormControl>
 
                         <Flex justify="space-between" mt={4}>
@@ -182,7 +273,7 @@ function Join() {
                             <Button
                                 colorScheme="teal"
                                 onClick={handleNextStep}
-                                isDisabled={!name || !email || !password || !birthDate}
+                                isDisabled={!name || !email || !password || !birthDate || !isEmailVerified}
                             >
                                 다음단계
                             </Button>
@@ -201,36 +292,35 @@ function Join() {
                             borderRadius="lg"
                             p={6}
                             boxShadow="md"
-                            >
-                        <RadioGroup onChange={(value) => setHasBusiness(value === 'yes')} mb={6}>
-                            <VStack align="start" spacing={4}>
-                                <Text fontSize="lg" fontWeight="bold">사업자이신가요?</Text>
-                                <Radio value="yes">네, 사업자 입니다.</Radio>
-                                <Radio value="no">아니오, 사업자가 아닙니다.</Radio>
-                            </VStack>
-                        </RadioGroup>
-                        { hasBusiness === true && (
-                            <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />
-                        )}
+                        >
+                            <RadioGroup onChange={(value) => setHasBusiness(value === 'yes')} mb={6}>
+                                <VStack align="start" spacing={4}>
+                                    <Text fontSize="lg" fontWeight="bold">사업자이신가요?</Text>
+                                    <Radio value="yes">네, 사업자 입니다.</Radio>
+                                    <Radio value="no">아니오, 사업자가 아닙니다.</Radio>
+                                </VStack>
+                            </RadioGroup>
+                            {hasBusiness === true && (
+                                <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />
+                            )}
 
-                        {hasBusiness === false && (
-                            <Flex justify="space-between" mt={4}>
-                                <Button
-                                    colorScheme="gray"
-                                    onClick={() => setActiveStep((prevStep) => prevStep - 1)}
-                                >
-                                    이전단계
-                                </Button>
-                                <Button
-                                    colorScheme="teal"
-                                    onClick={handleNextStep}
-                                    isDisabled={!name || !email || !password || !birthDate}
-                                >
-                                    다음단계
-                                </Button>
-                            </Flex>
-
-                )}
+                            {hasBusiness === false && (
+                                <Flex justify="space-between" mt={4}>
+                                    <Button
+                                        colorScheme="gray"
+                                        onClick={() => setActiveStep((prevStep) => prevStep - 1)}
+                                    >
+                                        이전단계
+                                    </Button>
+                                    <Button
+                                        colorScheme="teal"
+                                        onClick={handleSignup}
+                                        isDisabled={!name || !email || !password || !birthDate}
+                                    >
+                                        가입완료
+                                    </Button>
+                                </Flex>
+                            )}
                         </Box>
                     </VStack>
                 );

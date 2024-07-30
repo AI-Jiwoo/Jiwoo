@@ -50,7 +50,7 @@ const LandingPage = () => {
     };
 
     const handleGetStartedClick = () => {
-        navigate('/home');
+        navigate('/main');
     };
 
     const handleLogoClick = () => {

@@ -14,8 +14,8 @@ function App() {
         <ChakraProvider>
             <Router>
                 <Routes>
-                    <Route path="/landing" element={<LandingPage />} />
-                    <Route path="/" element={<MainPage />} />
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/main" element={<MainPage />} />
                     <Route path="/home" element={
                         <PageLayout>
                             <Home />
