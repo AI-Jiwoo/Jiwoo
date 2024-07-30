@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Login from "./pages/Login";
 import Join from "./pages/Join";
 import MainPage from "./pages/MainPage";
+import MyPage from "./pages/MyPage";
 
 function App() {
     return (
@@ -28,6 +29,11 @@ function App() {
                     <Route path="/join" element={
                         <PageLayout>
                             <Join />
+                        </PageLayout>
+                    } />
+                    <Route path="/mypage" element={
+                        <PageLayout>
+                            <MyPage/>
                         </PageLayout>
                     } />
                     <Route path="*" element={<Navigate to="/" replace />} />

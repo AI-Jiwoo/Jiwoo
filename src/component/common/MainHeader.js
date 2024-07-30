@@ -1,7 +1,9 @@
 import React from 'react';
-import { Flex, Image, Input, InputGroup, InputRightElement, Button, Text } from '@chakra-ui/react';
+import {Flex, Image, Input, InputGroup, InputRightElement, Button, Text, Link} from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import logo from '../../logo/headerLogo.png';
+import { Link as RouterLink } from 'react-router-dom';
+
 
 function MainHeader() {
     return (
@@ -17,7 +19,15 @@ function MainHeader() {
                 </InputRightElement>
             </InputGroup>
 
-            <Text fontWeight="bold">로그인 · 회원가입</Text>
+            <Flex>
+                <Link as={RouterLink} to="/login" mr={3}>
+                    <Text fontWeight="bold">로그인</Text>
+                </Link>
+                <Text fontWeight="bold" mx={1}>|</Text>
+                <Link as={RouterLink} to="/join" ml={3}>
+                    <Text fontWeight="bold">회원가입</Text>
+                </Link>
+            </Flex>
         </Flex>
     );
 }
