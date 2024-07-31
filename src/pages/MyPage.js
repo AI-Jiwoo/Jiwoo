@@ -77,7 +77,11 @@ const MyPage = () => {
     };
 
     const handleInfoChange = (e) => {
-        setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
+        const {name, value} = e.target;
+        setUserInfo(prevState => {
+            return { ...prevState, [name]: value
+            }
+        })
     };
 
     const handleDateChange = (date) => {
@@ -111,16 +115,18 @@ const MyPage = () => {
 
     const handleSaveInfo = async () => {
         try {
-            await axios.post('http://localhost:8000/auth/edit/info', {
+            console.log('Saving user info:', userInfo);
+            const response = await axios.post('http://localhost:8000/auth/edit/info', {
                 gender: userInfo.gender,
                 phoneNo: userInfo.phoneNo
             }, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
+            console.log('Server response:', response.data);
             alert('개인정보가 성공적으로 저장되었습니다.');
         } catch (error) {
-            console.error('Failed to save user info:', error);
-            alert('개인정보 저장에 실패했습니다.');
+            console.error('Failed to save user info:', error.response?.data || error.message);
+            alert('개인정보 저장에 실패했습니다: ' + (error.response?.data?.message || error.message));
         }
     };
 
