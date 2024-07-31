@@ -9,6 +9,7 @@ import Join from "./pages/Join";
 import MainPage from "./pages/MainPage";
 import MyPage from "./pages/MyPage";
 import { AuthProvider, useAuth } from './context/AuthContext';
+import MarketResearch from "./pages/MarketResearch";
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth();
@@ -49,6 +50,14 @@ function App() {
                             <PrivateRoute>
                                 <PageLayout>
                                     <MyPage/>
+                                </PageLayout>
+                            </PrivateRoute>
+                        } />
+                        {/* 새로운 MarketResearch 라우트 추가 */}
+                        <Route path="/market-research" element={
+                            <PrivateRoute>
+                                <PageLayout>
+                                    <MarketResearch />
                                 </PageLayout>
                             </PrivateRoute>
                         } />
