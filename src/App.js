@@ -8,37 +8,54 @@ import Login from "./pages/Login";
 import Join from "./pages/Join";
 import MainPage from "./pages/MainPage";
 import MyPage from "./pages/MyPage";
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+function PrivateRoute({ children }) {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    return user ? children : <Navigate to="/login" replace />;
+}
 
 function App() {
     return (
         <ChakraProvider>
-            <Router>
-                <Routes>
-                    <Route path="/landing" element={<LandingPage />} />
-                    <Route path="/" element={<MainPage />} />
-                    <Route path="/home" element={
-                        <PageLayout>
-                            <Home />
-                        </PageLayout>
-                    } />
-                    <Route path="/login" element={
-                        <PageLayout>
-                            <Login />
-                        </PageLayout>
-                    } />
-                    <Route path="/join" element={
-                        <PageLayout>
-                            <Join />
-                        </PageLayout>
-                    } />
-                    <Route path="/mypage" element={
-                        <PageLayout>
-                            <MyPage/>
-                        </PageLayout>
-                    } />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </Router>
+            <AuthProvider>
+                <Router>
+                    <Routes>
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/main" element={<MainPage />} />
+                        <Route path="/home" element={
+                            <PrivateRoute>
+                                <PageLayout>
+                                    <Home />
+                                </PageLayout>
+                            </PrivateRoute>
+                        } />
+                        <Route path="/login" element={
+                            <PageLayout>
+                                <Login />
+                            </PageLayout>
+                        } />
+                        <Route path="/join" element={
+                            <PageLayout>
+                                <Join />
+                            </PageLayout>
+                        } />
+                        <Route path="/mypage" element={
+                            <PrivateRoute>
+                                <PageLayout>
+                                    <MyPage/>
+                                </PageLayout>
+                            </PrivateRoute>
+                        } />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </Router>
+            </AuthProvider>
         </ChakraProvider>
     );
 }

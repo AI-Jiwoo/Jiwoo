@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import { Box, SimpleGrid, VStack, Image, Text, Flex, Button, IconButton } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import Slider from "react-slick";
@@ -13,17 +13,25 @@ import taxImage from '../images/mainSemu.png';
 import informationImage from '../images/maininformation.png';
 import marketResearchImage from '../images/market.png';
 
-// 배너 이미지 import (경로는 실제 프로젝트에 맞게 조정해주세요)
 import banner1 from '../images/banner1.png';
 import banner2 from '../images/banner2.png';
 import banner3 from '../images/banner3.png';
 import banner4 from '../images/banner4.png';
 import banner5 from '../images/banner5.png';
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "../context/AuthContext";
 
 function MainPage() {
+    const { user, loading } = useAuth();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const sliderRef = useRef(null);
+    const navigate = useNavigate();
+
+    useEffect( () => {
+        console.log("User state changed", user);
+    }, [user]);
+
 
     const categories = [
         { name: '창업가이드', image: changupGuideImage },
@@ -119,7 +127,9 @@ function MainPage() {
             <MainHeader />
 
             <Box bg="blue.500" py={20} minHeight="800px" display="flex" alignItems="center" justifyContent="center">
-                {!isLoggedIn ? (
+                {user ? (
+                    <Banner />
+                ) : (
                     <Flex
                         justifyContent="center"
                         alignItems="center"
@@ -127,12 +137,10 @@ function MainPage() {
                         color="white"
                     >
                         <Text fontSize="4xl" fontWeight="bold" mb={4}>영상넣을곳</Text>
-                        <Button colorScheme="white" variant="outline" onClick={() => setIsLoggedIn(true)}>
-                            로그인 시뮬레이션
+                        <Button colorScheme="white" variant="outline" onClick={() => navigate('/login')}>
+                            로그인하기
                         </Button>
                     </Flex>
-                ) : (
-                    <Banner />
                 )}
             </Box>
 

@@ -5,7 +5,7 @@ import {Button, ChakraProvider, Flex, Box, Text, Image, SimpleGrid, VStack} from
 import logo from '../logo/jiwooLanding.png';
 import backgroundVideo from '../video/1118545_4k_Form_1280x720.mp4';
 import useIntersectionObserver from '../hooks/useIntersectionObserver';
-import '../LandingPage.css';
+import '../style/LandingPage.css';
 import { EditIcon, LockIcon } from "@chakra-ui/icons";
 import FallingLogo from "../component/FallingLogo";
 
@@ -15,6 +15,7 @@ import businessIcon from '../images/business.png';
 import marketResearchIcon from '../images/marketResearch.png';
 import taxIcon from '../images/semu.png';
 import infoIcon from '../images/information.png';
+import {useAuth} from "../context/AuthContext";
 
 const AnimatedSection = ({ children, delay = 0, backgroundColor = 'transparent' }) => {
     const ref = useRef(null);
@@ -42,15 +43,21 @@ const AnimatedSection = ({ children, delay = 0, backgroundColor = 'transparent' 
 };
 
 const LandingPage = () => {
+    const {user, logout} = useAuth();
     const navigate = useNavigate();
     const [fallingLogos, setFallingLogos] = useState([]);
+
+     const handleLogout = () => {
+         logout();
+         navigate('/');
+     }
 
     const handleRemoveLogo = (id) => {
         setFallingLogos(prevLogos => prevLogos.filter(logo => logo.id !== id));
     };
 
     const handleGetStartedClick = () => {
-        navigate('/home');
+        navigate('/main');
     };
 
     const handleLogoClick = () => {
@@ -80,14 +87,35 @@ const LandingPage = () => {
                     right="4"
                     zIndex="2"
                 >
-                    <Flex mr="4" align="center" cursor="pointer" _hover={{ color: 'teal.200' }}>
-                        <LockIcon mr="1" />
-                        <Text color="white">로그인</Text>
-                    </Flex>
-                    <Flex align="center" cursor="pointer" _hover={{ color: 'teal.200' }}>
-                        <EditIcon mr="1" />
-                        <Text color="white">회원가입</Text>
-                    </Flex>
+                    {user ? (
+                        <>
+                            <Flex mr="4" align="center" cursor="pointer" onClick={() => navigate('/mypage')} _hover={{ color: 'teal.200' }}>
+                                <EditIcon mr="1" />
+                                <Text color="white">마이페이지</Text>
+                            </Flex>
+                            <Flex align="center" cursor="pointer" onClick={handleLogout} _hover={{ color: 'teal.200' }}>
+                                <LockIcon mr="1" />
+                                <Text color="white">로그아웃</Text>
+                            </Flex>
+
+                        </>
+                    ) : (
+
+                        <>
+
+                            <Flex mr="4" align="center" cursor="pointer" _hover={{ color: 'teal.200' }}>
+                                <LockIcon mr="1" />
+                                <Text color="white">로그인</Text>
+                            </Flex>
+                            <Flex align="center" cursor="pointer" _hover={{ color: 'teal.200' }}>
+                                <EditIcon mr="1" />
+                                <Text color="white">회원가입</Text>
+                            </Flex>
+
+
+                        </>
+
+                        )}
                 </Flex>
 
                 <AnimatedSection backgroundColor="rgba(22, 34, 56, 0.5)">

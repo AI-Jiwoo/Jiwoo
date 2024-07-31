@@ -17,7 +17,7 @@ const countries = [
     "이탈리아", "스페인", "러시아", "브라질", "인도", "싱가포르", "말레이시아", "태국", "베트남", "인도네시아"
 ];
 
-function BusinessInfoForm({ onSubmit }) {
+function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
     const [businessInfo, setBusinessInfo] = useState({
         businessName: '',
         registrationNumber: '',
@@ -166,14 +166,21 @@ function BusinessInfoForm({ onSubmit }) {
                     </FormControl>
                 </GridItem>
             </Grid>
-            <Button
-                colorScheme="teal"
-                size="lg"
-                onClick={handleSubmit}
-                isDisabled={Object.values(businessInfo).some(value => value === '')}
-            >
-                다음단계
-            </Button>
+            {showNextButton ? (
+                <Button
+                    colorScheme="teal"
+                    size="lg"
+                    onClick={handleSubmit}
+                    isDisabled={Object.values(businessInfo).some(value => value === '')}
+                >
+                    다음단계
+                </Button>
+            ) : (
+                <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+                    <Button colorScheme="teal" onClick={handleSubmit}>저장</Button>
+                    <Button onClick={onClose}>닫기</Button>
+                </Grid>
+            )}
         </VStack>
     );
 }
