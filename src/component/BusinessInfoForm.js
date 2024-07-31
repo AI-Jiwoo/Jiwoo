@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     VStack,
     FormControl,
@@ -17,28 +17,58 @@ const countries = [
     "이탈리아", "스페인", "러시아", "브라질", "인도", "싱가포르", "말레이시아", "태국", "베트남", "인도네시아"
 ];
 
-function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
+function BusinessInfoForm({ onSubmit, onClose }) {
     const [businessInfo, setBusinessInfo] = useState({
         businessName: '',
-        registrationNumber: '',
-        scale: '',
-        capital: '',
-        description: '',
-        type: '',
-        location: '',
-        foundingDate: '',
-        country: '',
+        businessNumber: '',
+        businessScale: '',
+        businessBudget: '',
+        businessContent: '',
+        businessPlatform: '',
+        businessLocation: '',
+        businessStartDate: '',
+        nation: '',
         investmentStatus: '',
         customerType: '',
+        startupStageId: ''
     });
+
+    const [isFormValid, setIsFormValid] = useState(false);
+
+    const validateForm = () => {
+        const requiredFields = [
+            'businessName',
+            'businessNumber',
+            'businessScale',
+            'businessContent',
+            'businessLocation',
+            'businessStartDate',
+            'nation',
+            'startupStageId'
+        ];
+
+        const isValid = requiredFields.every(field => businessInfo[field] !== '');
+        setIsFormValid(isValid);
+    };
+
+    useEffect(() => {
+        validateForm();
+        console.log('Business Info:', businessInfo);
+        console.log('Is Form Valid:', isFormValid);
+    }, [businessInfo]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setBusinessInfo(prev => ({ ...prev, [name]: value }));
+        setBusinessInfo(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
     const handleSubmit = () => {
-        onSubmit(businessInfo);
+        if (isFormValid) {
+            onSubmit(businessInfo);
+        }
     };
 
     return (
@@ -58,8 +88,8 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                     <FormControl isRequired>
                         <FormLabel>사업자 등록 번호</FormLabel>
                         <Input
-                            name="registrationNumber"
-                            value={businessInfo.registrationNumber}
+                            name="businessNumber"
+                            value={businessInfo.businessNumber}
                             onChange={handleChange}
                         />
                     </FormControl>
@@ -68,23 +98,23 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                     <FormControl isRequired>
                         <FormLabel>사업규모</FormLabel>
                         <Select
-                            name="scale"
-                            value={businessInfo.scale}
+                            name="businessScale"
+                            value={businessInfo.businessScale}
                             onChange={handleChange}
                         >
                             <option value="">선택해주세요</option>
-                            <option value="small">소규모</option>
-                            <option value="medium">중규모</option>
-                            <option value="large">대규모</option>
+                            <option value="small">스타트업</option>
+                            <option value="medium">중소기업</option>
+                            <option value="large">중견기업</option>
                         </Select>
                     </FormControl>
                 </GridItem>
                 <GridItem>
-                    <FormControl isRequired>
+                    <FormControl>
                         <FormLabel>사업 자본</FormLabel>
                         <Input
-                            name="capital"
-                            value={businessInfo.capital}
+                            name="businessBudget"
+                            value={businessInfo.businessBudget}
                             onChange={handleChange}
                         />
                     </FormControl>
@@ -93,18 +123,18 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
             <FormControl isRequired>
                 <FormLabel>사업내용</FormLabel>
                 <Textarea
-                    name="description"
-                    value={businessInfo.description}
+                    name="businessContent"
+                    value={businessInfo.businessContent}
                     onChange={handleChange}
                 />
             </FormControl>
             <Grid templateColumns="repeat(2, 1fr)" gap={6}>
                 <GridItem>
-                    <FormControl isRequired>
+                    <FormControl>
                         <FormLabel>사업형태</FormLabel>
                         <Input
-                            name="type"
-                            value={businessInfo.type}
+                            name="businessPlatform"
+                            value={businessInfo.businessPlatform}
                             onChange={handleChange}
                         />
                     </FormControl>
@@ -113,8 +143,8 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                     <FormControl isRequired>
                         <FormLabel>사업위치</FormLabel>
                         <Input
-                            name="location"
-                            value={businessInfo.location}
+                            name="businessLocation"
+                            value={businessInfo.businessLocation}
                             onChange={handleChange}
                         />
                     </FormControl>
@@ -124,8 +154,8 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                         <FormLabel>창업일자</FormLabel>
                         <Input
                             type="date"
-                            name="foundingDate"
-                            value={businessInfo.foundingDate}
+                            name="businessStartDate"
+                            value={businessInfo.businessStartDate}
                             onChange={handleChange}
                         />
                     </FormControl>
@@ -134,8 +164,8 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                     <FormControl isRequired>
                         <FormLabel>국가</FormLabel>
                         <Select
-                            name="country"
-                            value={businessInfo.country}
+                            name="nation"
+                            value={businessInfo.nation}
                             onChange={handleChange}
                         >
                             <option value="">선택해주세요</option>
@@ -146,7 +176,7 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                     </FormControl>
                 </GridItem>
                 <GridItem>
-                    <FormControl isRequired>
+                    <FormControl>
                         <FormLabel>투자상태</FormLabel>
                         <Input
                             name="investmentStatus"
@@ -156,7 +186,7 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                     </FormControl>
                 </GridItem>
                 <GridItem>
-                    <FormControl isRequired>
+                    <FormControl>
                         <FormLabel>고객유형</FormLabel>
                         <Input
                             name="customerType"
@@ -165,22 +195,34 @@ function BusinessInfoForm({ onSubmit, showNextButton = true, onClose }) {
                         />
                     </FormControl>
                 </GridItem>
+                <GridItem>
+                    <FormControl isRequired>
+                        <FormLabel>창업 단계</FormLabel>
+                        <Select
+                            name="startupStageId"
+                            value={businessInfo.startupStageId}
+                            onChange={handleChange}
+                        >
+                            <option value="">선택해주세요</option>
+                            <option value="1">1단계</option>
+                            <option value="2">2단계</option>
+                            <option value="3">3단계</option>
+                            <option value="4">4단계</option>
+                            <option value="5">5단계</option>
+                        </Select>
+                    </FormControl>
+                </GridItem>
             </Grid>
-            {showNextButton ? (
+            <Grid templateColumns="repeat(2, 1fr)" gap={6}>
                 <Button
                     colorScheme="teal"
-                    size="lg"
                     onClick={handleSubmit}
-                    isDisabled={Object.values(businessInfo).some(value => value === '')}
+                    isDisabled={!isFormValid}
                 >
-                    다음단계
+                    저장
                 </Button>
-            ) : (
-                <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-                    <Button colorScheme="teal" onClick={handleSubmit}>저장</Button>
-                    <Button onClick={onClose}>닫기</Button>
-                </Grid>
-            )}
+                <Button onClick={onClose}>닫기</Button>
+            </Grid>
         </VStack>
     );
 }
