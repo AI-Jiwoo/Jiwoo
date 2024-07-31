@@ -157,3 +157,92 @@
 }
 
 /* 모달 스타일은 그대로 유지 */
+
+.business-card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.business-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.business-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.business-card-header {
+    background-color: #3182ce;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.business-card-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.business-scale {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.business-card-content {
+    padding: 15px;
+}
+
+.business-card-content p {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+}
+
+.business-card-content i {
+    margin-right: 10px;
+    color: #3182ce;
+}
+
+.add-business-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e6f7ff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-business-card:hover {
+    background-color: #bae7ff;
+}
+
+.add-business-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #3182ce;
+}
+
+.add-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.no-business-info {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #718096;
+    font-style: italic;
+}

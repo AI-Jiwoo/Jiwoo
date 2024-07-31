@@ -24,22 +24,19 @@ import {
     FormLabel,
     InputGroup,
     InputRightElement,
-    RadioGroup,
-    Radio,
     useToast,
 } from '@chakra-ui/react';
 import termsText from '../component/TextTerms';
 import privacyText from '../component/PrivacyText';
-import BusinessInfoForm from '../component/BusinessInfoForm';
 import Confetti from 'react-confetti';
 import {useNavigate} from "react-router-dom";
 import axios from 'axios';
+import '../style/Join.css';
 
 const steps = [
     { title: '약관동의', description: '01' },
     { title: '회원정보', description: '02' },
-    { title: '정보입력', description: '03' },
-    { title: '가입완료', description: '04' },
+    { title: '가입완료', description: '03' },
 ];
 
 function Join() {
@@ -59,7 +56,9 @@ function Join() {
     const [hasBusiness, setHasBusiness] = useState(false);
     const [birthDate, setBirthDate] = useState('');
     const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const [isBusinessInfoValid, setIsBusinessInfoValid] = useState(false);
     const toast = useToast();
+
 
     const handleEmailCheck = async () => {
         if (!email) {
@@ -106,6 +105,7 @@ function Join() {
             }
         }
     };
+
     const handleEmailChange = (e) => {
         setEmail(e.target.value);
         setIsEmailVerified(false);  // 이메일이 변경되면 검증 상태 초기화
@@ -122,20 +122,66 @@ function Join() {
             return;
         }
         try {
-            const response = await axios.post('http://localhost:8000/auth/signup', {
-                name: name,
-                email: email,
-                password: password,
-                birthDate: birthDate
-            });
+            const signupData = {
+                name,
+                email,
+                password,
+                birthDate
+            };
 
-            if (response.status === 200) {
+            console.log('Sending signup data:', signupData);
+
+            const signupResponse = await axios.post('http://localhost:8000/auth/signup', signupData);
+
+            console.log('Signup response:', signupResponse);
+
+            if (signupResponse.status === 200) {
+                toast({
+                    title: "회원가입 성공",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+
+                // 사업자 정보가 있는 경우, 별도로 등록
+                if (hasBusiness && businessInfo) {
+                    try {
+                        const businessResponse = await axios.post('http://localhost:8000/business/regist', {
+                            ...businessInfo,
+                            email: email // 사용자 이메일을 함께 전송
+                        });
+
+                        console.log('Business registration response:', businessResponse);
+
+                        if (businessResponse.status === 201) {
+                            toast({
+                                title: "사업자 정보 등록 성공",
+                                status: "success",
+                                duration: 3000,
+                                isClosable: true,
+                            });
+                        } else {
+                            throw new Error('사업자 정보 등록 실패');
+                        }
+                    } catch (businessError) {
+                        console.error('Business registration error:', businessError);
+                        toast({
+                            title: "사업자 정보 등록 실패",
+                            description: businessError.response?.data?.message || "사업자 정보 등록 중 오류가 발생했습니다.",
+                            status: "error",
+                            duration: 3000,
+                            isClosable: true,
+                        });
+                    }
+                }
+
                 handleNextStep();
             }
         } catch (error) {
-            console.error('Signup error:', error);
+            console.error('Signup error:', error.response?.data || error.message);
             toast({
                 title: "회원가입 중 오류가 발생했습니다.",
+                description: error.response?.data?.message || "알 수 없는 오류가 발생했습니다.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -155,9 +201,9 @@ function Join() {
         setActiveStep((prevStep) => prevStep + 1);
     };
 
-    const handleBusinessInfoSubmit = (info) => {
+    const handleBusinessInfoSubmit = (info, isValid) => {
         setBusinessInfo(info);
-        handleNextStep();
+        setIsBusinessInfoValid(isValid);
     };
 
     const handleLogin = () => {
@@ -272,59 +318,14 @@ function Join() {
                             </Button>
                             <Button
                                 colorScheme="teal"
-                                onClick={handleNextStep}
-                                isDisabled={!name || !email || !password || !birthDate || !isEmailVerified}
+                                onClick={handleSignup}
+                                isDisabled={hasBusiness && !isBusinessInfoValid}
                             >
-                                다음단계
+                                가입완료
                             </Button>
                         </Flex>
                     </VStack>
                 );
-
-            case 2:
-                return (
-                    <VStack spacing={6} align="stretch">
-                        <Heading as="h3" size="lg" textAlign="center">
-                            사업자 정보
-                        </Heading>
-                        <Box
-                            borderWidth="1px"
-                            borderRadius="lg"
-                            p={6}
-                            boxShadow="md"
-                        >
-                            <RadioGroup onChange={(value) => setHasBusiness(value === 'yes')} mb={6}>
-                                <VStack align="start" spacing={4}>
-                                    <Text fontSize="lg" fontWeight="bold">사업자이신가요?</Text>
-                                    <Radio value="yes">네, 사업자 입니다.</Radio>
-                                    <Radio value="no">아니오, 사업자가 아닙니다.</Radio>
-                                </VStack>
-                            </RadioGroup>
-                            {hasBusiness === true && (
-                                <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />
-                            )}
-
-                            {hasBusiness === false && (
-                                <Flex justify="space-between" mt={4}>
-                                    <Button
-                                        colorScheme="gray"
-                                        onClick={() => setActiveStep((prevStep) => prevStep - 1)}
-                                    >
-                                        이전단계
-                                    </Button>
-                                    <Button
-                                        colorScheme="teal"
-                                        onClick={handleSignup}
-                                        isDisabled={!name || !email || !password || !birthDate}
-                                    >
-                                        가입완료
-                                    </Button>
-                                </Flex>
-                            )}
-                        </Box>
-                    </VStack>
-                );
-
             case steps.length - 1:
                 return (
                     <VStack spacing={8} align="center">
