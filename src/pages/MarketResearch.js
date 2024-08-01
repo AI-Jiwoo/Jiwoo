@@ -145,8 +145,8 @@ const MarketResearch = () => {
                     setDataSafely(setMarketSizeGrowth, marketSizeGrowthRes.data.data);
                     setDataSafely(setSimilarServices, similarServicesRes.data.data);
                     setDataSafely(setTrendCustomerTechnology, trendCustomerTechnologyRes.data.data);
-                    break;
                     await saveResearchHistory(type);
+                    break;
 
             }
         } catch (error) {
