@@ -5,7 +5,7 @@ import {
     List, ListItem, FormControl, FormLabel, Box
 } from '@chakra-ui/react';
 
-const BusinessModelAnalysis = ({ businesses, selectedBusiness, customData, onBusinessSelect, onCustomDataChange }) => {
+const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSelect, onCustomDataChange }) => {
     const [similarServices, setSimilarServices] = useState([]);
     const [analyzedBusinessModel, setAnalyzedBusinessModel] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -180,4 +180,4 @@ const BusinessModelAnalysis = ({ businesses, selectedBusiness, customData, onBus
     );
 };
 
-export default BusinessModelAnalysis;
+export default BusinessModel;

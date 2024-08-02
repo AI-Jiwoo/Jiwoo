@@ -5,6 +5,7 @@ import {
     Tabs, TabList, TabPanels, Tab, TabPanel, Card, CardBody, CardHeader, Alert, AlertIcon,
     SimpleGrid, Divider, FormControl, FormLabel, Td, Tr, Tbody, Th, Thead, Table
 } from '@chakra-ui/react';
+import BusinessModel from "./BusinessModel";
 
 const MarketResearch = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -244,7 +245,13 @@ const MarketResearch = () => {
                 </TabList>
                 <TabPanels>
                     <TabPanel>
-                        <Text>비즈니스 모델 내용</Text>
+                        <BusinessModel
+                            businesses={businesses}
+                            selectedBusiness={selectedBusiness}
+                            customData={customData}
+                            onBusinessSelect={handleBusinessSelect}
+                            onCustomDataChange={handleCustomDataChange}
+                            />
                     </TabPanel>
                     <TabPanel>
                         <VStack spacing={8} align="stretch">
