@@ -29,7 +29,7 @@ function Header() {
                 </Flex>
                 <Flex as="nav" alignItems="center" height="60px" ml={8}>
                     <Link mx={3} fontWeight="semibold">창업가이드</Link>
-                    <Link mx={3} fontWeight="semibold">엑셀러레이팅</Link>
+                    <Link as={RouterLink} to="/market-research" mx={3} fontWeight="semibold">엑셀러레이팅</Link>
                     <Link mx={3} fontWeight="semibold">세무처리</Link>
                     <Link mx={3} fontWeight="semibold">정보제공</Link>
                 </Flex>

@@ -44,7 +44,7 @@ const MyPage = () => {
 
     const fetchUserInfo = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/auth/profile', {
+            const response = await axios.get('http://localhost:5000/auth/profile', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             const userData = response.data;
@@ -63,7 +63,7 @@ const MyPage = () => {
 
     const fetchBusinessInfos = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/business/user', {
+            const response = await axios.get('http://localhost:5000/business/user', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             console.log('Raw response:', response.data);
@@ -99,7 +99,7 @@ const MyPage = () => {
             return;
         }
         try {
-            await axios.post('http://localhost:8000/auth/edit/password', {
+            await axios.post('http://localhost:5000/auth/edit/password', {
                 oldPassword: passwordForm.oldPassword,
                 newPassword: passwordForm.newPassword
             }, {
@@ -116,7 +116,7 @@ const MyPage = () => {
     const handleSaveInfo = async () => {
         try {
             console.log('Saving user info:', userInfo);
-            const response = await axios.post('http://localhost:8000/auth/edit/info', {
+            const response = await axios.post('http://localhost:5000/auth/edit/info', {
                 gender: userInfo.gender,
                 phoneNo: userInfo.phoneNo
             }, {
@@ -132,7 +132,7 @@ const MyPage = () => {
 
     const handleSubmitBusinessInfo = async (newBusinessInfo) => {
         try {
-            const response = await axios.post('http://localhost:8000/business/regist', {
+            const response = await axios.post('http://localhost:5000/business/regist', {
                 ...newBusinessInfo,
                 startupStageId: parseInt(newBusinessInfo.startupStageId, 10)
             }, {
