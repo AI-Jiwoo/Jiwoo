@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
     Box, VStack, HStack, Text, Button, Select, Spinner, Input,
     Tabs, TabList, TabPanels, Tab, TabPanel, Card, CardBody, CardHeader, Alert, AlertIcon,
-    SimpleGrid, Divider, FormControl, FormLabel, Td, Tr, Tbody, Th, Thead, Table
+    SimpleGrid, Divider, FormControl, FormLabel, Td, Tr, Tbody, Th, Thead, Table, ListItem, UnorderedList
 } from '@chakra-ui/react';
 import BusinessModel from "./BusinessModel";
 
@@ -16,7 +16,10 @@ const MarketResearch = () => {
         nation: '',
         customerType: '',
         businessType: '',
-        businessContent: ''
+        businessContent: '',
+        businessPlatform: '',
+        businessScale:'',
+        investmentStatus: ''
     });
     const [marketSizeGrowth, setMarketSizeGrowth] = useState(null);
     const [similarServices, setSimilarServices] = useState(null);
@@ -25,6 +28,12 @@ const MarketResearch = () => {
     const [error, setError] = useState(null);
     const [researchHistory, setResearchHistory] = useState([]);
 
+
+    useEffect(() => {
+        if (selectedBusiness) {
+            console.log('Selected business changed:', selectedBusiness);
+        }
+    }, [selectedBusiness?.id]);
 
     useEffect(() => {
         fetchBusinesses();
@@ -72,8 +81,10 @@ const MarketResearch = () => {
     };
 
     const handleBusinessSelect = (e) => {
-        const selected = businesses.find(b => b.id === parseInt(e.target.value));
-        setSelectedBusiness(selected);
+        const selectedId = parseInt(e.target.value)
+        const selected = businesses.find(b => b.id === selectedId);
+        console.log('Selected business :' , selected);
+        setSelectedBusiness({...selected});
         setCustomData({
             category: '',
             scale: '',
@@ -82,6 +93,76 @@ const MarketResearch = () => {
             businessType: '',
             businessContent: ''
         });
+        loadSelectedBusinessData(selected)
+    };
+
+    const loadSelectedBusinessData = async (business) => {
+        if(!business) return;
+
+        console.log("loading data for business:", business.businessName);
+    }
+
+    useEffect(() => {
+        console.log("Current selected business:", selectedBusiness);
+    }, [selectedBusiness]);
+
+    const parseAnalysisData = (data) => {
+        const parsedData = JSON.parse(data);
+        return {
+            businessId : parsedData.businessId,
+            similarServices : parsedData.similarServices,
+            analysis : {
+                strengths: parsedData.analysis.split('\n\n')[0].split('\n').slice(1),
+                weaknesses: parsedData.analysis.split('\n\n')[1].split('\n').slice(1),
+                characteristics: parsedData.analysis.split('\n\n')[2].split('\n').slice(1),
+                strategies: parsedData.analysis.split('\n\n')[3].split('\n').slice(1)
+            }
+        };
+    };
+
+    const AnalysisResult = ({ data }) => {
+        const parsedData = parseAnalysisData(data);
+
+        return (
+            <Box>
+                <Text fontSize="xl" fontWeight="bold" mb={4}>분석 결과</Text>
+
+                <Text fontWeight="bold" mb={2}>유사 서비스:</Text>
+                <UnorderedList mb={4}>
+                    {parsedData.similarServices.map((service, index) => (
+                        <ListItem key={index}>{service}</ListItem>
+                    ))}
+                </UnorderedList>
+
+                <Text fontWeight="bold" mb={2}>강점:</Text>
+                <UnorderedList mb={4}>
+                    {parsedData.analysis.strengths.map((strength, index) => (
+                        <ListItem key={index}>{strength}</ListItem>
+                    ))}
+                </UnorderedList>
+
+                <Text fontWeight="bold" mb={2}>약점:</Text>
+                <UnorderedList mb={4}>
+                    {parsedData.analysis.weaknesses.map((weakness, index) => (
+                        <ListItem key={index}>{weakness}</ListItem>
+                    ))}
+                </UnorderedList>
+
+                <Text fontWeight="bold" mb={2}>특징:</Text>
+                <UnorderedList mb={4}>
+                    {parsedData.analysis.characteristics.map((characteristic, index) => (
+                        <ListItem key={index}>{characteristic}</ListItem>
+                    ))}
+                </UnorderedList>
+
+                <Text fontWeight="bold" mb={2}>전략:</Text>
+                <UnorderedList mb={4}>
+                    {parsedData.analysis.strategies.map((strategy, index) => (
+                        <ListItem key={index}>{strategy}</ListItem>
+                    ))}
+                </UnorderedList>
+            </Box>
+        );
     };
 
     const handleCustomDataChange = (e) => {
@@ -119,36 +200,46 @@ const MarketResearch = () => {
             businessNumber: selectedBusiness.businessNumber,
             businessContent: selectedBusiness.businessContent,
             businessLocation: selectedBusiness.businessLocation,
-            businessStartDate: selectedBusiness.businessStartDate
-        } : customData;
+            businessStartDate: selectedBusiness.businessStartDate,
+            businessPlatform: selectedBusiness.businessPlatform || '',
+            businessScale: selectedBusiness.businessScale || '',
+            investmentStatus: selectedBusiness.investmentStatus || '',
+            customerType: selectedBusiness.customerType || '',
+            timestamp: new Date().getTime()
+        } : {
+            ...customData,
+            timestamp: new Date().getTime()
+        };
+
+        console.log('Sending data for analysis:', data);
 
         try {
             let response;
+            const timestamp = new Date().getTime();
             switch (type) {
                 case 'marketSize':
-                    response = await axios.post('http://localhost:5000/market-research/market-size-growth', data, { headers });
+                    response = await axios.post(`http://localhost:5000/market-research/market-size-growth?t=${timestamp}`, data, { headers });
                     setDataSafely(setMarketSizeGrowth, response.data.data);
                     break;
                 case 'similarServices':
-                    response = await axios.post('http://localhost:5000/market-research/similar-services-analysis', data, { headers });
+                    response = await axios.post(`http://localhost:5000/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
                     setDataSafely(setSimilarServices, response.data.data);
                     break;
                 case 'trendCustomerTechnology':
-                    response = await axios.post('http://localhost:5000/market-research/trend-customer-technology', data, { headers });
+                    response = await axios.post(`http://localhost:5000/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
                     setDataSafely(setTrendCustomerTechnology, response.data.data);
                     break;
                 case 'all':
                     const [marketSizeGrowthRes, similarServicesRes, trendCustomerTechnologyRes] = await Promise.all([
-                        axios.post('http://localhost:5000/market-research/market-size-growth', data, { headers }),
-                        axios.post('http://localhost:5000/market-research/similar-services-analysis', data, { headers }),
-                        axios.post('http://localhost:5000/market-research/trend-customer-technology', data, { headers })
+                        axios.post(`http://localhost:5000/market-research/market-size-growth?t=${timestamp}`, data, { headers }),
+                        axios.post(`http://localhost:5000/market-research/similar-services-analysis?t=${timestamp}`, data, { headers }),
+                        axios.post(`http://localhost:5000/market-research/trend-customer-technology?t=${timestamp}`, data, { headers })
                     ]);
                     setDataSafely(setMarketSizeGrowth, marketSizeGrowthRes.data.data);
                     setDataSafely(setSimilarServices, similarServicesRes.data.data);
                     setDataSafely(setTrendCustomerTechnology, trendCustomerTechnologyRes.data.data);
                     await saveResearchHistory(type);
                     break;
-
             }
         } catch (error) {
             console.error('Market analysis failed:', error);
@@ -372,7 +463,7 @@ const MarketResearch = () => {
                                         <Text fontSize="xl" fontWeight="bold">유사 서비스 분석</Text>
                                     </CardHeader>
                                     <CardBody>
-                                        <Text whiteSpace="pre-wrap">{similarServices}</Text>
+                                        <AnalysisResult data={similarServices}/>
                                     </CardBody>
                                 </Card>
                             )}
