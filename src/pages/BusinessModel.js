@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import {
     VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
-    List, ListItem, FormControl, FormLabel, Box
+    List, ListItem, FormControl, FormLabel, Box, Spinner
 } from '@chakra-ui/react';
 
 const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSelect, onCustomDataChange }) => {
     const [similarServices, setSimilarServices] = useState([]);
     const [analyzedBusinessModel, setAnalyzedBusinessModel] = useState(null);
+    const [businessProposal, setBusinessProposal] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -31,7 +32,11 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
             businessNumber: selectedBusiness.businessNumber,
             businessContent: selectedBusiness.businessContent,
             businessLocation: selectedBusiness.businessLocation,
-            businessStartDate: selectedBusiness.businessStartDate
+            businessStartDate: selectedBusiness.businessStartDate,
+            businessPlatform: selectedBusiness.businessPlatform || '',
+            businessScale: selectedBusiness.businessScale || '',
+            investmentStatus: selectedBusiness.investmentStatus || '',
+            customerType: selectedBusiness.customerType || '',
         } : customData;
 
         try {
@@ -65,6 +70,31 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
         } catch (error) {
             console.error('Failed to analyze business models:', error);
             setError(`비즈니스 모델 분석에 실패했습니다: ${error.response?.data?.message || error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const proposeBusinessModel = async () => {
+        if (!analyzedBusinessModel) {
+            setError('먼저 비즈니스 모델을 분석해주세요.');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        const headers = {
+            'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+            'Content-Type': 'application/json'
+        };
+
+        try {
+            const response = await axios.post('http://localhost:5000/business-model/propose', JSON.stringify(analyzedBusinessModel), { headers });
+            setBusinessProposal(response.data);
+        } catch (error) {
+            console.error('Failed to propose business model:', error);
+            setError(`비즈니스 모델 제안에 실패했습니다: ${error.response?.data?.message || error.message}`);
         } finally {
             setLoading(false);
         }
@@ -118,6 +148,9 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
                 <Button colorScheme="green" onClick={analyzeBusinessModels} isLoading={loading} isDisabled={similarServices.length === 0}>
                     비즈니스 모델 분석
                 </Button>
+                <Button colorScheme="purple" onClick={proposeBusinessModel} isLoading={loading} isDisabled={!analyzedBusinessModel}>
+                    비즈니스 모델 제안
+                </Button>
             </HStack>
 
             {error && (
@@ -126,6 +159,8 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
                     {error}
                 </Alert>
             )}
+
+            {loading && <Spinner />}
 
             {similarServices.length > 0 && (
                 <Card>
@@ -136,8 +171,8 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
                         <List spacing={3}>
                             {similarServices.map((service, index) => (
                                 <ListItem key={index}>
-                                    <Text fontWeight="bold">{service.name}</Text>
-                                    <Text>{service.description}</Text>
+                                    <Text fontWeight="bold">{service.businessName}</Text>
+                                    <Text>{service.info.businessContent}</Text>
                                 </ListItem>
                             ))}
                         </List>
@@ -171,6 +206,34 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
                             <Box>
                                 <Text fontWeight="bold">추천 전략:</Text>
                                 <Text>{analyzedBusinessModel.recommendedStrategies}</Text>
+                            </Box>
+                        </VStack>
+                    </CardBody>
+                </Card>
+            )}
+
+            {businessProposal && (
+                <Card>
+                    <CardHeader>
+                        <Text fontSize="xl" fontWeight="bold">비즈니스 모델 제안</Text>
+                    </CardHeader>
+                    <CardBody>
+                        <VStack align="stretch" spacing={4}>
+                            <Box>
+                                <Text fontWeight="bold">제안된 비즈니스 모델:</Text>
+                                <Text>{businessProposal.proposedModel}</Text>
+                            </Box>
+                            <Box>
+                                <Text fontWeight="bold">예상 수익 모델:</Text>
+                                <Text>{businessProposal.revenueModel}</Text>
+                            </Box>
+                            <Box>
+                                <Text fontWeight="bold">주요 고객 세그먼트:</Text>
+                                <Text>{businessProposal.customerSegments}</Text>
+                            </Box>
+                            <Box>
+                                <Text fontWeight="bold">핵심 자원 및 활동:</Text>
+                                <Text>{businessProposal.keyResourcesAndActivities}</Text>
                             </Box>
                         </VStack>
                     </CardBody>
