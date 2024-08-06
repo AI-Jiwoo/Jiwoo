@@ -25,7 +25,9 @@ function Header() {
         <Box as="header" borderBottom="1px solid" borderColor="gray.200" py={2}>
             <Flex align="center" maxWidth="100%" px={4}>
                 <Flex align="center" className="css-uljr60">
+                    <Link as={RouterLink} to="/main">
                     <Image src={logo} alt="JIWOO WISE HELPER" height="60px" />
+                    </Link>
                 </Flex>
                 <Flex as="nav" alignItems="center" height="60px" ml={8}>
                     <Link mx={3} fontWeight="semibold">창업가이드</Link>
