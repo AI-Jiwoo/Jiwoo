@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api import routes
 from app.database import connect_to_milvus
 from app.vector_store import VectorStore
@@ -12,6 +13,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+# CORS 미들웨어 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 오리진 허용. 프로덕션에서는 구체적인 오리진을 지정하는 것이 좋습니다.
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 메서드 허용
+    allow_headers=["*"],  # 모든 헤더 허용
+)
 
 # 전역 변수로 VectorStore 인스턴스 선언
 vector_store = None
@@ -28,13 +38,10 @@ async def startup_event():
     try:
         # Milvus 연결
         await connect_milvus()
-        
         # VectorStore 초기화
         vector_store = VectorStore()
-        
         # 데이터 파일 로딩
         await load_data_files()
-        
         logger.info("Startup completed successfully")
     except Exception as e:
         logger.error(f"Error during startup: {str(e)}")
