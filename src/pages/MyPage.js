@@ -36,11 +36,26 @@ const MyPage = () => {
     const [businessInfos, setBusinessInfos] = useState([]);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isPasswordModalOpen, onOpen: onPasswordModalOpen, onClose: onPasswordModalClose } = useDisclosure();
+    const [categories, setCategories] = useState([]);
+
 
     useEffect(() => {
         fetchUserInfo();
         fetchBusinessInfos();
+        fetchCategories();
     }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/category/names', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
+            });
+            setCategories(response.data);
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+            alert('카테고리 목록을 불러오는데 실패했습니다.');
+        }
+    };
 
     const fetchUserInfo = async () => {
         try {
@@ -282,6 +297,7 @@ const MyPage = () => {
                         <BusinessInfoForm
                             onSubmit={handleSubmitBusinessInfo}
                             onClose={onClose}
+                            categories={categories}
                         />
                     </ModalBody>
                 </ModalContent>

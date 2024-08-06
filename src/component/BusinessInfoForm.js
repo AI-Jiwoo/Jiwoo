@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
     VStack,
     FormControl,
@@ -30,10 +31,12 @@ function BusinessInfoForm({ onSubmit, onClose }) {
         nation: '',
         investmentStatus: '',
         customerType: '',
-        startupStageId: ''
+        startupStageId: '',
+        category: '' // 새로운 카테고리 필드 추가
     });
 
     const [isFormValid, setIsFormValid] = useState(false);
+    const [categories, setCategories] = useState([]); // 카테고리 목록 상태 추가
 
     const validateForm = () => {
         const requiredFields = [
@@ -44,7 +47,8 @@ function BusinessInfoForm({ onSubmit, onClose }) {
             'businessLocation',
             'businessStartDate',
             'nation',
-            'startupStageId'
+            'startupStageId',
+            'category' // 카테고리를 필수 필드로 추가
         ];
 
         const isValid = requiredFields.every(field => businessInfo[field] !== '');
@@ -56,6 +60,20 @@ function BusinessInfoForm({ onSubmit, onClose }) {
         console.log('Business Info:', businessInfo);
         console.log('Is Form Valid:', isFormValid);
     }, [businessInfo]);
+
+    useEffect(() => {
+        // 컴포넌트 마운트 시 카테고리 목록 가져오기
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/category/names');
+            setCategories(response.data);
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -209,6 +227,21 @@ function BusinessInfoForm({ onSubmit, onClose }) {
                             <option value="3">3단계</option>
                             <option value="4">4단계</option>
                             <option value="5">5단계</option>
+                        </Select>
+                    </FormControl>
+                </GridItem>
+                <GridItem>
+                    <FormControl isRequired>
+                        <FormLabel>카테고리</FormLabel>
+                        <Select
+                            name="category"
+                            value={businessInfo.category}
+                            onChange={handleChange}
+                        >
+                            <option value="">선택해주세요</option>
+                            {categories.map((category, index) => (
+                                <option key={index} value={category}>{category}</option>
+                            ))}
                         </Select>
                     </FormControl>
                 </GridItem>
