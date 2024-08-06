@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {
     VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
@@ -11,6 +11,25 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
     const [businessProposal, setBusinessProposal] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const [categoryError, setCategoryError] = useState(null);
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/category/names', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
+            });
+            console.log('Fetched categories:', response.data); // 로그 추가
+            setCategories(response.data || []);
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+            setCategoryError('카테고리 목록을 불러오는데 실패했습니다: ' + (error.response?.data?.message || error.message));
+        }
+    };
 
     const getSimilarServices = async () => {
         if (!selectedBusiness && !customData.category) {
@@ -115,8 +134,21 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
                     <VStack spacing={4} align="stretch">
                         <FormControl>
                             <FormLabel>사업 분야 (카테고리)</FormLabel>
-                            <Input name="category" value={customData.category} onChange={onCustomDataChange} placeholder="예: 인공지능(AI)" />
-                        </FormControl>
+                            {categoryError && <Text color="red.500">{categoryError}</Text>}
+                            {categories.length > 0 ? (
+                                <Select
+                                    name="category"
+                                    value={customData.category}
+                                    onChange={onCustomDataChange}
+                                    placeholder="카테고리 선택"
+                                >
+                                    {categories.map((category, index) => (
+                                        <option key={index} value={category}>{category}</option>
+                                    ))}
+                                </Select>
+                            ) : (
+                                <Text>카테고리를 불러오는 중...</Text>
+                            )}                        </FormControl>
                         <FormControl>
                             <FormLabel>사업 규모</FormLabel>
                             <Input name="scale" value={customData.scale} onChange={onCustomDataChange} placeholder="예: 중소기업" />
