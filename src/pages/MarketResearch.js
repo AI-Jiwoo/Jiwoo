@@ -27,6 +27,16 @@ const MarketResearch = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [researchHistory, setResearchHistory] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleString();
+    };
 
 
     useEffect(() => {
@@ -37,7 +47,8 @@ const MarketResearch = () => {
 
     useEffect(() => {
         fetchBusinesses();
-    }, []);
+        fetchResearchHistory();
+    }, [currentPage]);
 
     const fetchBusinesses = async () => {
         try {
@@ -52,15 +63,34 @@ const MarketResearch = () => {
     };
 
     const fetchResearchHistory = async () => {
+        setIsLoading(true);
+        setError(null);
         try {
-            const response = await axios.get('http://localhost:5000/market-research/history', {
+            const response = await axios.get(`http://localhost:5000/market-research/history?page=${currentPage}&size=10&sort=createdAt,desc`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            setResearchHistory(response.data);
+            console.log('Server response:', response.data);
+
+            // 여기서 데이터가 비어있는지 확인
+            if (response.data.data && response.data.data.length > 0) {
+                setResearchHistory(response.data.data);
+                setTotalPages(response.data.totalPages || 1);
+            } else {
+                setResearchHistory([]);
+                setTotalPages(0);
+            }
         } catch (error) {
             console.error('Failed to fetch research history:', error);
+            setError('검색 이력을 불러오는데 실패했습니다: ' + (error.response?.data?.message || error.message));
+            setResearchHistory([]);
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+    }
 
     const saveResearchHistory = async (type) => {
         const historyData = {
@@ -302,24 +332,51 @@ const MarketResearch = () => {
                 <Text fontSize="xl" fontWeight="bold">조회 이력</Text>
             </CardHeader>
             <CardBody>
-                <Table variant="simple">
-                    <Thead>
-                        <Tr>
-                            <Th>날짜</Th>
-                            <Th>분석 유형</Th>
-                            <Th>사업명/카테고리</Th>
-                        </Tr>
-                    </Thead>
-                    <Tbody>
-                        {researchHistory.map((history, index) => (
-                            <Tr key={index}>
-                                <Td>{new Date(history.researchDate).toLocaleString()}</Td>
-                                <Td>{history.researchType}</Td>
-                                <Td>{history.businessName || history.categoryName}</Td>
-                            </Tr>
-                        ))}
-                    </Tbody>
-                </Table>
+                {isLoading ? (
+                    <Spinner />
+                ) : error ? (
+                    <Text color="red.500">{error}</Text>
+                ) : researchHistory.length > 0 ? (
+                    <>
+                        <Table variant="simple">
+                            <Thead>
+                                <Tr>
+                                    <Th>날짜</Th>
+                                    <Th>분석 유형</Th>
+                                    <Th>사업명/카테고리</Th>
+                                </Tr>
+                            </Thead>
+                            <Tbody>
+                                {researchHistory.map((history, index) => (
+                                    <Tr key={index}>
+                                        <Td>{formatDate(history.researchDate)}</Td>
+                                        <Td>{history.researchType || 'N/A'}</Td>
+                                        <Td>{history.businessName || history.categoryName || 'N/A'}</Td>
+                                    </Tr>
+                                ))}
+                            </Tbody>
+                        </Table>
+                        {totalPages > 1 && (
+                            <HStack justifyContent="center" mt={4}>
+                                <Button onClick={() => handlePageChange(currentPage - 1)} isDisabled={currentPage === 0}>
+                                    이전
+                                </Button>
+                                <Text>{currentPage + 1} / {totalPages}</Text>
+                                <Button onClick={() => handlePageChange(currentPage + 1)} isDisabled={currentPage === totalPages - 1}>
+                                    다음
+                                </Button>
+                            </HStack>
+                        )}
+                    </>
+                ) : (
+                    <VStack spacing={4} align="center">
+                        <Text>조회 이력이 없습니다.</Text>
+                        <Text>시장 분석을 실행하여 조회 이력을 생성해보세요.</Text>
+                        <Button colorScheme="blue" onClick={() => {/* 시장 분석 페이지로 이동하는 로직 */}}>
+                            시장 분석 시작하기
+                        </Button>
+                    </VStack>
+                )}
             </CardBody>
         </Card>
     );
