@@ -1,11 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-    Box, VStack, HStack, Text, Button, Select, Spinner, Input,
-    Tabs, TabList, TabPanels, Tab, TabPanel, Card, CardBody, CardHeader, Alert, AlertIcon,
-    SimpleGrid, Divider, FormControl, FormLabel, Td, Tr, Tbody, Th, Thead, Table, ListItem, UnorderedList
+    Box,
+    VStack,
+    HStack,
+    Text,
+    Button,
+    Select,
+    Spinner,
+    Input,
+    Tabs,
+    TabList,
+    TabPanels,
+    Tab,
+    TabPanel,
+    Card,
+    CardBody,
+    CardHeader,
+    Alert,
+    AlertIcon,
+    SimpleGrid,
+    Divider,
+    FormControl,
+    FormLabel,
+    Td,
+    Tr,
+    Tbody,
+    Th,
+    Thead,
+    Table,
+    ListItem,
+    UnorderedList,
+    GridItem,
+    Grid, Flex
 } from '@chakra-ui/react';
 import BusinessModel from "./BusinessModel";
+import { motion } from 'framer-motion';
+import MarketGrowthChart from "../component/MarketGrowthChart";
+
 
 const MarketResearch = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -126,19 +158,30 @@ const MarketResearch = () => {
     };
 
     const handleBusinessSelect = (e) => {
-        const selectedId = parseInt(e.target.value)
+        const selectedId = parseInt(e.target.value);
         const selected = businesses.find(b => b.id === selectedId);
-        console.log('Selected business :' , selected);
-        setSelectedBusiness({...selected});
-        setCustomData({
-            category: '',
-            scale: '',
-            nation: '',
-            customerType: '',
-            businessType: '',
-            businessContent: ''
-        });
-        loadSelectedBusinessData(selected)
+        console.log('Selected business :', selected);
+        setSelectedBusiness(selected ? {...selected} : null);
+        if (selected) {
+            setCustomData({
+                category: selected.category || '',
+                scale: selected.businessScale || '',
+                nation: selected.businessLocation || '',
+                customerType: selected.customerType || '',
+                businessType: selected.businessType || '',
+                businessContent: selected.businessContent || ''
+            });
+        } else {
+            setCustomData({
+                category: '',
+                scale: '',
+                nation: '',
+                customerType: '',
+                businessType: '',
+                businessContent: ''
+            });
+        }
+        loadSelectedBusinessData(selected);
     };
 
     const loadSelectedBusinessData = async (business) => {
@@ -306,19 +349,25 @@ const MarketResearch = () => {
     const renderMarketSizeGrowth = (data) => {
         const parsedData = JSON.parse(data);
         return (
-            <SimpleGrid columns={2} spacing={4}>
-                <Box>
-                    <Text fontWeight="bold">시장 규모</Text>
-                    <Text>{parsedData.marketSize}</Text>
+            <Flex>
+                <Box flex="3" pr={4}>
+                    <Box height="400px" width="100%">
+                        <MarketGrowthChart data={parsedData} />
+                    </Box>
                 </Box>
-                <Box>
-                    <Text fontWeight="bold">성장률</Text>
-                    <Text>{parsedData.growthRate}</Text>
-                </Box>
-            </SimpleGrid>
+                <VStack flex="1" align="start" spacing={4} justifyContent="center">
+                    <Box>
+                        <Text fontWeight="bold">시장 규모</Text>
+                        <Text>{parsedData.marketSize}</Text>
+                    </Box>
+                    <Box>
+                        <Text fontWeight="bold">성장률</Text>
+                        <Text>{parsedData.growthRate}</Text>
+                    </Box>
+                </VStack>
+            </Flex>
         );
     };
-
     const renderTrendCustomerTechnology = (data) => {
         const parsedData = JSON.parse(data);
         return (
@@ -397,7 +446,13 @@ const MarketResearch = () => {
     );
 
     return (
-        <Box width="80%" margin="auto" mt={12} mb={12}>
+        <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ duration: 0.5 }}
+        >
+        <Box width="80%" margin="auto" mt={12} mb={12} minHeight="1000px">
             <Text fontSize="2xl" fontWeight="bold" mb={8} textAlign="center">액셀러레이팅</Text>
 
             <Tabs isFitted variant="enclosed" colorScheme="blue" mb={8}>
@@ -556,6 +611,7 @@ const MarketResearch = () => {
                 </TabPanels>
             </Tabs>
         </Box>
+        </motion.div>
     );
 };
 

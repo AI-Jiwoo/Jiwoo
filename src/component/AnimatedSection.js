@@ -1,3 +1,7 @@
+import {Box} from "@chakra-ui/react";
+import useIntersectionObserver from "../hooks/useIntersectionObserver";
+import {useEffect, useRef, useState} from "react";
+
 const AnimatedSection = ({ children, delay = 0, backgroundColor = 'transparent' }) => {
     const ref = useRef(null);
     const entry = useIntersectionObserver(ref, {
