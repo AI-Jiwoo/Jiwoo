@@ -1,203 +1,111 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Box, SimpleGrid, VStack, Image, Text, Flex, Button, IconButton } from '@chakra-ui/react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import React, {useEffect, useRef, useState} from 'react';
+import { Box, Text, Flex, Image, IconButton, HStack } from '@chakra-ui/react';
+import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons';
 import MainHeader from '../component/common/MainHeader';
-import "../style/main.css"
-import { motion } from "framer-motion";
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from "../context/AuthContext";
 import Chatbot from "../component/Chatbot";
 import MarketResearch from "./MarketResearch";
-
-// 카테고리 이미지 import
-import businessImage from '../images/Bmodel.png';
-import changupGuideImage from '../images/changupG.png';
-import taxImage from '../images/mainSemu.png';
-import marketResearchImage from '../images/market.png';
-
-// 배너 이미지 import
-import banner1 from '../images/banner1.png';
-import banner2 from '../images/banner2.png';
-import banner3 from '../images/banner3.png';
-import banner4 from '../images/banner4.png';
-import banner5 from '../images/banner5.png';
+import {useLocation} from "react-router-dom";
 
 function MainPage() {
-    const { user } = useAuth();
-    const [isPlaying, setIsPlaying] = useState(true);
-    const sliderRef = useRef(null);
-    const navigate = useNavigate();
-    const location = useLocation();
+    const [currentSlide, setCurrentSlide] = useState(0);
     const marketResearchRef = useRef(null);
+    const location = useLocation();
+
+    const features = [
+        { title: "창업 가이드", description: "AI 기반 맞춤형 창업 전략", icon: "/path/to/icon1.png" },
+        { title: "비즈니스 모델", description: "혁신적인 비즈니스 모델 설계", icon: "/path/to/icon2.png" },
+        { title: "세무 처리", description: "간편한 세무 관리 솔루션", icon: "/path/to/icon3.png" },
+        { title: "시장 조사", description: "AI 기반 시장 트렌드 분석", icon: "/path/to/icon4.png" },
+    ];
+
+    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % features.length);
+    const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + features.length) % features.length);
+
 
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    navigate('/market-research', { replace: true });
-                } else {
-                    navigate('/main', { replace: true });
-                }
-            },
-            { threshold: 0.5 }
-        );
-
-        if (marketResearchRef.current) {
-            observer.observe(marketResearchRef.current);
-        }
-
-        return () => {
-            if (marketResearchRef.current) {
-                observer.unobserve(marketResearchRef.current);
-            }
-        };
-    }, [navigate]);
-
-    useEffect(() => {
-        if (location.pathname === '/market-research') {
-            marketResearchRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (location.state?.scrollToMarketResearch) {
+            scrollToMarketResearch();
         }
     }, [location]);
 
-    const handleCategoryClick = (category) => {
-        if (category === '시장조사') {
-            marketResearchRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
+    const scrollToMarketResearch = () => {
+        marketResearchRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
-
-    const categories = [
-        { name: '창업가이드', image: changupGuideImage },
-        { name: '비즈니스 모델', image: businessImage },
-        { name: '세무처리', image: taxImage },
-        { name: '시장조사', image: marketResearchImage },
-    ];
-
-    const bannerSettings = {
-        dots: false,
-        infinite: true,
-        speed: 500,
-        slidesToShow: 1,
-        slidesToScroll: 1,
-        autoplay: isPlaying,
-        autoplaySpeed: 3000,
-        pauseOnHover: true,
-        arrows: false,
-        centerMode: true,
-        focusOnSelect: true,
-    };
-
-    const bannerItems = [
-        { image: banner1, title: "배너 제목 1", description: "배너 설명 1" },
-        { image: banner2, title: "배너 제목 2", description: "배너 설명 2" },
-        { image: banner3, title: "배너 제목 3", description: "배너 설명 3" },
-        { image: banner4, title: "배너 제목 4", description: "배너 설명 4" },
-        { image: banner5, title: "배너 제목 5", description: "배너 설명 5" },
-    ];
-
-    const Banner = () => (
-        <Box width="100%" maxWidth="1000px" margin="auto" position="relative">
-            <Slider ref={sliderRef} {...bannerSettings}>
-                {bannerItems.map((item, index) => (
-                    <Box key={index} px={2}>
-                        <Box
-                            position="relative"
-                            height="400px"
-                            overflow="hidden"
-                            borderRadius="lg"
-                            boxShadow="md"
-                        >
-                            <Image
-                                src={item.image}
-                                alt={`Banner ${index + 1}`}
-                                width="100%"
-                                height="100%"
-                                objectFit="cover"
-                            />
-                            <Box
-                                position="absolute"
-                                top="0"
-                                left="0"
-                                right="0"
-                                bottom="0"
-                                bg="rgba(0,0,0,0.4)"
-                                p={6}
-                                display="flex"
-                                flexDirection="column"
-                                justifyContent="center"
-                            >
-                                <Text fontSize="2xl" fontWeight="bold" color="white">{item.title}</Text>
-                                <Text mt={2} color="white">{item.description}</Text>
-                            </Box>
-                        </Box>
-                    </Box>
-                ))}
-            </Slider>
-            <IconButton
-                icon={<ChevronLeftIcon />}
-                onClick={() => sliderRef.current.slickPrev()}
-                aria-label="Previous slide"
-                position="absolute"
-                left="0"
-                top="50%"
-                transform="translateY(-50%)"
-                zIndex="1"
-            />
-            <IconButton
-                icon={<ChevronRightIcon />}
-                onClick={() => sliderRef.current.slickNext()}
-                aria-label="Next slide"
-                position="absolute"
-                right="0"
-                top="50%"
-                transform="translateY(-50%)"
-                zIndex="1"
-            />
-        </Box>
-    );
 
     return (
         <Box>
-            <MainHeader />
-            <Chatbot/>
+            <MainHeader scrollToMarketResearch={scrollToMarketResearch} />
+            <Chatbot />
 
-            <Box bg="blue.500" py={20} minHeight="800px" display="flex" alignItems="center" justifyContent="center">
-                {user ? (
-                    <Banner />
-                ) : (
-                    <Flex
-                        justifyContent="center"
-                        alignItems="center"
-                        flexDirection="column"
-                        color="white"
-                    >
-                        <Text fontSize="4xl" fontWeight="bold" mb={4}>영상넣을곳</Text>
-                        <Button colorScheme="white" variant="outline" onClick={() => navigate('/login')}>
-                            로그인하기
-                        </Button>
+            <Box
+                bg="#000428"
+                color="white"
+                height="100vh"
+                position="relative"
+                overflow="hidden"
+            >
+                <Flex direction="column" height="100%" pl="10%" pr="5%" pt="5%">
+                    <Text fontSize="6xl" fontWeight="bold" mb={4}>
+                        JIWOO AI HELPER
+                    </Text>
+                    <Text fontSize="xl" maxWidth="600px" mb={16}>
+                        1인 IT 창업을 위한 최고의 AI 파트너<br />
+                        혁신적인 기술로 당신의 창업 여정을 가속화합니다
+                    </Text>
+
+                    <Flex position="absolute" bottom="10%" left="10%" right="5%" height="120px">
+                        {features.map((feature, index) => (
+                            <Box
+                                key={index}
+                                bg={index === currentSlide ? "white" : "rgba(0,0,0,0.5)"}
+                                color={index === currentSlide ? "black" : "white"}
+                                p={4}
+                                mr={4}
+                                width="24%"
+                                borderRadius="md"
+                                cursor="pointer"
+                                onClick={() => setCurrentSlide(index)}
+                            >
+                                <Text fontWeight="bold" fontSize="lg" mb={2}>{feature.title}</Text>
+                                <Text fontSize="sm">{feature.description}</Text>
+                                <Flex justify="space-between" align="center" mt={4}>
+                                    <Image src={feature.icon} boxSize="30px" />
+                                    <ChevronRightIcon />
+                                </Flex>
+                            </Box>
+                        ))}
                     </Flex>
-                )}
-            </Box>
+                </Flex>
 
-            <SimpleGrid columns={5} spacing={10} px={20} my={100} ml={400}>
-                {categories.map((category, index) => (
-                    <VStack
-                        key={index}
-                        spacing={4}
-                        align="center"
-                        as={motion.div}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleCategoryClick(category.name)}
-                        cursor="pointer"
-                    >
-                        <Image src={category.image} alt={category.name} boxSize="150px" />
-                        <Text fontWeight="bold">{category.name}</Text>
-                    </VStack>
-                ))}
-            </SimpleGrid>
+                <HStack position="absolute" right="5%" top="5%" color="white">
+                    <IconButton
+                        icon={<ChevronLeftIcon />}
+                        onClick={prevSlide}
+                        variant="ghost"
+                        color="white"
+                    />
+                    <Text>{`${String(currentSlide + 1).padStart(2, '0')} / ${String(features.length).padStart(2, '0')}`}</Text>
+                    <IconButton
+                        icon={<ChevronRightIcon />}
+                        onClick={nextSlide}
+                        variant="ghost"
+                        color="white"
+                    />
+                </HStack>
+
+                <Box
+                    position="absolute"
+                    top="0"
+                    right="0"
+                    width="100%"
+                    height="100%"
+                    bg="url('/path/to/your/wave-image.png')"
+                    backgroundSize="cover"
+                    backgroundPosition="center"
+                    opacity="0.2"
+                    pointerEvents="none"
+                />
+            </Box>
 
             <Box ref={marketResearchRef}>
                 <MarketResearch />
