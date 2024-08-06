@@ -1,44 +1,69 @@
 from pymilvus import connections, FieldSchema, CollectionSchema, DataType, Collection, utility
+import logging
 
-def create_collection():
-    # Milvus 데이터베이스에 연결
-    connections.connect("default", host="localhost", port="19530")
-    
-    # 현재 존재하는 모든 컬렉션 목록 출력
-    print(utility.list_collections())
-    
-    collection_name = "company_collection"
-    
-    # 컬렉션이 이미 존재하는지 확인
-    if utility.has_collection(collection_name):
-        print(f"Collection {collection_name} already exists.")
-        return
-    
-    # 컬렉션의 스키마 정의
-    fields = [
-        FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),  # 자동 생성되는 고유 ID
-        FieldSchema(name="businessName", dtype=DataType.VARCHAR, max_length=255),     # 회사명 (최대 255자)
-        FieldSchema(name="info", dtype=DataType.JSON),                                # 회사 정보 (JSON 형식)
-        FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=768)           # 임베딩 벡터 (768차원)
-    ]
-    
-    # 컬렉션 스키마 생성
-    schema = CollectionSchema(fields, "Company information collection for similarity search")
-    
-    # 컬렉션 생성
-    collection = Collection(collection_name, schema)
-    
-    # 인덱스 파라미터 설정
+# 로깅 설정
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def connect_to_milvus(host="localhost", port="19530"):
+    """Milvus 데이터베이스에 연결"""
+    try:
+        connections.connect("default", host=host, port=port)
+        logger.info(f"Connected to Milvus server at {host}:{port}")
+    except Exception as e:
+        logger.error(f"Failed to connect to Milvus: {str(e)}")
+        raise
+
+def create_collection(collection_name="company_collection"):
+    """Milvus 컬렉션 생성 및 설정"""
+    try:
+        # 현재 존재하는 모든 컬렉션 목록 출력
+        logger.info(f"Existing collections: {utility.list_collections()}")
+
+        # 컬렉션이 이미 존재하는 경우 삭제
+        if utility.has_collection(collection_name):
+            utility.drop_collection(collection_name)
+            logger.info(f"Existing collection {collection_name} has been dropped.")
+
+        # 컬렉션의 스키마 정의
+        fields = [
+            FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+            FieldSchema(name="businessName", dtype=DataType.VARCHAR, max_length=255),
+            FieldSchema(name="info", dtype=DataType.JSON),
+            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=768)
+        ]
+
+        # 컬렉션 스키마 생성
+        schema = CollectionSchema(fields, "Business information collection for similarity search and chatbot")
+
+        # 컬렉션 생성
+        collection = Collection(collection_name, schema)
+
+        # 인덱스 생성
+        create_index(collection)
+
+        logger.info(f"Collection {collection_name} created successfully")
+    except Exception as e:
+        logger.error(f"Error creating collection: {str(e)}")
+        raise
+
+def create_index(collection):
+    """컬렉션에 인덱스 생성"""
     index_params = {
-        "index_type": "IVF_FLAT",  # 인덱스 타입
-        "metric_type": "L2",       # 거리 측정 방식 (L2: 유클리드 거리)
-        "params": {"nlist": 1024}  # IVF_FLAT 인덱스의 클러스터 수
+        "index_type": "IVF_FLAT",
+        "metric_type": "L2",
+        "params": {"nlist": 1024}
     }
-    
-    # 임베딩 필드에 인덱스 생성
     collection.create_index("embedding", index_params)
-    
-    print("Collection created successfully")
+    logger.info("Index created successfully")
+
+def main():
+    """메인 함수"""
+    try:
+        connect_to_milvus()
+        create_collection()
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    create_collection()
+    main()
