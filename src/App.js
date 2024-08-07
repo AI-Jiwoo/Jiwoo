@@ -9,6 +9,7 @@ import Join from "./pages/Join";
 import MainPage from "./pages/MainPage";
 import MyPage from "./pages/MyPage";
 import { AuthProvider, useAuth } from './context/AuthContext';
+import BusinessModel from "./pages/BusinessModel";
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth();
@@ -29,7 +30,9 @@ function App() {
                         <Route path="/" element={<LandingPage />} />
                         <Route path="/main" element={<MainPage />} />
                         <Route path="/market-research" element={<MainPage />} />
-                        <Route path="/home" element={
+                        <Route path="/business-model" element={<BusinessModel/>} />
+
+                            <Route path="/home" element={
                             <PrivateRoute>
                                 <PageLayout>
                                     <Home />

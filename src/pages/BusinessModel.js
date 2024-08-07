@@ -1,38 +1,66 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import axios from 'axios';
 import {
     VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
-    List, ListItem, FormControl, FormLabel, Box, Spinner
+    List, ListItem, FormControl, FormLabel, Box, Spinner, Icon, SimpleGrid, Progress, Flex,
+    useBreakpointValue, Heading, UnorderedList, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton
 } from '@chakra-ui/react';
+import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye } from "react-icons/fa";
 
-const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSelect, onCustomDataChange }) => {
+const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+    const [businesses, setBusinesses] = useState([]);
     const [similarServices, setSimilarServices] = useState([]);
     const [analyzedBusinessModel, setAnalyzedBusinessModel] = useState(null);
     const [businessProposal, setBusinessProposal] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [categories, setCategories] = useState([]);
-    const [categoryError, setCategoryError] = useState(null);
+    const [currentStep, setCurrentStep] = useState(1);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const columnCount = useBreakpointValue({ base: 1, md: 2 });
+    const businessModelRef = useRef(null);
+
 
     useEffect(() => {
+        fetchBusinesses();
         fetchCategories();
     }, []);
+
+    useEffect(() => {
+        if (businessModelRef.current) {
+            businessModelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, []);
+
+    useEffect(() => {
+        console.log("Selected business updated:", selectedBusiness);
+    }, [selectedBusiness]);
+
+    const fetchBusinesses = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/business/user', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
+            });
+            setBusinesses(response.data.business || []);
+        } catch (error) {
+            handleError('사업 정보를 불러오는데 실패했습니다', error);
+        }
+    };
 
     const fetchCategories = async () => {
         try {
             const response = await axios.get('http://localhost:5000/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            console.log('Fetched categories:', response.data); // 로그 추가
             setCategories(response.data || []);
         } catch (error) {
-            console.error('Failed to fetch categories:', error);
-            setCategoryError('카테고리 목록을 불러오는데 실패했습니다: ' + (error.response?.data?.message || error.message));
+            handleError('카테고리 목록을 불러오는데 실패했습니다', error);
         }
     };
 
     const getSimilarServices = async () => {
-        if (!selectedBusiness && !customData.category) {
+        if (!selectedBusiness && !customData?.category) {
             setError('사업을 선택하거나 카테고리를 입력해주세요.');
             return;
         }
@@ -61,20 +89,15 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
         try {
             const response = await axios.post('http://localhost:5000/business-model/similar-services', data, { headers });
             setSimilarServices(response.data);
+            setCurrentStep(2);
         } catch (error) {
-            console.error('Failed to get similar services:', error);
-            setError(`유사 서비스 조회에 실패했습니다: ${error.response?.data?.message || error.message}`);
+            handleError('유사 서비스 조회에 실패했습니다', error);
         } finally {
             setLoading(false);
         }
     };
 
     const analyzeBusinessModels = async () => {
-        if (similarServices.length === 0) {
-            setError('먼저 유사 서비스를 조회해주세요.');
-            return;
-        }
-
         setLoading(true);
         setError(null);
 
@@ -86,20 +109,15 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
         try {
             const response = await axios.post('http://localhost:5000/business-model/analyze', similarServices, { headers });
             setAnalyzedBusinessModel(response.data);
+            setCurrentStep(3);
         } catch (error) {
-            console.error('Failed to analyze business models:', error);
-            setError(`비즈니스 모델 분석에 실패했습니다: ${error.response?.data?.message || error.message}`);
+            handleError('비즈니스 모델 분석에 실패했습니다', error);
         } finally {
             setLoading(false);
         }
     };
 
     const proposeBusinessModel = async () => {
-        if (!analyzedBusinessModel) {
-            setError('먼저 비즈니스 모델을 분석해주세요.');
-            return;
-        }
-
         setLoading(true);
         setError(null);
 
@@ -111,19 +129,59 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
         try {
             const response = await axios.post('http://localhost:5000/business-model/propose', JSON.stringify(analyzedBusinessModel), { headers });
             setBusinessProposal(response.data);
+            setCurrentStep(4);
         } catch (error) {
-            console.error('Failed to propose business model:', error);
-            setError(`비즈니스 모델 제안에 실패했습니다: ${error.response?.data?.message || error.message}`);
+            handleError('비즈니스 모델 제안에 실패했습니다', error);
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <VStack spacing={8} align="stretch">
-            <Box>
-                <Text fontWeight="bold" mb={2}>사업 선택 또는 정보 입력</Text>
-                <Select placeholder="사업 선택" onChange={onBusinessSelect} value={selectedBusiness?.id || ''} mb={4}>
+    const handleError = (message, error) => {
+        console.error(message, error);
+        setError(`${message}: ${error.response?.data?.message || error.message}`);
+    };
+
+    const renderStepIndicator = () => (
+        <Box mb={8}>
+            <Progress value={(currentStep / 4) * 100} size="sm" colorScheme="blue" />
+            <HStack justify="space-between" mt={2}>
+                {['사업 선택', '유사 서비스', '모델 분석', '모델 제안'].map((step, index) => (
+                    <Text key={index} fontWeight={currentStep >= index + 1 ? "bold" : "normal"} fontSize="sm">
+                        {index + 1}. {step}
+                    </Text>
+                ))}
+            </HStack>
+        </Box>
+    );
+
+    const handleBusinessSelect = useCallback((event) => {
+        const selectedId = parseInt(event.target.value, 10);
+        const selected = businesses.find(b => b.id === selectedId);
+        console.log("Business selected:", selected);
+        if (selected) {
+            setSelectedBusiness(selected);  // 직접 상태 업데이트
+            if (typeof onBusinessSelect === 'function') {
+                onBusinessSelect(selected);
+            }
+        }
+    }, [businesses, onBusinessSelect]);
+
+    const renderBusinessSelection = () => (
+        <Card>
+            <CardHeader>
+                <HStack>
+                    <Icon as={FaBusinessTime} />
+                    <Heading size="md">사업 선택 또는 정보 입력</Heading>
+                </HStack>
+            </CardHeader>
+            <CardBody>
+                <Select
+                    placeholder="사업 선택"
+                    onChange={handleBusinessSelect}
+                    value={selectedBusiness?.id || ''}
+                    mb={4}
+                >
                     {businesses.map((business) => (
                         <option key={business.id} value={business.id}>
                             {business.businessName}
@@ -131,147 +189,285 @@ const BusinessModel = ({ businesses, selectedBusiness, customData, onBusinessSel
                     ))}
                 </Select>
                 {!selectedBusiness && (
-                    <VStack spacing={4} align="stretch">
+                    <SimpleGrid columns={columnCount} spacing={4}>
                         <FormControl>
                             <FormLabel>사업 분야 (카테고리)</FormLabel>
-                            {categoryError && <Text color="red.500">{categoryError}</Text>}
-                            {categories.length > 0 ? (
-                                <Select
-                                    name="category"
-                                    value={customData.category}
-                                    onChange={onCustomDataChange}
-                                    placeholder="카테고리 선택"
-                                >
-                                    {categories.map((category, index) => (
-                                        <option key={index} value={category}>{category}</option>
-                                    ))}
-                                </Select>
-                            ) : (
-                                <Text>카테고리를 불러오는 중...</Text>
-                            )}                        </FormControl>
+                            <Select
+                                name="category"
+                                value={customData?.category || ''}
+                                onChange={onCustomDataChange}
+                                placeholder="카테고리 선택"
+                            >
+                                {categories.map((category, index) => (
+                                    <option key={index} value={category}>
+                                        {category}
+                                    </option>
+                                ))}
+                            </Select>
+                        </FormControl>
                         <FormControl>
                             <FormLabel>사업 규모</FormLabel>
-                            <Input name="scale" value={customData.scale} onChange={onCustomDataChange} placeholder="예: 중소기업" />
+                            <Input
+                                name="scale"
+                                value={customData?.scale || ''}
+                                onChange={onCustomDataChange}
+                                placeholder="예: 중소기업"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>국가</FormLabel>
-                            <Input name="nation" value={customData.nation} onChange={onCustomDataChange} placeholder="예: 대한민국" />
+                            <Input
+                                name="nation"
+                                value={customData?.nation || ''}
+                                onChange={onCustomDataChange}
+                                placeholder="예: 대한민국"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>고객유형</FormLabel>
-                            <Input name="customerType" value={customData.customerType} onChange={onCustomDataChange} placeholder="예: B2B" />
+                            <Input
+                                name="customerType"
+                                value={customData?.customerType || ''}
+                                onChange={onCustomDataChange}
+                                placeholder="예: B2B"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>사업유형</FormLabel>
-                            <Input name="businessType" value={customData.businessType} onChange={onCustomDataChange} placeholder="예: 소프트웨어 개발" />
+                            <Input
+                                name="businessType"
+                                value={customData?.businessType || ''}
+                                onChange={onCustomDataChange}
+                                placeholder="예: 소프트웨어 개발"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>사업내용</FormLabel>
-                            <Input name="businessContent" value={customData.businessContent} onChange={onCustomDataChange} placeholder="사업 내용을 간략히 설명해주세요" />
+                            <Input
+                                name="businessContent"
+                                value={customData?.businessContent || ''}
+                                onChange={onCustomDataChange}
+                                placeholder="사업 내용을 간략히 설명해주세요"
+                            />
                         </FormControl>
-                    </VStack>
+                    </SimpleGrid>
                 )}
-            </Box>
-
-            <HStack spacing={4}>
-                <Button colorScheme="blue" onClick={getSimilarServices} isLoading={loading}>
-                    유사 서비스 조회
+                <Button
+                    mt={4}
+                    colorScheme="blue"
+                    onClick={getSimilarServices}
+                    isLoading={loading}
+                >
+                    다음 단계
                 </Button>
-                <Button colorScheme="green" onClick={analyzeBusinessModels} isLoading={loading} isDisabled={similarServices.length === 0}>
+            </CardBody>
+        </Card>
+    );
+
+    const renderSimilarServices = () => (
+        <Card>
+            <CardHeader>
+                <HStack>
+                    <Icon as={FaUsers} />
+                    <Heading size="md">유사 서비스</Heading>
+                </HStack>
+            </CardHeader>
+            <CardBody>
+                <List spacing={3}>
+                    {similarServices.map((service, index) => (
+                        <ListItem key={index}>
+                            <Text>{service.name}</Text>
+                        </ListItem>
+                    ))}
+                </List>
+                <Button
+                    mt={4}
+                    colorScheme="blue"
+                    onClick={analyzeBusinessModels}
+                    isLoading={loading}
+                >
                     비즈니스 모델 분석
                 </Button>
-                <Button colorScheme="purple" onClick={proposeBusinessModel} isLoading={loading} isDisabled={!analyzedBusinessModel}>
+            </CardBody>
+        </Card>
+    );
+
+    const renderAnalyzedBusinessModel = () => (
+        <Card>
+            <CardHeader>
+                <HStack>
+                    <Icon as={FaChartLine} />
+                    <Heading size="md">비즈니스 모델 분석 결과</Heading>
+                </HStack>
+            </CardHeader>
+            <CardBody>
+                <Text whiteSpace="pre-wrap">{analyzedBusinessModel?.analysis}</Text>
+                <Button
+                    mt={4}
+                    colorScheme="blue"
+                    onClick={proposeBusinessModel}
+                    isLoading={loading}
+                >
                     비즈니스 모델 제안
                 </Button>
-            </HStack>
+            </CardBody>
+        </Card>
+    );
 
-            {error && (
-                <Alert status="error">
-                    <AlertIcon />
-                    {error}
-                </Alert>
-            )}
+    const renderBusinessProposal = () => (
+        <Card>
+            <CardHeader>
+                <HStack>
+                    <Icon as={FaLightbulb} />
+                    <Heading size="md">비즈니스 모델 제안</Heading>
+                </HStack>
+            </CardHeader>
+            <CardBody>
+                <Text whiteSpace="pre-wrap">{businessProposal?.proposal}</Text>
+            </CardBody>
+        </Card>
+    );
 
-            {loading && <Spinner />}
+    const parseAnalysis = (analysisText) => {
+        const companies = analysisText.split('\n\n');
+        return companies.map(company => {
+            const [name, ...details] = company.split('\n');
+            const parsedDetails = details.reduce((acc, detail) => {
+                const [key, value] = detail.split(': ');
+                acc[key.slice(2)] = value;
+                return acc;
+            }, {});
+            return { name: name.slice(3), ...parsedDetails };
+        });
+    };
 
-            {similarServices.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <Text fontSize="xl" fontWeight="bold">유사 서비스</Text>
-                    </CardHeader>
-                    <CardBody>
-                        <List spacing={3}>
-                            {similarServices.map((service, index) => (
-                                <ListItem key={index}>
-                                    <Text fontWeight="bold">{service.businessName}</Text>
-                                    <Text>{service.info.businessContent}</Text>
-                                </ListItem>
+    const parseProposal = (proposalText) => {
+        const lines = proposalText.split('\n');
+        const result = {};
+        let currentKey = '';
+        lines.forEach(line => {
+            if (line.includes(':')) {
+                const [key, value] = line.split(':');
+                currentKey = key.trim();
+                result[currentKey] = value.trim();
+            } else if (line.startsWith('-') && currentKey) {
+                if (!Array.isArray(result[currentKey])) {
+                    result[currentKey] = [];
+                }
+                result[currentKey].push(line.slice(2));
+            }
+        });
+        return result;
+    };
+
+    const renderFullResults = () => (
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>전체 분석 결과</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    {analyzedBusinessModel && (
+                        <Box mb={8}>
+                            <Heading size="md" mb={4}>비즈니스 모델 분석 결과</Heading>
+                            {parseAnalysis(analyzedBusinessModel.analysis).map((company, index) => (
+                                <Box key={index} mb={4}>
+                                    <Heading size="sm">{company.name}</Heading>
+                                    <Text><strong>수익구조:</strong> {company['수익구조']}</Text>
+                                    <Text><strong>공통 전략:</strong> {company['공통 전략']}</Text>
+                                    <Text><strong>독특한 접근 방식:</strong> {company['독특한 접근 방식']}</Text>
+                                    <Text><strong>개선 가능한 영역:</strong> {company['개선 가능한 영역']}</Text>
+                                </Box>
                             ))}
-                        </List>
-                    </CardBody>
-                </Card>
-            )}
+                        </Box>
+                    )}
+                    {businessProposal && (
+                        <Box>
+                            <Heading size="md" mb={4}>비즈니스 모델 제안</Heading>
+                            {(() => {
+                                const proposal = parseProposal(businessProposal.proposal);
+                                return (
+                                    <VStack align="start" spacing={4}>
+                                        <Heading size="sm">{proposal['제안하는 비즈니스 모델은']}</Heading>
+                                        {Object.entries(proposal).slice(1).map(([key, value]) => (
+                                            <Box key={key}>
+                                                <Text fontWeight="bold">{key}:</Text>
+                                                {Array.isArray(value) ? (
+                                                    <UnorderedList>
+                                                        {value.map((item, index) => (
+                                                            <ListItem key={index}>{item}</ListItem>
+                                                        ))}
+                                                    </UnorderedList>
+                                                ) : (
+                                                    <Text>{value}</Text>
+                                                )}
+                                            </Box>
+                                        ))}
+                                    </VStack>
+                                );
+                            })()}
+                        </Box>
+                    )}
+                </ModalBody>
+            </ModalContent>
+        </Modal>
+    );
 
-            {analyzedBusinessModel && (
-                <Card>
-                    <CardHeader>
-                        <Text fontSize="xl" fontWeight="bold">비즈니스 모델 분석 결과</Text>
-                    </CardHeader>
-                    <CardBody>
-                        <VStack align="stretch" spacing={4}>
-                            <Box>
-                                <Text fontWeight="bold">강점:</Text>
-                                <Text>{analyzedBusinessModel.strengths}</Text>
-                            </Box>
-                            <Box>
-                                <Text fontWeight="bold">약점:</Text>
-                                <Text>{analyzedBusinessModel.weaknesses}</Text>
-                            </Box>
-                            <Box>
-                                <Text fontWeight="bold">기회:</Text>
-                                <Text>{analyzedBusinessModel.opportunities}</Text>
-                            </Box>
-                            <Box>
-                                <Text fontWeight="bold">위협:</Text>
-                                <Text>{analyzedBusinessModel.threats}</Text>
-                            </Box>
-                            <Box>
-                                <Text fontWeight="bold">추천 전략:</Text>
-                                <Text>{analyzedBusinessModel.recommendedStrategies}</Text>
-                            </Box>
-                        </VStack>
-                    </CardBody>
-                </Card>
-            )}
+    const handleNewAnalysis = () => {
+        setSelectedBusiness(null);
+        setSimilarServices([]);
+        setAnalyzedBusinessModel(null);
+        setBusinessProposal(null);
+        setCurrentStep(1);
+        setError(null);
+    };
 
-            {businessProposal && (
-                <Card>
-                    <CardHeader>
-                        <Text fontSize="xl" fontWeight="bold">비즈니스 모델 제안</Text>
-                    </CardHeader>
-                    <CardBody>
-                        <VStack align="stretch" spacing={4}>
-                            <Box>
-                                <Text fontWeight="bold">제안된 비즈니스 모델:</Text>
-                                <Text>{businessProposal.proposedModel}</Text>
-                            </Box>
-                            <Box>
-                                <Text fontWeight="bold">예상 수익 모델:</Text>
-                                <Text>{businessProposal.revenueModel}</Text>
-                            </Box>
-                            <Box>
-                                <Text fontWeight="bold">주요 고객 세그먼트:</Text>
-                                <Text>{businessProposal.customerSegments}</Text>
-                            </Box>
-                            <Box>
-                                <Text fontWeight="bold">핵심 자원 및 활동:</Text>
-                                <Text>{businessProposal.keyResourcesAndActivities}</Text>
-                            </Box>
-                        </VStack>
-                    </CardBody>
-                </Card>
-            )}
-        </VStack>
+    if (loading) {
+        return (
+            <Flex align="center" justify="center" height="100vh">
+                <Spinner size="xl" />
+            </Flex>
+        );
+    }
+
+    return (
+        <Box ref={businessModelRef} width="70%" margin="auto" pt={24} mb={12} minHeight="1000px">
+            <Box mt={8}/>
+            <Flex justifyContent="space-between" alignItems="center" mb={8}>
+                <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
+            </Flex>
+            {renderStepIndicator()}
+            <VStack spacing={8} align="stretch">
+                {error && (
+                    <Alert status="error">
+                        <AlertIcon />
+                        {error}
+                    </Alert>
+                )}
+                {currentStep === 1 && renderBusinessSelection()}
+                {currentStep === 2 && renderSimilarServices()}
+                {currentStep === 3 && renderAnalyzedBusinessModel()}
+                {currentStep === 4 && renderBusinessProposal()}
+                {currentStep > 1 && (
+                    <HStack justifyContent="space-between">
+                        <Button
+                            leftIcon={<Icon as={FaRedo} />}
+                            onClick={handleNewAnalysis}
+                        >
+                            새로운 분석 시작
+                        </Button>
+                        <Button
+                            rightIcon={<Icon as={FaEye} />}
+                            onClick={() => setIsModalOpen(true)}
+                            isDisabled={!analyzedBusinessModel || !businessProposal}
+                        >
+                            전체 결과 보기
+                        </Button>
+                    </HStack>
+                )}
+            </VStack>
+            {renderFullResults()}
+        </Box>
     );
 };
 
