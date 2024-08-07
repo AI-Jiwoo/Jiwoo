@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import axios from 'axios';
 import {
     VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
@@ -19,10 +19,18 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     const [currentStep, setCurrentStep] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const columnCount = useBreakpointValue({ base: 1, md: 2 });
+    const businessModelRef = useRef(null);
+
 
     useEffect(() => {
         fetchBusinesses();
         fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        if (businessModelRef.current) {
+            businessModelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }, []);
 
     useEffect(() => {
@@ -423,7 +431,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     }
 
     return (
-        <Box width="70%" margin="auto" mt={12} mb={12} minHeight="1000px">
+        <Box ref={businessModelRef} width="70%" margin="auto" pt={24} mb={12} minHeight="1000px">
+            <Box mt={8}/>
             <Flex justifyContent="space-between" alignItems="center" mb={8}>
                 <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
             </Flex>

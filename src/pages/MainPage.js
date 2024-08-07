@@ -1,16 +1,44 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box, Text, Flex, Image, IconButton, HStack, VStack } from '@chakra-ui/react';
 import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons';
 import MainHeader from '../component/common/MainHeader';
 import Chatbot from "../component/Chatbot";
 import MarketResearch from "./MarketResearch";
 import BusinessModel from "./BusinessModel";
-
+import SideNavigation from "../component/SideNavigation";
 
 function MainPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
     const marketResearchRef = useRef(null);
     const businessModelRef = useRef(null);
+    const [activeSection, setActiveSection] = useState('marketSize');
+    const marketSizeRef = useRef(null);
+    const similarServicesRef = useRef(null);
+    const trendCustomerTechnologyRef = useRef(null);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollPosition = window.scrollY;
+            if (marketResearchRef.current && scrollPosition < businessModelRef.current.offsetTop) {
+                setActiveSection('marketResearchRef');
+            } else if (businessModelRef.current && scrollPosition < trendCustomerTechnologyRef.current.offsetTop) {
+                setActiveSection('businessModelRef');
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToSection = (sectionName) => {
+        const refMap = {
+            marketSize: marketResearchRef,
+            similarServices: businessModelRef,
+        };
+        if (refMap[sectionName]?.current) {
+            refMap[sectionName].current.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
 
     const features = [
         { title: "창업 가이드", description: "AI 기반 맞춤형 창업 전략", icon: "/path/to/icon1.png" },
@@ -30,20 +58,20 @@ function MainPage() {
         return () => clearInterval(timer);
     }, []);
 
-
     const scrollToMarketResearch = () => {
         marketResearchRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const scrollToBusinessModel = () => {  // 새로 추가된 함수
+    const scrollToBusinessModel = () => {
         businessModelRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-
     return (
         <Box>
-            <MainHeader scrollToMarketResearch={scrollToMarketResearch}
-                        scrollToBusinessModel={scrollToBusinessModel}/>
+            <MainHeader
+                scrollToMarketResearch={scrollToMarketResearch}
+                scrollToBusinessModel={scrollToBusinessModel}
+            />
             <Chatbot />
 
             <Box
@@ -119,6 +147,9 @@ function MainPage() {
                 </HStack>
             </Box>
 
+            <SideNavigation activeSection={activeSection} scrollToSection={scrollToSection} />
+
+
             <Box ref={marketResearchRef}>
                 <MarketResearch />
             </Box>
@@ -126,7 +157,6 @@ function MainPage() {
             <Box ref={businessModelRef}>
                 <BusinessModel />
             </Box>
-
         </Box>
     );
 }

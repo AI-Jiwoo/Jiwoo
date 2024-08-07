@@ -42,6 +42,7 @@ import {
 import { motion } from 'framer-motion';
 import MarketGrowthChart from "../component/MarketGrowthChart";
 import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaQuestionCircle, FaRedo} from 'react-icons/fa';
+import Cookies from 'js-cookie';
 
 const MarketResearch = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -70,11 +71,32 @@ const MarketResearch = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const { isOpen, onOpen, onClose } = useDisclosure();
 
+
+
+    useEffect(() => {
+        const marketResearchElement = document.getElementById('market-research');
+        if (marketResearchElement) {
+            marketResearchElement.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, []);
+
     useEffect(() => {
         fetchBusinesses();
         fetchResearchHistory();
         fetchCategories();
+        loadResearchHistoryFromCookie();
     }, [currentPage]);
+
+    const loadResearchHistoryFromCookie = () => {
+        const cookieHistory = Cookies.get('marketResearchHistory');
+        if (cookieHistory) {
+            setResearchHistory(JSON.parse(cookieHistory));
+        }
+    };
+
+    const saveResearchHistoryToCookie = (newHistory) => {
+        Cookies.set('marketResearchHistory', JSON.stringify(newHistory), { expires: 7 }); // 7일간 유효
+    };
 
     const fetchBusinesses = async () => {
         try {
@@ -92,10 +114,11 @@ const MarketResearch = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://localhost:5000/market-research/history?page=${currentPage}&size=10&sort=createdAt,desc`, {
+            const response = await axios.get(`http://localhost:5000/market-research/history?page=${currentPage}&size=10`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            if (response.data.data && response.data.data.length > 0) {
+            console.log('Research history response:', response.data);  // 디버깅용
+            if (response.data.data && Array.isArray(response.data.data)) {
                 setResearchHistory(response.data.data);
                 setTotalPages(response.data.totalPages || 1);
             } else {
@@ -158,15 +181,12 @@ const MarketResearch = () => {
             setError('사업을 선택하거나 카테고리를 입력해주세요.');
             return;
         }
-
         setLoading(true);
         setError(null);
-
         const headers = {
             'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
             'Content-Type': 'application/json'
         };
-
         const data = selectedBusiness ? {
             id: selectedBusiness.id,
             businessName: selectedBusiness.businessName,
@@ -183,22 +203,28 @@ const MarketResearch = () => {
             ...customData,
             timestamp: new Date().getTime()
         };
-
         try {
-            let response;
+            let marketInformation = '';
+            let competitorAnalysis = '';
+            let marketTrends = '';
+            let regulationInformation = '';
+            let marketEntryStrategy = '';
             const timestamp = new Date().getTime();
             switch (type) {
                 case 'marketSize':
-                    response = await axios.post(`http://localhost:5000/market-research/market-size-growth?t=${timestamp}`, data, { headers });
-                    setMarketSizeGrowth(response.data.data);
+                    const marketSizeResponse = await axios.post(`http://localhost:5000/market-research/market-size-growth?t=${timestamp}`, data, { headers });
+                    setMarketSizeGrowth(marketSizeResponse.data.data);
+                    marketInformation = JSON.stringify(marketSizeResponse.data.data);
                     break;
                 case 'similarServices':
-                    response = await axios.post(`http://localhost:5000/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
-                    setSimilarServices(response.data.data);
+                    const similarServicesResponse = await axios.post(`http://localhost:5000/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
+                    setSimilarServices(similarServicesResponse.data.data);
+                    competitorAnalysis = JSON.stringify(similarServicesResponse.data.data);
                     break;
                 case 'trendCustomerTechnology':
-                    response = await axios.post(`http://localhost:5000/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
-                    setTrendCustomerTechnology(response.data.data);
+                    const trendResponse = await axios.post(`http://localhost:5000/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
+                    setTrendCustomerTechnology(trendResponse.data.data);
+                    marketTrends = JSON.stringify(trendResponse.data.data);
                     break;
                 case 'all':
                     const [marketSizeGrowthRes, similarServicesRes, trendCustomerTechnologyRes] = await Promise.all([
@@ -209,11 +235,33 @@ const MarketResearch = () => {
                     setMarketSizeGrowth(marketSizeGrowthRes.data.data);
                     setSimilarServices(similarServicesRes.data.data);
                     setTrendCustomerTechnology(trendCustomerTechnologyRes.data.data);
+                    marketInformation = JSON.stringify(marketSizeGrowthRes.data.data);
+                    competitorAnalysis = JSON.stringify(similarServicesRes.data.data);
+                    marketTrends = JSON.stringify(trendCustomerTechnologyRes.data.data);
                     break;
             }
+            // 조회 이력 저장
+            const historyData = {
+                createAt: new Date().toISOString(),
+                marketInformation,
+                competitorAnalysis,
+                marketTrends,
+                regulationInformation,
+                marketEntryStrategy,
+                businessId: selectedBusiness?.id || -1
+            };
+            await axios.post('http://localhost:5000/market-research/save-history', historyData, { headers });
             setCurrentStep(3);
+
+            const newHistory = [...researchHistory, historyData];
+            setResearchHistory(newHistory);
+            saveResearchHistoryToCookie(newHistory);
+
+            setCurrentStep(3);
+
         } catch (error) {
             console.error('Market analysis failed:', error);
+            console.error('Error response:', error.response?.data);
             setError(`시장 분석에 실패했습니다: ${error.response?.data?.message || error.message}`);
         } finally {
             setLoading(false);
@@ -367,13 +415,11 @@ const MarketResearch = () => {
         }
 
         return (
-            <Flex>
-                <Box flex="3" pr={4}>
-                    <Box height="400px" width="100%">
-                        <MarketGrowthChart data={parsedData} />
-                    </Box>
+            <Box>
+                <Box height="400px" width="100%" mb={2}>
+                    <MarketGrowthChart data={parsedData} />
                 </Box>
-                <VStack flex="1" align="start" spacing={4} justifyContent="center">
+                <HStack spacing={8} justify="flex-start">
                     <Box>
                         <Text fontWeight="bold">시장 규모</Text>
                         <Text>{parsedData.marketSize}</Text>
@@ -382,11 +428,10 @@ const MarketResearch = () => {
                         <Text fontWeight="bold">성장률</Text>
                         <Text>{parsedData.growthRate}</Text>
                     </Box>
-                </VStack>
-            </Flex>
+                </HStack>
+            </Box>
         );
     };
-
     const renderSimilarServices = (data) => {
         console.log('Similar Services data:', data);
         let parsedData;
@@ -552,7 +597,7 @@ const MarketResearch = () => {
         const formatDate = (dateString) => {
             if (!dateString) return 'N/A';
             const date = new Date(dateString);
-            return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleString();
+            return isNaN(date.getTime()) ? dateString : date.toLocaleString();
         };
 
         return (
@@ -571,16 +616,18 @@ const MarketResearch = () => {
                                 <Thead>
                                     <Tr>
                                         <Th>날짜</Th>
-                                        <Th>분석 유형</Th>
-                                        <Th>사업명/카테고리</Th>
+                                        <Th>시장 정보</Th>
+                                        <Th>경쟁사 분석</Th>
+                                        <Th>시장 동향</Th>
                                     </Tr>
                                 </Thead>
                                 <Tbody>
                                     {researchHistory.map((history, index) => (
                                         <Tr key={index}>
-                                            <Td>{formatDate(history.researchDate)}</Td>
-                                            <Td>{history.researchType || 'N/A'}</Td>
-                                            <Td>{history.businessName || history.categoryName || 'N/A'}</Td>
+                                            <Td>{formatDate(history.createAt)}</Td>
+                                            <Td>{history.marketInformation ? '있음' : '없음'}</Td>
+                                            <Td>{history.competitorAnalysis ? '있음' : '없음'}</Td>
+                                            <Td>{history.marketTrends ? '있음' : '없음'}</Td>
                                         </Tr>
                                     ))}
                                 </Tbody>
@@ -631,12 +678,12 @@ const MarketResearch = () => {
         <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
             transition={{ duration: 0.5 }}
         >
-            <Box width="70%" margin="auto" mt={12} mb={12} minHeight="1000px">
+            <Box id="market-research" width="70%" margin="auto" pt={24} pb={12} minHeight="1000px">
+                <Box mt={8}/>
                 <Flex justifyContent="space-between" alignItems="center" mb={8}>
-                    <Heading as="h1" size="2xl" mb={8}>시장 조사💹</Heading>
+                    <Heading as="h1" size="2xl" mb={8} wordBreak="break-word">시장 조사💹</Heading>
                     <Tooltip label="도움말">
                         <Icon as={FaQuestionCircle} onClick={onOpen} cursor="pointer" />
                     </Tooltip>
