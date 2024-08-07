@@ -17,18 +17,20 @@ function MainPage() {
     const trendCustomerTechnologyRef = useRef(null);
 
     useEffect(() => {
-        const handleScroll = () => {
-            const scrollPosition = window.scrollY;
-            if (marketResearchRef.current && scrollPosition < businessModelRef.current.offsetTop) {
-                setActiveSection('marketResearchRef');
-            } else if (businessModelRef.current && scrollPosition < trendCustomerTechnologyRef.current.offsetTop) {
-                setActiveSection('businessModelRef');
-            }
-        };
+        if (marketResearchRef.current && businessModelRef.current) {
+            const handleScroll = () => {
+                const scrollPosition = window.scrollY;
+                if (scrollPosition < businessModelRef.current.offsetTop) {
+                    setActiveSection('marketResearchRef');
+                } else {
+                    setActiveSection('businessModelRef');
+                }
+            };
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+            window.addEventListener('scroll', handleScroll);
+            return () => window.removeEventListener('scroll', handleScroll);
+        }
+    }, [marketResearchRef, businessModelRef]);
 
     const scrollToSection = (sectionName) => {
         const refMap = {
