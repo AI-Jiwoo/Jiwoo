@@ -425,7 +425,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     return (
         <Box width="70%" margin="auto" mt={12} mb={12} minHeight="1000px">
             <Flex justifyContent="space-between" alignItems="center" mb={8}>
-                <Heading size="xl">비즈니스 모델 분석</Heading>
+                <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
             </Flex>
             {renderStepIndicator()}
             <VStack spacing={8} align="stretch">

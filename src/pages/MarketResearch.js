@@ -37,7 +37,7 @@ import {
     ModalHeader,
     ModalBody,
     ModalCloseButton,
-    TabPanel, TabList, Tabs, Tab, TabPanels
+    TabPanel, TabList, Tabs, Tab, TabPanels, Heading
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import MarketGrowthChart from "../component/MarketGrowthChart";
@@ -636,7 +636,7 @@ const MarketResearch = () => {
         >
             <Box width="70%" margin="auto" mt={12} mb={12} minHeight="1000px">
                 <Flex justifyContent="space-between" alignItems="center" mb={8}>
-                    <Text fontSize="2xl" fontWeight="bold">시장 조사</Text>
+                    <Heading as="h1" size="2xl" mb={8}>시장 조사💹</Heading>
                     <Tooltip label="도움말">
                         <Icon as={FaQuestionCircle} onClick={onOpen} cursor="pointer" />
                     </Tooltip>
