@@ -5,7 +5,7 @@ import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 
-function MainHeader({ scrollToMarketResearch }) {
+function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -22,12 +22,21 @@ function MainHeader({ scrollToMarketResearch }) {
         navigate('/mypage');
     };
 
-    const handleAcceleratingClick = (e) => {
+    const handleMarketResearchClick = (e) => {
         e.preventDefault();
         if (location.pathname === '/main') {
             scrollToMarketResearch();
         } else {
             navigate('/main', { state: { scrollToMarketResearch: true } });
+        }
+    };
+
+    const handleBusinessModelClick = (e) => {
+        e.preventDefault();
+        if (location.pathname === '/main') {
+            scrollToBusinessModel();
+        } else {
+            navigate('/main', { state: { scrollToBusinessModel: true } });
         }
     };
 
@@ -48,7 +57,8 @@ function MainHeader({ scrollToMarketResearch }) {
 
                 <HStack spacing={8}>
                     <Link as={RouterLink} to="/startup-guide" fontWeight="bold">창업가이드</Link>
-                    <Link href="#" onClick={handleAcceleratingClick} fontWeight="bold">엑셀러레이팅</Link>
+                    <Link href="#" onClick={handleMarketResearchClick} fontWeight="bold">시장조사</Link>
+                    <Link href="#" onClick={handleBusinessModelClick} fontWeight="bold">비즈니스모델</Link>
                     <Link as={RouterLink} to="/tax-handling" fontWeight="bold">세무처리</Link>
                 </HStack>
 

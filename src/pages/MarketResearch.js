@@ -1,15 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-    Box, VStack, HStack, Text, Button, Select, Spinner, Input, Tabs, TabList, TabPanels, Tab, TabPanel,
-    Card, CardBody, CardHeader, Alert, AlertIcon, SimpleGrid, Divider, FormControl, FormLabel,
-    Td, Tr, Tbody, Th, Thead, Table, ListItem, UnorderedList, Flex, Icon, Tooltip, Progress, useDisclosure,
-    Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton
+    Box,
+    VStack,
+    HStack,
+    Text,
+    Button,
+    Select,
+    Spinner,
+    Input,
+    SimpleGrid,
+    Divider,
+    FormControl,
+    FormLabel,
+    Card,
+    CardBody,
+    CardHeader,
+    Alert,
+    AlertIcon,
+    Td,
+    Tr,
+    Tbody,
+    Th,
+    Thead,
+    Table,
+    ListItem,
+    UnorderedList,
+    Flex,
+    Icon,
+    Tooltip,
+    Progress,
+    useDisclosure,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalCloseButton,
+    TabPanel, TabList, Tabs, Tab, TabPanels
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import MarketGrowthChart from "../component/MarketGrowthChart";
 import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaQuestionCircle, FaRedo} from 'react-icons/fa';
-import BusinessModel from "./BusinessModel";
 
 const MarketResearch = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -43,70 +75,6 @@ const MarketResearch = () => {
         fetchResearchHistory();
         fetchCategories();
     }, [currentPage]);
-    const renderResearchHistory = () => {
-        const formatDate = (dateString) => {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleString();
-        };
-
-
-
-        return (
-            <Card>
-                <CardHeader>
-                    <Text fontSize="xl" fontWeight="bold">조회 이력</Text>
-                </CardHeader>
-                <CardBody>
-                    {isLoading ? (
-                        <Spinner />
-                    ) : error ? (
-                        <Text color="red.500">{error}</Text>
-                    ) : researchHistory.length > 0 ? (
-                        <>
-                            <Table variant="simple">
-                                <Thead>
-                                    <Tr>
-                                        <Th>날짜</Th>
-                                        <Th>분석 유형</Th>
-                                        <Th>사업명/카테고리</Th>
-                                    </Tr>
-                                </Thead>
-                                <Tbody>
-                                    {researchHistory.map((history, index) => (
-                                        <Tr key={index}>
-                                            <Td>{formatDate(history.researchDate)}</Td>
-                                            <Td>{history.researchType || 'N/A'}</Td>
-                                            <Td>{history.businessName || history.categoryName || 'N/A'}</Td>
-                                        </Tr>
-                                    ))}
-                                </Tbody>
-                            </Table>
-                            {totalPages > 1 && (
-                                <HStack justifyContent="center" mt={4}>
-                                    <Button onClick={() => setCurrentPage(currentPage - 1)} isDisabled={currentPage === 0}>
-                                        이전
-                                    </Button>
-                                    <Text>{currentPage + 1} / {totalPages}</Text>
-                                    <Button onClick={() => setCurrentPage(currentPage + 1)} isDisabled={currentPage === totalPages - 1}>
-                                        다음
-                                    </Button>
-                                </HStack>
-                            )}
-                        </>
-                    ) : (
-                        <VStack spacing={4} align="center">
-                            <Text>조회 이력이 없습니다.</Text>
-                            <Text>시장 분석을 실행하여 조회 이력을 생성해보세요.</Text>
-                            <Button colorScheme="blue" onClick={() => setCurrentStep(1)}>
-                                시장 분석 시작하기
-                            </Button>
-                        </VStack>
-                    )}
-                </CardBody>
-            </Card>
-        );
-    };
 
     const fetchBusinesses = async () => {
         try {
@@ -273,46 +241,79 @@ const MarketResearch = () => {
             </CardHeader>
             <CardBody>
                 <Select placeholder="사업 선택" onChange={handleBusinessSelect} value={selectedBusiness?.id || ''} mb={4}>
-                    {businesses.map((business) => (
+                    {Array.isArray(businesses) && businesses.map((business) => (
                         <option key={business.id} value={business.id}>{business.businessName}</option>
                     ))}
                 </Select>
-                {!selectedBusiness && (
+                {(!selectedBusiness || (Array.isArray(businesses) && businesses.length === 0)) && (
                     <SimpleGrid columns={2} spacing={4}>
                         <FormControl>
                             <FormLabel>사업 분야 (카테고리)</FormLabel>
-                            <Select name="category" value={customData.category} onChange={handleCustomDataChange} placeholder="카테고리 선택">
-                                {categories.map((category, index) => (
+                            <Select
+                                name="category"
+                                value={customData?.category || ''}
+                                onChange={handleCustomDataChange}
+                                placeholder="카테고리 선택"
+                            >
+                                {Array.isArray(categories) && categories.map((category, index) => (
                                     <option key={index} value={category}>{category}</option>
                                 ))}
                             </Select>
                         </FormControl>
                         <FormControl>
                             <FormLabel>사업 규모</FormLabel>
-                            <Input name="scale" value={customData.scale} onChange={handleCustomDataChange} placeholder="예: 중소기업" />
+                            <Input
+                                name="scale"
+                                value={customData?.scale || ''}
+                                onChange={handleCustomDataChange}
+                                placeholder="예: 중소기업"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>국가</FormLabel>
-                            <Input name="nation" value={customData.nation} onChange={handleCustomDataChange} placeholder="예: 대한민국" />
+                            <Input
+                                name="nation"
+                                value={customData?.nation || ''}
+                                onChange={handleCustomDataChange}
+                                placeholder="예: 대한민국"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>고객유형</FormLabel>
-                            <Input name="customerType" value={customData.customerType} onChange={handleCustomDataChange} placeholder="예: B2B" />
+                            <Input
+                                name="customerType"
+                                value={customData?.customerType || ''}
+                                onChange={handleCustomDataChange}
+                                placeholder="예: B2B"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>사업유형</FormLabel>
-                            <Input name="businessType" value={customData.businessType} onChange={handleCustomDataChange} placeholder="예: 소프트웨어 개발" />
+                            <Input
+                                name="businessType"
+                                value={customData?.businessType || ''}
+                                onChange={handleCustomDataChange}
+                                placeholder="예: 소프트웨어 개발"
+                            />
                         </FormControl>
                         <FormControl>
                             <FormLabel>사업내용</FormLabel>
-                            <Input name="businessContent" value={customData.businessContent} onChange={handleCustomDataChange} placeholder="사업 내용을 간략히 설명해주세요" />
+                            <Input
+                                name="businessContent"
+                                value={customData?.businessContent || ''}
+                                onChange={handleCustomDataChange}
+                                placeholder="사업 내용을 간략히 설명해주세요"
+                            />
                         </FormControl>
                     </SimpleGrid>
                 )}
-                <Button mt={4} colorScheme="blue" onClick={() => setCurrentStep(2)}>다음 단계</Button>
+                <Button mt={4} colorScheme="blue" onClick={() => setCurrentStep(2)}>
+                    다음 단계
+                </Button>
             </CardBody>
         </Card>
     );
+
 
     const renderAnalysisTypeSelection = () => (
         <Card>
@@ -428,7 +429,6 @@ const MarketResearch = () => {
                                     </UnorderedList>
                                 </Box>
                             )}
-                            {/* 약점, 특징, 전략에 대해서도 비슷하게 구현 */}
                         </Box>
                     </>
                 )}
@@ -477,7 +477,6 @@ const MarketResearch = () => {
     };
 
     const handleNewAnalysis = () => {
-        // 상태 초기화
         setSelectedBusiness(null);
         setCustomData({
             category: '',
@@ -494,9 +493,9 @@ const MarketResearch = () => {
         setSimilarServices(null);
         setTrendCustomerTechnology(null);
         setError(null);
-        // 첫 번째 단계로 돌아가기
         setCurrentStep(1);
     };
+
     const renderResults = () => (
         <VStack spacing={8} align="stretch">
             {marketSizeGrowth && (
@@ -549,6 +548,69 @@ const MarketResearch = () => {
         </VStack>
     );
 
+    const renderResearchHistory = () => {
+        const formatDate = (dateString) => {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleString();
+        };
+
+        return (
+            <Card>
+                <CardHeader>
+                    <Text fontSize="xl" fontWeight="bold">조회 이력</Text>
+                </CardHeader>
+                <CardBody>
+                    {isLoading ? (
+                        <Spinner />
+                    ) : error ? (
+                        <Text color="red.500">{error}</Text>
+                    ) : researchHistory.length > 0 ? (
+                        <>
+                            <Table variant="simple">
+                                <Thead>
+                                    <Tr>
+                                        <Th>날짜</Th>
+                                        <Th>분석 유형</Th>
+                                        <Th>사업명/카테고리</Th>
+                                    </Tr>
+                                </Thead>
+                                <Tbody>
+                                    {researchHistory.map((history, index) => (
+                                        <Tr key={index}>
+                                            <Td>{formatDate(history.researchDate)}</Td>
+                                            <Td>{history.researchType || 'N/A'}</Td>
+                                            <Td>{history.businessName || history.categoryName || 'N/A'}</Td>
+                                        </Tr>
+                                    ))}
+                                </Tbody>
+                            </Table>
+                            {totalPages > 1 && (
+                                <HStack justifyContent="center" mt={4}>
+                                    <Button onClick={() => setCurrentPage(currentPage - 1)} isDisabled={currentPage === 0}>
+                                        이전
+                                    </Button>
+                                    <Text>{currentPage + 1} / {totalPages}</Text>
+                                    <Button onClick={() => setCurrentPage(currentPage + 1)} isDisabled={currentPage === totalPages - 1}>
+                                        다음
+                                    </Button>
+                                </HStack>
+                            )}
+                        </>
+                    ) : (
+                        <VStack spacing={4} align="center">
+                            <Text>조회 이력이 없습니다.</Text>
+                            <Text>시장 분석을 실행하여 조회 이력을 생성해보세요.</Text>
+                            <Button colorScheme="blue" onClick={() => setCurrentStep(1)}>
+                                시장 분석 시작하기
+                            </Button>
+                        </VStack>
+                    )}
+                </CardBody>
+            </Card>
+        );
+    };
+
     const renderHelpModal = () => (
         <Modal isOpen={isOpen} onClose={onClose}>
             <ModalOverlay />
@@ -574,7 +636,7 @@ const MarketResearch = () => {
         >
             <Box width="70%" margin="auto" mt={12} mb={12} minHeight="1000px">
                 <Flex justifyContent="space-between" alignItems="center" mb={8}>
-                    <Text fontSize="2xl" fontWeight="bold">액셀러레이팅</Text>
+                    <Text fontSize="2xl" fontWeight="bold">시장 조사</Text>
                     <Tooltip label="도움말">
                         <Icon as={FaQuestionCircle} onClick={onOpen} cursor="pointer" />
                     </Tooltip>
@@ -582,22 +644,12 @@ const MarketResearch = () => {
 
                 {renderStepIndicator()}
 
-                <Tabs isFitted variant="enclosed" colorScheme="blue" mb={8}>
+                <Tabs isFitted variant="enclosed">
                     <TabList mb="1em">
-                        <Tab>비즈니스 모델</Tab>
-                        <Tab>시장조사</Tab>
-                        <Tab>조회이력</Tab>
+                        <Tab>시장 분석</Tab>
+                        <Tab>조회 이력</Tab>
                     </TabList>
                     <TabPanels>
-                        <TabPanel>
-                            <BusinessModel
-                                businesses={businesses}
-                                selectedBusiness={selectedBusiness}
-                                customData={customData}
-                                onBusinessSelect={handleBusinessSelect}
-                                onCustomDataChange={handleCustomDataChange}
-                            />
-                        </TabPanel>
                         <TabPanel>
                             <VStack spacing={8} align="stretch">
                                 {currentStep === 1 && renderBusinessSelection()}

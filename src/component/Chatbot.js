@@ -1,5 +1,4 @@
-// src/components/Chatbot.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Box,
     Image,
@@ -21,21 +20,49 @@ const Chatbot = () => {
     const { isOpen, onToggle, onClose } = useDisclosure();
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
-    const [scrollPosition, setScrollPosition] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [dragging, setDragging] = useState(false);
+    const [position, setPosition] = useState({ x: 20, y: 100 });
+    const chatRef = useRef(null);
+    const dragStartPosition = useRef({ x: 0, y: 0 });
 
+    // Handle drag start
+    const handleMouseDown = (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+            // Allow input and button interactions
+            return;
+        }
+        setDragging(true);
+        dragStartPosition.current = {
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
+        };
+        e.preventDefault();
+    };
+
+    // Handle drag move
+    const handleMouseMove = (e) => {
+        if (dragging) {
+            const newX = e.clientX - dragStartPosition.current.x;
+            const newY = e.clientY - dragStartPosition.current.y;
+            setPosition({ x: newX, y: newY });
+        }
+    };
+
+    // Handle drag end
+    const handleMouseUp = () => {
+        setDragging(false);
+    };
 
     useEffect(() => {
-        const handleScroll = () => {
-            setScrollPosition(window.pageYOffset);
-        };
-
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
 
         return () => {
-            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, []);
+    }, [dragging]);
 
     const handleSendMessage = async () => {
         if (inputMessage.trim()) {
@@ -60,10 +87,13 @@ const Chatbot = () => {
 
     return (
         <Box
+            ref={chatRef}
             position="fixed"
-            bottom={isOpen ? 0 : `${Math.max(20, 20 - scrollPosition)}px`}
-            right={isOpen ? 0 : "20px"}
+            top={position.y}
+            left={position.x}
             zIndex="1000"
+            cursor={dragging ? 'grabbing' : 'pointer'}
+            onMouseDown={handleMouseDown}
             transition="all 0.3s ease-out"
         >
             <Image
