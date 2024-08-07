@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import {
     VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
     List, ListItem, FormControl, FormLabel, Box, Spinner, Icon, SimpleGrid, Progress, Flex,
-    useBreakpointValue, Container, Heading
+    useBreakpointValue, Heading, UnorderedList, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton
 } from '@chakra-ui/react';
-import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb } from "react-icons/fa";
+import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye } from "react-icons/fa";
 
-const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCustomDataChange }) => {
+const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
     const [businesses, setBusinesses] = useState([]);
     const [similarServices, setSimilarServices] = useState([]);
     const [analyzedBusinessModel, setAnalyzedBusinessModel] = useState(null);
@@ -16,13 +17,17 @@ const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCusto
     const [error, setError] = useState(null);
     const [categories, setCategories] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
-
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const columnCount = useBreakpointValue({ base: 1, md: 2 });
 
     useEffect(() => {
         fetchBusinesses();
         fetchCategories();
     }, []);
+
+    useEffect(() => {
+        console.log("Selected business updated:", selectedBusiness);
+    }, [selectedBusiness]);
 
     const fetchBusinesses = async () => {
         try {
@@ -142,13 +147,17 @@ const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCusto
         </Box>
     );
 
-    const handleBusinessSelect = (event) => {
-        const selectedId = event.target.value;
+    const handleBusinessSelect = useCallback((event) => {
+        const selectedId = parseInt(event.target.value, 10);
         const selected = businesses.find(b => b.id === selectedId);
-        if (onBusinessSelect) {
-            onBusinessSelect(selected); // 부모 컴포넌트의 핸들러를 호출
+        console.log("Business selected:", selected);
+        if (selected) {
+            setSelectedBusiness(selected);  // 직접 상태 업데이트
+            if (typeof onBusinessSelect === 'function') {
+                onBusinessSelect(selected);
+            }
         }
-    };
+    }, [businesses, onBusinessSelect]);
 
     const renderBusinessSelection = () => (
         <Card>
@@ -171,7 +180,7 @@ const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCusto
                         </option>
                     ))}
                 </Select>
-                {(!selectedBusiness || businesses.length === 0) && (
+                {!selectedBusiness && (
                     <SimpleGrid columns={columnCount} spacing={4}>
                         <FormControl>
                             <FormLabel>사업 분야 (카테고리)</FormLabel>
@@ -284,7 +293,7 @@ const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCusto
                 </HStack>
             </CardHeader>
             <CardBody>
-                <Text>{analyzedBusinessModel}</Text>
+                <Text whiteSpace="pre-wrap">{analyzedBusinessModel?.analysis}</Text>
                 <Button
                     mt={4}
                     colorScheme="blue"
@@ -306,10 +315,104 @@ const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCusto
                 </HStack>
             </CardHeader>
             <CardBody>
-                <Text>{businessProposal}</Text>
+                <Text whiteSpace="pre-wrap">{businessProposal?.proposal}</Text>
             </CardBody>
         </Card>
     );
+
+    const parseAnalysis = (analysisText) => {
+        const companies = analysisText.split('\n\n');
+        return companies.map(company => {
+            const [name, ...details] = company.split('\n');
+            const parsedDetails = details.reduce((acc, detail) => {
+                const [key, value] = detail.split(': ');
+                acc[key.slice(2)] = value;
+                return acc;
+            }, {});
+            return { name: name.slice(3), ...parsedDetails };
+        });
+    };
+
+    const parseProposal = (proposalText) => {
+        const lines = proposalText.split('\n');
+        const result = {};
+        let currentKey = '';
+        lines.forEach(line => {
+            if (line.includes(':')) {
+                const [key, value] = line.split(':');
+                currentKey = key.trim();
+                result[currentKey] = value.trim();
+            } else if (line.startsWith('-') && currentKey) {
+                if (!Array.isArray(result[currentKey])) {
+                    result[currentKey] = [];
+                }
+                result[currentKey].push(line.slice(2));
+            }
+        });
+        return result;
+    };
+
+    const renderFullResults = () => (
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>전체 분석 결과</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    {analyzedBusinessModel && (
+                        <Box mb={8}>
+                            <Heading size="md" mb={4}>비즈니스 모델 분석 결과</Heading>
+                            {parseAnalysis(analyzedBusinessModel.analysis).map((company, index) => (
+                                <Box key={index} mb={4}>
+                                    <Heading size="sm">{company.name}</Heading>
+                                    <Text><strong>수익구조:</strong> {company['수익구조']}</Text>
+                                    <Text><strong>공통 전략:</strong> {company['공통 전략']}</Text>
+                                    <Text><strong>독특한 접근 방식:</strong> {company['독특한 접근 방식']}</Text>
+                                    <Text><strong>개선 가능한 영역:</strong> {company['개선 가능한 영역']}</Text>
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
+                    {businessProposal && (
+                        <Box>
+                            <Heading size="md" mb={4}>비즈니스 모델 제안</Heading>
+                            {(() => {
+                                const proposal = parseProposal(businessProposal.proposal);
+                                return (
+                                    <VStack align="start" spacing={4}>
+                                        <Heading size="sm">{proposal['제안하는 비즈니스 모델은']}</Heading>
+                                        {Object.entries(proposal).slice(1).map(([key, value]) => (
+                                            <Box key={key}>
+                                                <Text fontWeight="bold">{key}:</Text>
+                                                {Array.isArray(value) ? (
+                                                    <UnorderedList>
+                                                        {value.map((item, index) => (
+                                                            <ListItem key={index}>{item}</ListItem>
+                                                        ))}
+                                                    </UnorderedList>
+                                                ) : (
+                                                    <Text>{value}</Text>
+                                                )}
+                                            </Box>
+                                        ))}
+                                    </VStack>
+                                );
+                            })()}
+                        </Box>
+                    )}
+                </ModalBody>
+            </ModalContent>
+        </Modal>
+    );
+
+    const handleNewAnalysis = () => {
+        setSelectedBusiness(null);
+        setSimilarServices([]);
+        setAnalyzedBusinessModel(null);
+        setBusinessProposal(null);
+        setCurrentStep(1);
+        setError(null);
+    };
 
     if (loading) {
         return (
@@ -320,7 +423,11 @@ const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCusto
     }
 
     return (
-        <Container maxW="container.xl" py={8}>
+        <Box width="70%" margin="auto" mt={12} mb={12} minHeight="1000px">
+            <Flex justifyContent="space-between" alignItems="center" mb={8}>
+                <Heading size="xl">비즈니스 모델 분석</Heading>
+            </Flex>
+            {renderStepIndicator()}
             <VStack spacing={8} align="stretch">
                 {error && (
                     <Alert status="error">
@@ -328,13 +435,30 @@ const BusinessModel = ({ selectedBusiness, customData, onBusinessSelect, onCusto
                         {error}
                     </Alert>
                 )}
-                {renderStepIndicator()}
                 {currentStep === 1 && renderBusinessSelection()}
                 {currentStep === 2 && renderSimilarServices()}
                 {currentStep === 3 && renderAnalyzedBusinessModel()}
                 {currentStep === 4 && renderBusinessProposal()}
+                {currentStep > 1 && (
+                    <HStack justifyContent="space-between">
+                        <Button
+                            leftIcon={<Icon as={FaRedo} />}
+                            onClick={handleNewAnalysis}
+                        >
+                            새로운 분석 시작
+                        </Button>
+                        <Button
+                            rightIcon={<Icon as={FaEye} />}
+                            onClick={() => setIsModalOpen(true)}
+                            isDisabled={!analyzedBusinessModel || !businessProposal}
+                        >
+                            전체 결과 보기
+                        </Button>
+                    </HStack>
+                )}
             </VStack>
-        </Container>
+            {renderFullResults()}
+        </Box>
     );
 };
 
