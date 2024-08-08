@@ -94,11 +94,9 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             };
         }
 
-        console.log("Sending data to server:", data);  // 디버깅을 위한 로그
 
         try {
             const response = await axios.post('http://localhost:5000/business-model/similar-services', data, { headers });
-            console.log("Server response:", response.data);  // 디버깅을 위한 로그
             setSimilarServices(response.data);
             setCurrentStep(2);
         } catch (error) {
@@ -284,13 +282,22 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                 </HStack>
             </CardHeader>
             <CardBody>
-                <List spacing={3}>
-                    {similarServices.map((service, index) => (
-                        <ListItem key={index}>
-                            <Text>{service.businessName || service.name}</Text>
-                        </ListItem>
-                    ))}
-                </List>
+                {similarServices.length > 0 ? (
+                    <List spacing={3}>
+                        {similarServices.map((service, index) => (
+                            <ListItem key={index}>
+                                <Text>{service.businessName || service.name || '이름 없음'}</Text>
+                                {service.analysis && (
+                                    <Text fontSize="sm" color="gray.600" mt={1}>
+                                        {service.analysis}
+                                    </Text>
+                                )}
+                            </ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <Text>유사 서비스가 없습니다.</Text>
+                )}
                 <Button
                     mt={4}
                     colorScheme="blue"
@@ -372,53 +379,41 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     };
 
     const renderFullResults = () => (
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="full">
             <ModalOverlay />
-            <ModalContent>
+            <ModalContent maxWidth="90vw" maxHeight="90vh">
                 <ModalHeader>전체 분석 결과</ModalHeader>
                 <ModalCloseButton />
-                <ModalBody>
-                    {analyzedBusinessModel && (
-                        <Box mb={8}>
-                            <Heading size="md" mb={4}>비즈니스 모델 분석 결과</Heading>
-                            {parseAnalysis(analyzedBusinessModel.analysis).map((company, index) => (
-                                <Box key={index} mb={4}>
-                                    <Heading size="sm">{company.name}</Heading>
-                                    <Text><strong>수익구조:</strong> {company['수익구조']}</Text>
-                                    <Text><strong>공통 전략:</strong> {company['공통 전략']}</Text>
-                                    <Text><strong>독특한 접근 방식:</strong> {company['독특한 접근 방식']}</Text>
-                                    <Text><strong>개선 가능한 영역:</strong> {company['개선 가능한 영역']}</Text>
-                                </Box>
-                            ))}
-                        </Box>
-                    )}
-                    {businessProposal && (
+                <ModalBody overflowY="auto" p={6}>
+                    <VStack spacing={8} align="stretch">
                         <Box>
-                            <Heading size="md" mb={4}>비즈니스 모델 제안</Heading>
-                            {(() => {
-                                const proposal = parseProposal(businessProposal.proposal);
-                                return (
-                                    <VStack align="start" spacing={4}>
-                                        <Heading size="sm">{proposal['제안하는 비즈니스 모델은']}</Heading>
-                                        {Object.entries(proposal).slice(1).map(([key, value]) => (
-                                            <Box key={key}>
-                                                <Text fontWeight="bold">{key}:</Text>
-                                                {Array.isArray(value) ? (
-                                                    <UnorderedList>
-                                                        {value.map((item, index) => (
-                                                            <ListItem key={index}>{item}</ListItem>
-                                                        ))}
-                                                    </UnorderedList>
-                                                ) : (
-                                                    <Text>{value}</Text>
-                                                )}
-                                            </Box>
-                                        ))}
-                                    </VStack>
-                                );
-                            })()}
+                            <Heading size="md" mb={4}>유사 서비스</Heading>
+                            <List spacing={3}>
+                                {similarServices.map((service, index) => (
+                                    <ListItem key={index}>
+                                        <Text fontWeight="bold">{service.businessName || service.name || '이름 없음'}</Text>
+                                        {service.analysis && (
+                                            <Text mt={1}>{service.analysis}</Text>
+                                        )}
+                                    </ListItem>
+                                ))}
+                            </List>
                         </Box>
-                    )}
+
+                        {analyzedBusinessModel && (
+                            <Box>
+                                <Heading size="md" mb={4}>비즈니스 모델 분석 결과</Heading>
+                                <Text whiteSpace="pre-wrap">{analyzedBusinessModel.analysis}</Text>
+                            </Box>
+                        )}
+
+                        {businessProposal && (
+                            <Box>
+                                <Heading size="md" mb={4}>비즈니스 모델 제안</Heading>
+                                <Text whiteSpace="pre-wrap">{businessProposal.proposal}</Text>
+                            </Box>
+                        )}
+                    </VStack>
                 </ModalBody>
             </ModalContent>
         </Modal>
