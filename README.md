@@ -71,7 +71,7 @@ Python기반 VectorDB 유사도 검증 및 Jiwoo chat-bot서버입니다.
             "businessPlatform": "SaaS",
             "businessScale": "대기업",
             "business_field": "통신, 전자",
-            "businessStartDate": "1963-03-15",
+            "businessStartDate": "1953-04-08",
             "investmentStatus": "주식회사",
             "customerType": "B2B, B2C"
         },

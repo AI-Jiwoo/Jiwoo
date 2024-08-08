@@ -17,7 +17,7 @@ class Chatbot:
             temperature=0.7, 
             api_key=os.getenv("OPENAI_API_KEY")
         )
-        self.memory = ConversationBufferMemory(k=100, return_messages=True)
+        self.memory = ConversationBufferMemory()
         self.conversation = ConversationChain(
             llm=self.llm,
             memory=self.memory,
