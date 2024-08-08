@@ -473,6 +473,9 @@ const MarketResearch = () => {
             </Box>
         );
     };
+    const [selectedCompany, setSelectedCompany] = useState(null);
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+
     const renderSimilarServices = (data) => {
         console.log('Similar Services data:', data);
         let parsedData;
@@ -488,56 +491,79 @@ const MarketResearch = () => {
         }
 
         const parseAnalysis = (analysisStr) => {
-            const companies = analysisStr.split(/\d+\.\s+기업\s+[A-Z]:\s+/).filter(Boolean);
-            return companies.map(company => {
-                const sections = company.split(/(?=강점:|약점:|특징:|전략:)/);
-                const companyData = {};
-                sections.forEach(section => {
-                    const [title, ...content] = section.split(':');
-                    companyData[title.trim()] = content.join(':').trim().split('-').filter(Boolean).map(item => item.trim());
+            const companyRegex = /(\d+\.[\s\S]*?)(?=\d+\.|$)/g;
+            const companies = [];
+            let match;
+
+            while ((match = companyRegex.exec(analysisStr)) !== null) {
+                const [, content] = match;
+                const lines = content.trim().split('\n');
+                const name = lines[0].replace(/^\d+\.\s*/, '').trim();
+                const details = {};
+                let currentKey = '';
+
+                lines.slice(1).forEach(line => {
+                    if (line.startsWith('- ')) {
+                        const [key, ...value] = line.slice(2).split(':');
+                        currentKey = key.trim();
+                        details[currentKey] = value.join(':').trim();
+                    } else if (currentKey) {
+                        details[currentKey] += ' ' + line.trim();
+                    }
                 });
-                return companyData;
-            });
+
+                companies.push({ name, details });
+            }
+
+            return companies;
         };
 
         const analysisData = parseAnalysis(parsedData.analysis);
+
+        const handleCompanyClick = (company) => {
+            setSelectedCompany(company);
+            setIsCompanyModalOpen(true);
+        };
 
         return (
             <VStack align="stretch" spacing={4}>
                 <Box>
                     <Text fontWeight="bold">유사 서비스</Text>
                     <UnorderedList>
-                        {Array.isArray(parsedData.similarServices) && parsedData.similarServices.length > 0 ?
-                            parsedData.similarServices.map((service, index) => (
-                                <ListItem key={index}>{service}</ListItem>
-                            ))
-                            : <ListItem>유사 서비스 정보가 없습니다.</ListItem>
-                        }
+                        {analysisData.map((company, index) => (
+                            <ListItem key={index} cursor="pointer" onClick={() => handleCompanyClick(company)}>
+                                <Text color="blue.500" textDecoration="underline">{company.name}</Text>
+                            </ListItem>
+                        ))}
                     </UnorderedList>
                 </Box>
                 <Divider />
                 <Box>
-                    <Text fontWeight="bold">분석</Text>
-                    {analysisData.map((company, index) => (
-                        <Box key={index} mt={4}>
-                            <Text fontWeight="bold">기업 {String.fromCharCode(65 + index)}</Text>
-                            {Object.entries(company).map(([key, values]) => (
-                                <Box key={key} mt={2}>
-                                    <Text fontWeight="semibold">{key}</Text>
-                                    <UnorderedList>
-                                        {values.map((item, idx) => (
-                                            <ListItem key={idx}>{item}</ListItem>
-                                        ))}
-                                    </UnorderedList>
-                                </Box>
-                            ))}
-                        </Box>
-                    ))}
+                    <Text fontWeight="bold">전체 분석</Text>
+                    <Text whiteSpace="pre-wrap">{parsedData.analysis}</Text>
                 </Box>
+                {renderCompanyModal()}
             </VStack>
         );
     };
 
+    const renderCompanyModal = () => (
+        <Modal isOpen={isCompanyModalOpen} onClose={() => setIsCompanyModalOpen(false)} size="lg">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>{selectedCompany?.name}</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    {selectedCompany && Object.entries(selectedCompany.details).map(([key, value]) => (
+                        <Box key={key} mb={3}>
+                            <Text fontWeight="bold">{key}:</Text>
+                            <Text>{value}</Text>
+                        </Box>
+                    ))}
+                </ModalBody>
+            </ModalContent>
+        </Modal>
+    );
     const renderTrendCustomerTechnology = (data) => {
         console.log('Trend Customer Technology data:', data);
         let parsedData;

@@ -27,8 +27,8 @@ function App() {
             <AuthProvider>
                 <Router>
                     <Routes>
-                        <Route path="/" element={<PageLayout><LandingPage /></PageLayout>} />
-                        <Route path="/main" element={<MainPage />} /> {/* MainPage는 PageLayout을 사용하지 않음 */}
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/main" element={<PageLayout><MainPage /></PageLayout>} /> {/* MainPage는 PageLayout을 사용하지 않음 */}
                         <Route path="/market-research" element={<PageLayout><MainPage /></PageLayout>} />
                         <Route path="/business-model" element={<PageLayout><BusinessModel /></PageLayout>} />
                         <Route path="/home" element={
