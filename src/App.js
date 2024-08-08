@@ -10,6 +10,8 @@ import MainPage from "./pages/MainPage";
 import MyPage from "./pages/MyPage";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BusinessModel from "./pages/BusinessModel";
+import MainHeader from "./component/common/MainHeader";
+import MyPageLayout from "./component/common/MyPageLayout";
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth();
@@ -38,13 +40,13 @@ function App() {
                                 </PageLayout>
                             </PrivateRoute>
                         } />
-                        <Route path="/login" element={<PageLayout><Login /></PageLayout>} />
+                        <Route path="/login" element={<MyPageLayout><Login /></MyPageLayout>} />
                         <Route path="/join" element={<PageLayout><Join /></PageLayout>} />
                         <Route path="/mypage" element={
                             <PrivateRoute>
-                                <PageLayout>
+                                <MyPageLayout>
                                     <MyPage/>
-                                </PageLayout>
+                                </MyPageLayout>
                             </PrivateRoute>
                         } />
                         <Route path="*" element={<Navigate to="/" replace />} />

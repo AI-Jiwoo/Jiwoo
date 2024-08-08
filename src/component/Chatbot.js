@@ -10,9 +10,9 @@ import {
     IconButton,
     Flex,
     Text,
-    Spinner
+    Spinner, Avatar
 } from '@chakra-ui/react';
-import { CloseIcon } from '@chakra-ui/icons';
+import {ChatIcon, CloseIcon} from '@chakra-ui/icons';
 import chatbotIcon from '../images/chatbot.png';
 import axios from "axios";
 
@@ -84,18 +84,16 @@ import axios from "axios";
         const getChatWindowPosition = () => {
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
-            const chatWidth = 500;
-            const chatHeight = 600;
+            const chatWidth = 600;  // 너비 증가
+            const chatHeight = 700;  // 높이 증가
 
             let x = position.x;
             let y = position.y;
 
-            // 화면 오른쪽 경계를 넘어가지 않도록 조정
             if (x + chatWidth > windowWidth) {
                 x = windowWidth - chatWidth;
             }
 
-            // 화면 아래쪽 경계를 넘어가지 않도록 조정
             if (y + chatHeight > windowHeight) {
                 y = windowHeight - chatHeight;
             }
@@ -119,7 +117,7 @@ import axios from "axios";
                 <Image
                     src={chatbotIcon}
                     alt="Chatbot"
-                    boxSize="60px"
+                    boxSize="70px"  // 아이콘 크기 증가
                     cursor="pointer"
                     onClick={onToggle}
                     display={isOpen ? 'none' : 'block'}
@@ -130,54 +128,78 @@ import axios from "axios";
                         top={chatPosition.y}
                         left={chatPosition.x}
                         bg="white"
-                        boxShadow="xl"
-                        height="600px"
-                        width="500px"
+                        boxShadow="2xl"
+                        height="700px"  // 높이 증가
+                        width="600px"  // 너비 증가
                         zIndex="1001"
+                        borderRadius="lg"
+                        overflow="hidden"
                     >
                         <Flex direction="column" height="100%">
-                            <Flex justify="space-between" align="center" p={4} borderBottom="1px solid" borderColor="gray.200">
-                                <Text fontWeight="bold" fontSize="xl">지우</Text>
+                            <Flex justify="space-between" align="center" p={6} bg="blue.500" color="white">
+                                <Flex align="center">
+                                    <Avatar src={chatbotIcon} size="sm" mr={3} />
+                                    <Text fontWeight="bold" fontSize="xl">지우 AI 챗봇</Text>
+                                </Flex>
                                 <IconButton
                                     icon={<CloseIcon />}
                                     onClick={onClose}
                                     variant="ghost"
+                                    color="white"
+                                    _hover={{ bg: 'blue.600' }}
                                     aria-label="Close chatbot"
                                 />
                             </Flex>
-                            <VStack flex={1} spacing={6} p={6} overflowY="auto">
+                            <VStack flex={1} spacing={6} p={6} overflowY="auto" bg="gray.50">
                                 {messages.map((msg, index) => (
-                                    <Box
+                                    <Flex
                                         key={index}
                                         alignSelf={msg.sender === 'user' ? 'flex-end' : 'flex-start'}
-                                        bg={msg.sender === 'user' ? 'blue.100' : 'gray.100'}
-                                        p={3}
-                                        borderRadius="md"
-                                        maxWidth="80%"
+                                        maxWidth="70%"
                                     >
-                                        {msg.text}
-                                    </Box>
+                                        {msg.sender === 'bot' && (
+                                            <Avatar src={chatbotIcon} size="sm" mr={2} />
+                                        )}
+                                        <Box
+                                            bg={msg.sender === 'user' ? 'blue.500' : 'white'}
+                                            color={msg.sender === 'user' ? 'white' : 'black'}
+                                            p={4}
+                                            borderRadius="lg"
+                                            boxShadow="md"
+                                        >
+                                            {msg.text}
+                                        </Box>
+                                    </Flex>
                                 ))}
                                 {isLoading && (
-                                    <Spinner size="sm" color="blue.500" />
+                                    <Spinner size="md" color="blue.500" />
                                 )}
                             </VStack>
-                            <Box p={4} borderTop="1px solid" borderColor="gray.200">
-                                <Input
-                                    value={inputMessage}
-                                    onChange={(e) => setInputMessage(e.target.value)}
-                                    placeholder="메시지를 입력하세요..."
-                                    size="lg"
-                                    mb={2}
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleSendMessage();
-                                        }
-                                    }}
-                                />
-                                <Button onClick={handleSendMessage} colorScheme="blue" width="100%" isLoading={isLoading}>
-                                    전송
-                                </Button>
+                            <Box p={6} bg="gray.100">
+                                <Flex>
+                                    <Input
+                                        value={inputMessage}
+                                        onChange={(e) => setInputMessage(e.target.value)}
+                                        placeholder="메시지를 입력하세요..."
+                                        size="lg"
+                                        bg="white"
+                                        mr={2}
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleSendMessage();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        onClick={handleSendMessage}
+                                        colorScheme="blue"
+                                        size="lg"
+                                        isLoading={isLoading}
+                                        leftIcon={<ChatIcon />}
+                                    >
+                                        전송
+                                    </Button>
+                                </Flex>
                             </Box>
                         </Flex>
                     </Box>
@@ -185,4 +207,5 @@ import axios from "axios";
             </Box>
         );
     };
-    export default Chatbot;
+
+export default Chatbot;

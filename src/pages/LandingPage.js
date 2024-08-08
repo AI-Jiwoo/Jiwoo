@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import ReactTypingEffect from 'react-typing-effect';
 import {Button, ChakraProvider, Flex, Box, Text, Image, SimpleGrid, VStack} from '@chakra-ui/react';
 import logo from '../logo/jiwooLanding.png';
@@ -25,6 +25,7 @@ const AnimatedSection = ({ children, delay = 0, backgroundColor = 'transparent' 
     });
     const isVisible = !!entry?.isIntersecting;
 
+
     return (
         <Box
             ref={ref}
@@ -46,8 +47,10 @@ const LandingPage = () => {
     const {user, logout} = useAuth();
     const navigate = useNavigate();
     const [fallingLogos, setFallingLogos] = useState([]);
+    const location = useLocation();
 
-     const handleLogout = () => {
+
+    const handleLogout = () => {
          logout();
          navigate('/');
      }
@@ -59,6 +62,10 @@ const LandingPage = () => {
     const handleGetStartedClick = () => {
         navigate('/main');
     };
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     const handleLogoClick = () => {
         const newLogos = Array.from({ length: 10 }, () => ({
