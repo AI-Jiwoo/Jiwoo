@@ -27,28 +27,19 @@ function App() {
             <AuthProvider>
                 <Router>
                     <Routes>
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="/main" element={<MainPage />} />
-                        <Route path="/market-research" element={<MainPage />} />
-                        <Route path="/business-model" element={<BusinessModel/>} />
-
-                            <Route path="/home" element={
+                        <Route path="/" element={<PageLayout><LandingPage /></PageLayout>} />
+                        <Route path="/main" element={<MainPage />} /> {/* MainPage는 PageLayout을 사용하지 않음 */}
+                        <Route path="/market-research" element={<PageLayout><MainPage /></PageLayout>} />
+                        <Route path="/business-model" element={<PageLayout><BusinessModel /></PageLayout>} />
+                        <Route path="/home" element={
                             <PrivateRoute>
                                 <PageLayout>
                                     <Home />
                                 </PageLayout>
                             </PrivateRoute>
                         } />
-                        <Route path="/login" element={
-                            <PageLayout>
-                                <Login />
-                            </PageLayout>
-                        } />
-                        <Route path="/join" element={
-                            <PageLayout>
-                                <Join />
-                            </PageLayout>
-                        } />
+                        <Route path="/login" element={<PageLayout><Login /></PageLayout>} />
+                        <Route path="/join" element={<PageLayout><Join /></PageLayout>} />
                         <Route path="/mypage" element={
                             <PrivateRoute>
                                 <PageLayout>

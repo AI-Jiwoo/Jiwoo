@@ -12,7 +12,7 @@ import {
     FormControl,
     FormLabel,
     Input,
-    useDisclosure,
+    useDisclosure, useToast,
 } from "@chakra-ui/react";
 import BusinessInfoForm from "../component/BusinessInfoForm";
 import "react-datepicker/dist/react-datepicker.css";
@@ -37,6 +37,7 @@ const MyPage = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isPasswordModalOpen, onOpen: onPasswordModalOpen, onClose: onPasswordModalClose } = useDisclosure();
     const [categories, setCategories] = useState([]);
+    const toast = useToast()
 
 
     useEffect(() => {
@@ -50,13 +51,31 @@ const MyPage = () => {
             const response = await axios.get('http://localhost:5000/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            setCategories(response.data);
+            console.log('Raw category data:', response.data);
+
+            let processedCategories;
+            if (Array.isArray(response.data)) {
+                processedCategories = response.data.map((category, index) => ({
+                    id: category.id ? category.id.toString() : (index + 1).toString(),
+                    name: category.name || category
+                }));
+            } else {
+                throw new Error('Unexpected category data format');
+            }
+
+            console.log('Processed categories:', processedCategories);
+            setCategories(processedCategories);
         } catch (error) {
             console.error('Failed to fetch categories:', error);
-            alert('카테고리 목록을 불러오는데 실패했습니다.');
+            toast({
+                title: "카테고리 로딩 실패",
+                description: "카테고리 목록을 불러오는데 실패했습니다.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
         }
     };
-
     const fetchUserInfo = async () => {
         try {
             const response = await axios.get('http://localhost:5000/auth/profile', {
@@ -107,10 +126,27 @@ const MyPage = () => {
         setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
     };
 
+
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            alert('새 비밀번호가 일치하지 않습니다.');
+            toast({
+                title: "비밀번호 불일치",
+                description: "새 비밀번호가 일치하지 않습니다.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+        if (passwordForm.oldPassword === passwordForm.newPassword) {
+            toast({
+                title: "비밀번호 변경 실패",
+                description: "새 비밀번호가 현재 비밀번호와 같습니다. 다른 비밀번호를 선택해주세요.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
             return;
         }
         try {
@@ -120,11 +156,23 @@ const MyPage = () => {
             }, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            alert('비밀번호가 성공적으로 변경되었습니다.');
+            toast({
+                title: "비밀번호 변경 성공",
+                description: "비밀번호가 성공적으로 변경되었습니다.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
             onPasswordModalClose();
         } catch (error) {
             console.error('Failed to change password:', error);
-            alert('비밀번호 변경에 실패했습니다.');
+            toast({
+                title: "비밀번호 변경 실패",
+                description: "비밀번호 변경에 실패했습니다. 다시 시도해주세요.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
         }
     };
 
@@ -147,27 +195,51 @@ const MyPage = () => {
 
     const handleSubmitBusinessInfo = async (newBusinessInfo) => {
         try {
-            const response = await axios.post('http://localhost:5000/business/regist', {
+            // 사업자 등록번호 형식 변환 (예: 12323-12345 -> 123-23-12345)
+            const formattedBusinessNumber = newBusinessInfo.businessNumber.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
+
+            const processedInfo = {
                 ...newBusinessInfo,
-                startupStageId: parseInt(newBusinessInfo.startupStageId, 10)
-            }, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
+                businessNumber: formattedBusinessNumber,
+                categoryIds: [newBusinessInfo.categoryId], // 단일 ID를 배열로 변환
+            };
+
+            console.log('Submitting business info:', processedInfo);
+
+            const response = await axios.post('http://localhost:5000/business/regist', processedInfo, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+                    'Content-Type': 'application/json'
+                }
             });
+
+            console.log('Server response:', response.data);
 
             if (response.status === 201) {
                 onClose();
-                alert('새 사업정보가 성공적으로 저장되었습니다.');
-                fetchBusinessInfos(); // 여기에 추가
+                toast({
+                    title: "사업 정보 저장 성공",
+                    description: "새 사업정보가 성공적으로 저장되었습니다.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                fetchBusinessInfos();
             } else {
                 throw new Error('사업 정보 저장에 실패했습니다.');
             }
         } catch (error) {
             console.error('Failed to save business info:', error.response?.data || error.message);
-            alert('사업 정보 저장에 실패했습니다: ' + (error.response?.data?.message || error.message));
+            console.error('Error details:', error);
+            toast({
+                title: "사업 정보 저장 실패",
+                description: error.response?.data?.message || error.message || "사업 정보 저장에 실패했습니다. 모든 필수 필드를 입력했는지 확인해주세요.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
         }
     };
-
-
     return (
         <div className="container">
             <div className="title-container">

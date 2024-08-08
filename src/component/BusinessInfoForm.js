@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
     VStack,
     FormControl,
@@ -18,7 +17,7 @@ const countries = [
     "이탈리아", "스페인", "러시아", "브라질", "인도", "싱가포르", "말레이시아", "태국", "베트남", "인도네시아"
 ];
 
-function BusinessInfoForm({ onSubmit, onClose }) {
+function BusinessInfoForm({ onSubmit, onClose, categories }) {
     const [businessInfo, setBusinessInfo] = useState({
         businessName: '',
         businessNumber: '',
@@ -32,11 +31,15 @@ function BusinessInfoForm({ onSubmit, onClose }) {
         investmentStatus: '',
         customerType: '',
         startupStageId: '',
-        category: '' // 새로운 카테고리 필드 추가
+        categoryId: ''
     });
 
     const [isFormValid, setIsFormValid] = useState(false);
-    const [categories, setCategories] = useState([]); // 카테고리 목록 상태 추가
+
+    useEffect(() => {
+        validateForm();
+        console.log('Current businessInfo:', businessInfo);
+    }, [businessInfo]);
 
     const validateForm = () => {
         const requiredFields = [
@@ -48,44 +51,45 @@ function BusinessInfoForm({ onSubmit, onClose }) {
             'businessStartDate',
             'nation',
             'startupStageId',
-            'category' // 카테고리를 필수 필드로 추가
+            'categoryId'
         ];
 
-        const isValid = requiredFields.every(field => businessInfo[field] !== '');
-        setIsFormValid(isValid);
+        const isValid = requiredFields.every(field => {
+            const value = businessInfo[field];
+            const isValidValue = value !== undefined && value !== null && value !== '';
+            if (!isValidValue) {
+                console.log(`Field ${field} is invalid. Value:`, value);
+            }
+            return isValidValue;
+        });
+
+        // 사업자 등록번호 형식 검증
+        const isBusinessNumberValid = businessInfo.businessNumber.match(/\d{3}-\d{2}-\d{5}/);
+
+        setIsFormValid(isValid && isBusinessNumberValid);
+        console.log('Form validation result:', isValid && isBusinessNumberValid, businessInfo);
     };
 
-    useEffect(() => {
-        validateForm();
-        console.log('Business Info:', businessInfo);
-        console.log('Is Form Valid:', isFormValid);
-    }, [businessInfo]);
-
-    useEffect(() => {
-        // 컴포넌트 마운트 시 카테고리 목록 가져오기
-        fetchCategories();
-    }, []);
-
-    const fetchCategories = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/category/names');
-            setCategories(response.data);
-        } catch (error) {
-            console.error('Failed to fetch categories:', error);
-        }
-    };
-
+// handleChange 함수도 수정
     const handleChange = (e) => {
         const { name, value } = e.target;
+        console.log(`Changing ${name} to:`, value);
         setBusinessInfo(prev => ({
             ...prev,
             [name]: value
         }));
+
+        if (name === 'categoryId') {
+            console.log('Selected Category : ', categories)
+        }
     };
 
     const handleSubmit = () => {
         if (isFormValid) {
+            console.log('Submitting form with data:', businessInfo);
             onSubmit(businessInfo);
+        } else {
+            console.log('Form is not valid. Current state:', businessInfo);
         }
     };
 
@@ -234,13 +238,15 @@ function BusinessInfoForm({ onSubmit, onClose }) {
                     <FormControl isRequired>
                         <FormLabel>카테고리</FormLabel>
                         <Select
-                            name="category"
-                            value={businessInfo.category}
+                            name="categoryId"
+                            value={businessInfo.categoryId}
                             onChange={handleChange}
                         >
                             <option value="">선택해주세요</option>
-                            {categories.map((category, index) => (
-                                <option key={index} value={category}>{category}</option>
+                            {categories.map((category) => (
+                                <option key={category.id} value={category.id.toString()}>
+                                    {category.name}
+                                </option>
                             ))}
                         </Select>
                     </FormControl>

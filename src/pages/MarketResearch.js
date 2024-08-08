@@ -70,7 +70,48 @@ const MarketResearch = () => {
     const [categories, setCategories] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const [selectedHistory, setSelectedHistory] = useState(null);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
+
+    const handleHistoryClick = (history) => {
+        setSelectedHistory(history);
+        setIsHistoryModalOpen(true);
+    };
+
+    const renderHistoryModal = () => {
+        if (!selectedHistory) return null;
+
+        return (
+            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} size="xl">
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>분석 결과 상세</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Tabs>
+                            <TabList>
+                                <Tab>시장 규모</Tab>
+                                <Tab>유사 서비스</Tab>
+                                <Tab>트렌드/고객/기술</Tab>
+                            </TabList>
+                            <TabPanels>
+                                <TabPanel>
+                                    {selectedHistory.marketInformation && renderMarketSizeGrowth(selectedHistory.marketInformation)}
+                                </TabPanel>
+                                <TabPanel>
+                                    {selectedHistory.competitorAnalysis && renderSimilarServices(selectedHistory.competitorAnalysis)}
+                                </TabPanel>
+                                <TabPanel>
+                                    {selectedHistory.marketTrends && renderTrendCustomerTechnology(selectedHistory.marketTrends)}
+                                </TabPanel>
+                            </TabPanels>
+                        </Tabs>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+        );
+    };
 
 
     useEffect(() => {
@@ -446,12 +487,27 @@ const MarketResearch = () => {
             return <Text>유효하지 않은 유사 서비스 데이터입니다.</Text>;
         }
 
+        const parseAnalysis = (analysisStr) => {
+            const companies = analysisStr.split(/\d+\.\s+기업\s+[A-Z]:\s+/).filter(Boolean);
+            return companies.map(company => {
+                const sections = company.split(/(?=강점:|약점:|특징:|전략:)/);
+                const companyData = {};
+                sections.forEach(section => {
+                    const [title, ...content] = section.split(':');
+                    companyData[title.trim()] = content.join(':').trim().split('-').filter(Boolean).map(item => item.trim());
+                });
+                return companyData;
+            });
+        };
+
+        const analysisData = parseAnalysis(parsedData.analysis);
+
         return (
             <VStack align="stretch" spacing={4}>
                 <Box>
                     <Text fontWeight="bold">유사 서비스</Text>
                     <UnorderedList>
-                        {Array.isArray(parsedData.similarServices) ?
+                        {Array.isArray(parsedData.similarServices) && parsedData.similarServices.length > 0 ?
                             parsedData.similarServices.map((service, index) => (
                                 <ListItem key={index}>{service}</ListItem>
                             ))
@@ -459,24 +515,25 @@ const MarketResearch = () => {
                         }
                     </UnorderedList>
                 </Box>
-                {parsedData.analysis && (
-                    <>
-                        <Divider />
-                        <Box>
-                            <Text fontWeight="bold">분석</Text>
-                            {parsedData.analysis.strengths && (
-                                <Box>
-                                    <Text fontWeight="bold">강점</Text>
+                <Divider />
+                <Box>
+                    <Text fontWeight="bold">분석</Text>
+                    {analysisData.map((company, index) => (
+                        <Box key={index} mt={4}>
+                            <Text fontWeight="bold">기업 {String.fromCharCode(65 + index)}</Text>
+                            {Object.entries(company).map(([key, values]) => (
+                                <Box key={key} mt={2}>
+                                    <Text fontWeight="semibold">{key}</Text>
                                     <UnorderedList>
-                                        {parsedData.analysis.strengths.map((strength, index) => (
-                                            <ListItem key={index}>{strength}</ListItem>
+                                        {values.map((item, idx) => (
+                                            <ListItem key={idx}>{item}</ListItem>
                                         ))}
                                     </UnorderedList>
                                 </Box>
-                            )}
+                            ))}
                         </Box>
-                    </>
-                )}
+                    ))}
+                </Box>
             </VStack>
         );
     };
@@ -600,6 +657,7 @@ const MarketResearch = () => {
             return isNaN(date.getTime()) ? dateString : date.toLocaleString();
         };
 
+
         return (
             <Card>
                 <CardHeader>
@@ -623,7 +681,12 @@ const MarketResearch = () => {
                                 </Thead>
                                 <Tbody>
                                     {researchHistory.map((history, index) => (
-                                        <Tr key={index}>
+                                        <Tr
+                                            key={index}
+                                            onClick={() => handleHistoryClick(history)}
+                                            cursor="pointer"
+                                            _hover={{ bg: "gray.100" }}
+                                        >
                                             <Td>{formatDate(history.createAt)}</Td>
                                             <Td>{history.marketInformation ? '있음' : '없음'}</Td>
                                             <Td>{history.competitorAnalysis ? '있음' : '없음'}</Td>
@@ -720,6 +783,8 @@ const MarketResearch = () => {
                 </Tabs>
 
                 {renderHelpModal()}
+                {renderHistoryModal()}
+
             </Box>
         </motion.div>
     );
