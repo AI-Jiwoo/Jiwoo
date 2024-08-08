@@ -66,7 +66,6 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                             as={RouterLink}
                             to="/startup-guide"
                             fontWeight="bold"
-                            _hover={{ bg: 'black', color: 'white' }}
                             p={2}
                             borderRadius="md"
                         >
@@ -76,7 +75,6 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                             href="#"
                             onClick={handleMarketResearchClick}
                             fontWeight="bold"
-                            _hover={{ bg: 'black', color: 'white' }}
                             p={2}
                             borderRadius="md"
                         >
@@ -86,7 +84,6 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                             href="#"
                             onClick={handleBusinessModelClick}
                             fontWeight="bold"
-                            _hover={{ bg: 'black', color: 'white' }}
                             p={2}
                             borderRadius="md"
                         >
@@ -96,7 +93,6 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                             as={RouterLink}
                             to="/tax-handling"
                             fontWeight="bold"
-                            _hover={{ bg: 'black', color: 'white' }}
                             p={2}
                             borderRadius="md"
                         >
@@ -108,21 +104,21 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                         {user ? (
                             <>
                                 <Link as={RouterLink} to="/mypage" mx={3} onClick={handleMyPageClick}>
-                                    <Text fontWeight="bold" _hover={{ bg: 'black', color: 'white' }}>마이페이지</Text>
+                                    <Text fontWeight="bold" >마이페이지</Text>
                                 </Link>
                                 <Text fontWeight="bold" mx={2}>|</Text>
                                 <Link onClick={handleLogout} ml={3}>
-                                    <Text fontWeight="bold" _hover={{ bg: 'black', color: 'white' }}>로그아웃</Text>
+                                    <Text fontWeight="bold" >로그아웃</Text>
                                 </Link>
                             </>
                         ) : (
                             <>
                                 <Link as={RouterLink} to="/login" mx={3}>
-                                    <Text fontWeight="bold" _hover={{ bg: 'black', color: 'white' }}>로그인</Text>
+                                    <Text fontWeight="bold">로그인</Text>
                                 </Link>
                                 <Text fontWeight="bold" mx={2}>|</Text>
                                 <Link as={RouterLink} to="/join" mx={3}>
-                                    <Text fontWeight="bold" _hover={{ bg: 'black', color: 'white' }}>회원가입</Text>
+                                    <Text fontWeight="bold" >회원가입</Text>
                                 </Link>
                             </>
                         )}

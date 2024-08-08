@@ -1,18 +1,17 @@
 import React from 'react';
-import { Box, Flex } from '@chakra-ui/react';
+import MainHeader from './MainHeader';
 import Footer from './Footer';
-import MainHeader from "./MainHeader";
 
-function PageLayout({ children }) {
+const PageLayout = ({ children }) => {
     return (
-        <Flex flexDirection="column" minHeight="100vh">
+        <div className="page-container">
             <MainHeader />
-            <Box flex="1">
+            <main className="content">
                 {children}
-            </Box>
+            </main>
             <Footer />
-        </Flex>
+        </div>
     );
-}
+};
 
 export default PageLayout;

@@ -6,6 +6,7 @@ import Chatbot from "../component/Chatbot";
 import MarketResearch from "./MarketResearch";
 import BusinessModel from "./BusinessModel";
 import SideNavigation from "../component/SideNavigation";
+import Footer from "../component/common/Footer";
 
 function MainPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -159,6 +160,7 @@ function MainPage() {
             <Box ref={businessModelRef}>
                 <BusinessModel />
             </Box>
+            <Footer/>
         </Box>
     );
 }
