@@ -5,7 +5,6 @@ import Footer from './Footer';
 const PageLayout = ({ children }) => {
     return (
         <div className="page-container">
-            <MainHeader />
             <main className="content">
                 {children}
             </main>

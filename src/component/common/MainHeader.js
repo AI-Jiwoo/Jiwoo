@@ -39,6 +39,8 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
         }
     };
 
+
+
         return (
             <Box
                 as="header"

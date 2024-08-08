@@ -74,7 +74,7 @@ function MainPage() {
             <MainHeader
                 scrollToMarketResearch={scrollToMarketResearch}
                 scrollToBusinessModel={scrollToBusinessModel}
-            />
+   />
             <Chatbot />
 
             <Box

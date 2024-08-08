@@ -73,21 +73,32 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             'Content-Type': 'application/json'
         };
 
-        const data = selectedBusiness ? {
-            id: selectedBusiness.id,
-            businessName: selectedBusiness.businessName,
-            businessNumber: selectedBusiness.businessNumber,
-            businessContent: selectedBusiness.businessContent,
-            businessLocation: selectedBusiness.businessLocation,
-            businessStartDate: selectedBusiness.businessStartDate,
-            businessPlatform: selectedBusiness.businessPlatform || '',
-            businessScale: selectedBusiness.businessScale || '',
-            investmentStatus: selectedBusiness.investmentStatus || '',
-            customerType: selectedBusiness.customerType || '',
-        } : customData;
+        let data;
+        if (selectedBusiness) {
+            data = {
+                id: selectedBusiness.id,
+                businessName: selectedBusiness.businessName,
+                businessNumber: selectedBusiness.businessNumber,
+                businessContent: selectedBusiness.businessContent,
+                businessLocation: selectedBusiness.businessLocation,
+                businessStartDate: selectedBusiness.businessStartDate,
+                businessPlatform: selectedBusiness.businessPlatform || '',
+                businessScale: selectedBusiness.businessScale || '',
+                investmentStatus: selectedBusiness.investmentStatus || '',
+                customerType: selectedBusiness.customerType || '',
+            };
+        } else {
+            data = {
+                ...customData,
+                businessName: customData.category, // 카테고리를 businessName으로 사용
+            };
+        }
+
+        console.log("Sending data to server:", data);  // 디버깅을 위한 로그
 
         try {
             const response = await axios.post('http://localhost:5000/business-model/similar-services', data, { headers });
+            console.log("Server response:", response.data);  // 디버깅을 위한 로그
             setSimilarServices(response.data);
             setCurrentStep(2);
         } catch (error) {
@@ -276,7 +287,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                 <List spacing={3}>
                     {similarServices.map((service, index) => (
                         <ListItem key={index}>
-                            <Text>{service.name}</Text>
+                            <Text>{service.businessName || service.name}</Text>
                         </ListItem>
                     ))}
                 </List>
