@@ -1,7 +1,11 @@
+# utils/vector_store.py
+
 from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, utility
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
-from app.embeddings import get_embedding_function
+from utils.embedding_utils import get_embedding_function
+from utils.database import connect_to_milvus, get_collection
+from config.settings import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,25 +13,16 @@ logger = logging.getLogger(__name__)
 class VectorStore:
     """Milvus를 사용한 벡터 저장소 클래스"""
 
-    def __init__(self, host="localhost", port="19530"):
+    def __init__(self, host=settings.MILVUS_HOST, port=settings.MILVUS_PORT):
         """
         VectorStore 초기화
         :param host: Milvus 서버 호스트
         :param port: Milvus 서버 포트
         """
         self.embedding_function = get_embedding_function()
-        self.collection_name = "business_info"
-        self._connect_to_milvus(host, port)
+        self.collection_name = settings.COLLECTION_NAME
+        connect_to_milvus(host, port)
         self._ensure_collection_exists()
-
-    def _connect_to_milvus(self, host, port):
-        """Milvus 서버에 연결"""
-        try:
-            connections.connect("default", host=host, port=port)
-            logger.info(f"Connected to Milvus server at {host}:{port}")
-        except Exception as e:
-            logger.error(f"Failed to connect to Milvus: {str(e)}")
-            raise
 
     def _ensure_collection_exists(self):
         """컬렉션 존재 여부 확인 및 생성"""
@@ -41,7 +36,7 @@ class VectorStore:
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
             FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
-            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=768)
+            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=settings.EMBEDDING_DIMENSION)
         ]
         schema = CollectionSchema(fields, "Business information for similarity search")
         collection = Collection(name=self.collection_name, schema=schema)
@@ -50,7 +45,7 @@ class VectorStore:
 
     def _check_and_create_index(self):
         """기존 컬렉션의 인덱스 확인 및 생성"""
-        collection = Collection(self.collection_name)
+        collection = get_collection(self.collection_name)
         if not collection.has_index():
             self._create_index(collection)
             logger.info(f"Created index for existing collection: {self.collection_name}")
@@ -72,8 +67,7 @@ class VectorStore:
         :param texts: 추가할 텍스트 리스트
         :param metadatas: 텍스트에 대한 메타데이터 (사용되지 않음)
         """
-        collection = Collection(self.collection_name)
-        collection.load()
+        collection = get_collection(self.collection_name)
         embeddings = [self.embedding_function(text) for text in texts]
         entities = [texts, embeddings]
         collection.insert(entities)
@@ -87,8 +81,7 @@ class VectorStore:
         :param k: 반환할 결과 수
         :return: 유사한 문서 리스트
         """
-        collection = Collection(self.collection_name)
-        collection.load()
+        collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
         results = collection.search(
             data=[self.embedding_function(query)],
