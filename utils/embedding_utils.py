@@ -1,5 +1,3 @@
-# utils/embedding_utils.py
-
 from typing import List, Callable
 from sentence_transformers import SentenceTransformer
 from services.models import CompanyInfo

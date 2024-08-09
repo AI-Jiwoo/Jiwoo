@@ -1,5 +1,3 @@
-# services/chatbot.py
-
 from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory

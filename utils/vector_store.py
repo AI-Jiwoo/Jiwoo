@@ -1,5 +1,3 @@
-# utils/vector_store.py
-
 from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, utility
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter

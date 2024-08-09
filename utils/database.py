@@ -1,5 +1,3 @@
-# utils/database.py
-
 from pymilvus import connections, Collection, utility
 import logging
 from config.settings import settings
