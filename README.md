@@ -103,26 +103,26 @@ Python기반 VectorDB 유사도 검증 및 Jiwoo chat-bot서버입니다.
 
 ```
 Jiwoo-AI-Server
+├─ .github
 ├─ .gitignore
 ├─ Dockerfile
+├─ docker-compose.yml
+├─ main.py
+├─ requirements.txt
 ├─ README.md
 ├─ app
 │  ├─ __init__.py
-│  ├─ api
-│  │  └─ routes.py
+│  └─ api
+│     └─ routes.py
+├─ config
+│  └─ settings.py
+├─ services
 │  ├─ chatbot.py
-│  ├─ database.py
-│  ├─ embeddings.py
-│  ├─ models.py
-│  └─ vector_store.py
-├─ create_collection.py
-├─ data
-│  ├─ business_info.txt
-│  ├─ side_projects.txt
-│  └─ startup_guide.txt
-├─ docker-compose.yml
-├─ main.py
-└─ requirements.txt
+│  └─ models.py
+└─ utils
+   ├─ database.py
+   ├─ embedding_utils.py
+   └─ vector_store.py
 
 ```
 
