@@ -36,7 +36,7 @@ class SimilaritySearchInput(BaseModel):
 
 class SimilaritySearchResponse(BaseModel):
     """유사도 검색 응답을 위한 모델"""
-    similar_companies: List[CompanyInfo] = Field(..., description="유사한 회사 목록")
+    similar_companies: List[CompanySearchResult] = Field(..., description="유사한 회사 목록")
 
 class ContentInfo(BaseModel):
     """텍스트 내용만 포함하는 모델 (벡터 저장소에서 사용)"""
