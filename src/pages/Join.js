@@ -352,15 +352,15 @@ function Join() {
     };
 
     return (
-        <Container maxW="800px" py={10}>
+        <Container maxW="800px"  minH="100vh" py={20}>
             <VStack spacing={8} align="stretch">
-                <Heading as="h1" size="xl" textAlign="center">회원가입</Heading>
+                <Heading as="h1" size="xl" textAlign="center" mt={8}>회원가입</Heading>
 
-                <Text textAlign="center">
+                <Text textAlign="center"  fontSize="lg">
                     지금 바로 가입하시면 더 다양한 서비스를 이용하실 수 있습니다.
                 </Text>
 
-                <Stepper index={activeStep} colorScheme="blue">
+                <Stepper index={activeStep} colorScheme="blue" size="lg">
                     {steps.map((step, index) => (
                         <Step key={index}>
                             <StepIndicator>
@@ -381,7 +381,7 @@ function Join() {
                     ))}
                 </Stepper>
 
-                <Box mt={8}>
+                <Box mt={12}>
                     {renderStepContent()}
                 </Box>
             </VStack>

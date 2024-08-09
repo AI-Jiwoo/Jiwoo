@@ -1,53 +1,63 @@
-.landing-container {
-    background-color: #162238;
+.landing-page {
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    flex-direction: column;
+    margin-bottom: 50px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #333;
+}
+
+main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.content {
+    width: 100%;
+}
+
+h1 {
+    font-size: 48px;
+    margin-bottom: 30px;
+}
+
+.slogan p {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.tagline {
+    font-size: 18px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.app-links {
+    display: flex;
+}
+
+.app-links a {
+    padding: 10px 20px;
+    margin-right: 20px;
+    background-color: #333;
     color: white;
-    text-align: center;
-}
-
-.landing-logo {
-    width: 50vw;
-    height: auto;
-}
-
-.landing-typing-effect {
-    font-size: 3vw;
-    margin-top: 2vh;
-}
-
-.landing-container {
-    width: 100%;
-    min-height: 100vh;
-    overflow-x: hidden;
-}
-
-.animated-section {
-    width: 100%;
-    min-height: 100vh;
-}
-
-.landing-logo {
-    height: auto;
-}
-
-.landing-typing-effect {
-    font-size: 3vw;
-    margin-top: 2vh;
-    color: white;
-}
-
-.date-picker-wrapper {
-    width: 100%;
-}
-
-.react-datepicker-wrapper {
-    width: 100%;
-}
-
-.react-datepicker__input-container {
-    width: 100%;
-    color: black;
+    text-decoration: none;
+    border-radius: 5px;
 }

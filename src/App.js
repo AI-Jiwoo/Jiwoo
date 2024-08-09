@@ -41,7 +41,7 @@ function App() {
                             </PrivateRoute>
                         } />
                         <Route path="/login" element={<MyPageLayout><Login /></MyPageLayout>} />
-                        <Route path="/join" element={<PageLayout><Join /></PageLayout>} />
+                        <Route path="/join" element={<MyPageLayout><Join /></MyPageLayout>} />
                         <Route path="/mypage" element={
                             <PrivateRoute>
                                 <MyPageLayout>
