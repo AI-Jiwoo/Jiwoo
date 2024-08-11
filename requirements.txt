@@ -9,3 +9,14 @@ pydantic==2.6.1
 pydantic-settings==2.1.0
 langchain-core==0.1.23
 langchain-openai==0.0.2
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.5.1
+torch==2.2.0
+transformers==4.37.2
+tqdm==4.66.2
+requests==2.31.0
+aiohttp==3.9.3
+sqlalchemy==2.0.27
+pyarrow==14.0.2
+tenacity==8.2.3
