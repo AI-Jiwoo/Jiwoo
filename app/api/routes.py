@@ -4,6 +4,7 @@ from utils.embedding_utils import get_company_embedding
 from services.models import CompanyInput, CompanySearchResult, CompanyInfo, ChatInput, ChatResponse
 from services.chatbot import Chatbot
 from utils.vector_store import VectorStore
+from pydantic import BaseModel
 import json
 
 router = APIRouter()
@@ -81,16 +82,19 @@ async def chat(chat_input: ChatInput):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class SimilaritySearchRequest(BaseModel):
+    query: str
+    k: int = 5
+
 @router.post("/similarity_search")
-async def similarity_search(query: str, k: int = 5):
+async def similarity_search(request: SimilaritySearchRequest):
     """
     벡터 저장소에서 유사한 문서를 검색하는 엔드포인트
-    :param query: 검색 쿼리
-    :param k: 반환할 결과 수
+    :param request: 검색 쿼리와 반환할 결과 수를 포함한 요청 객체
     :return: 유사한 문서 리스트
     """
     try:
-        results = vector_store.similarity_search(query, k)
+        results = vector_store.similarity_search(request.query, request.k)
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
