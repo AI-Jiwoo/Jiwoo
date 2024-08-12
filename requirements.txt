@@ -1,27 +1,55 @@
+# Web framework and ASGI server
 fastapi
-uvicorn
+uvicorn[standard]
+
+# Vector database and embedding model
 pymilvus
 sentence-transformers
+
+# Environment variable management
 python-dotenv
+
+# LangChain and its dependencies
 langchain
-openai
-pydantic
-pydantic-settings
 langchain-core
 langchain-openai
 langchain_community
+
+# OpenAI API for chatbot
+openai
+
+# Data validation and settings management
+pydantic
+pydantic-settings
+
+# General-purpose scientific libraries
 numpy
 pandas
 scikit-learn
+
+# Deep learning and NLP
 torch
 transformers
 tqdm
+
+# HTTP requests and web scraping
 requests
 aiohttp
+beautifulsoup4
+httpx
+
+# Scheduling tasks
+apscheduler
+
+# SQL and Arrow support
 sqlalchemy
 pyarrow
+
+# Resiliency
 tenacity
-beautifulsoup4
-apscheduler
-httpx
+
+# Tokenization
 tiktoken
+
+# SerpAPI for web search
+serpapi
