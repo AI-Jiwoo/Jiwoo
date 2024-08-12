@@ -6,10 +6,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Jiwoo-AI-Server"
     DEBUG: bool = True
     
-    # OpenAI 설정
+    # OpenAI API 설정
     OPENAI_API_KEY: str = Field(default="")
     
-    # Milvus 설정
+    # Milvus 벡터 데이터베이스 설정
     MILVUS_HOST: str = Field(default="localhost")
     MILVUS_PORT: str = Field(default="19530")
     COLLECTION_NAME: str = "business_info"
@@ -27,7 +27,11 @@ class Settings(BaseSettings):
     # 서버 설정
     HOST: str = Field(default="0.0.0.0")
     PORT: int = Field(default=8000)
+    
+    # SerpAPI 설정 (웹 검색용)
+    SERPAPI_KEY: str = Field(default="")
 
+    # 환경 변수 설정
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 settings = Settings()
