@@ -12,9 +12,10 @@ import {
     Image,
     useColorModeValue,
     IconButton,
-    Link
+    Link,
+    SimpleGrid
 } from '@chakra-ui/react';
-import { FaChevronDown, FaChevronRight, FaRobot, FaChartLine } from 'react-icons/fa';
+import { FaChevronDown, FaChevronRight, FaChevronLeft, FaRobot, FaChartLine, FaCalculator } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import landingImage from '../images/landing.png';
 
@@ -29,18 +30,32 @@ const LandingPage = () => {
     const color = useColorModeValue('black', 'white');
     const textBg = useColorModeValue('gray.100', 'gray.700');
     const [currentSection, setCurrentSection] = useState(0);
+    const firstSectionRef = useRef(null);
     const secondSectionRef = useRef(null);
     const thirdSectionRef = useRef(null);
+    const fourthSectionRef = useRef(null);
 
-    const scrollToNextSection = () => {
-        if (currentSection === 0) {
-            secondSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            setCurrentSection(1);
-        } else if (currentSection === 1) {
-            thirdSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            setCurrentSection(2);
-        }
+    const scrollToSection = (sectionNumber) => {
+        setCurrentSection(sectionNumber);
+        const sectionRefs = [firstSectionRef, secondSectionRef, thirdSectionRef, fourthSectionRef];
+        sectionRefs[sectionNumber].current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    const nextSection = () => {
+        setCurrentSection((prev) => (prev + 1) % 4);
+    };
+
+    const prevSection = () => {
+        setCurrentSection((prev) => (prev - 1 + 4) % 4);
+    };
+
+    // useEffect(() => {
+    //     const timer = setInterval(() => {
+    //         nextSection();
+    //     }, 10000);
+    //
+    //     return () => clearInterval(timer);
+    // }, []);
 
     const sentences = [
         { color: "red.500", text: "Journey to success starts here," },
@@ -53,7 +68,13 @@ const LandingPage = () => {
     return (
         <Box bg={bg} color={color} overflowX="hidden">
             {/* 첫 번째 섹션 */}
-            <Flex direction="column" minH="100vh" px={[4, 6, 8, 12, 16]}>
+            <Flex
+                ref={firstSectionRef}
+                direction="column"
+                minH="100vh"
+                px={[4, 6, 8, 12, 16]}
+                style={{display: currentSection === 0 ? 'flex' : 'none'}}
+            >
                 <Flex justify="space-between" align="center" py={6}>
                     <Heading as="h1" size="lg">JIWOO</Heading>
                     <Flex>
@@ -136,7 +157,7 @@ const LandingPage = () => {
                     <IconButton
                         aria-label="Scroll to next section"
                         icon={<FaChevronDown />}
-                        onClick={scrollToNextSection}
+                        onClick={() => scrollToSection(1)}
                         size="lg"
                         rounded="full"
                     />
@@ -144,7 +165,13 @@ const LandingPage = () => {
             </Flex>
 
             {/* 두 번째 섹션 */}
-            <Box ref={secondSectionRef} minH="100vh" position="relative" overflow="hidden">
+            <Box
+                ref={secondSectionRef}
+                minH="100vh"
+                position="relative"
+                overflow="hidden"
+                style={{display: currentSection === 1 ? 'block' : 'none'}}
+            >
                 <Box
                     position="absolute"
                     right={0}
@@ -194,39 +221,52 @@ const LandingPage = () => {
                         <Text fontSize="xl" fontWeight="bold">챗봇 이미지 영역</Text>
                     </Flex>
                 </Box>
-                <Box
+                <IconButton
+                    aria-label="Go to previous section"
+                    icon={<FaChevronLeft />}
+                    onClick={prevSection}
+                    size="lg"
+                    rounded="full"
+                    colorScheme="blue"
+                    boxShadow="lg"
                     position="absolute"
-                    bottom={8}
-                    right={8}
+                    top="50%"
+                    left={8}
+                    transform="translateY(-50%)"
                     zIndex={3}
-                >
-                    <IconButton
-                        aria-label="Go to next section"
-                        icon={<FaChevronRight />}
-                        onClick={scrollToNextSection}
-                        size="lg"
-                        rounded="full"
-                        colorScheme="blue"
-                        boxShadow="lg"
-                    />
-                </Box>
+                />
+                <IconButton
+                    aria-label="Go to next section"
+                    icon={<FaChevronRight />}
+                    onClick={nextSection}
+                    size="lg"
+                    rounded="full"
+                    colorScheme="blue"
+                    boxShadow="lg"
+                    position="absolute"
+                    top="50%"
+                    right={8}
+                    transform="translateY(-50%)"
+                    zIndex={3}
+                />
             </Box>
 
-            {/* 세 번째 섹션 */}
+            {/* 세 번째 섹션 (엑셀러레이팅) */}
             <AnimatePresence>
-                {currentSection === 2 && (
+                {(currentSection === 2 || currentSection === 3) && (
                     <MotionBox
+                        ref={thirdSectionRef}
                         initial={{ opacity: 0, x: '100%' }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: '-100%' }}
                         transition={{ duration: 0.5 }}
-                        position="fixed"
+                        position={currentSection === 2 ? "fixed" : "relative"}
                         top={0}
                         left={0}
                         right={0}
                         bottom={0}
                         bg={bg}
-                        zIndex={10}
+                        zIndex={currentSection === 2 ? 10 : 1}
                         overflowY="auto"
                     >
                         <Flex direction="column" minH="100vh" px={[4, 6, 8, 12, 16]} py={16}>
@@ -280,6 +320,153 @@ const LandingPage = () => {
                                 </Flex>
                             </Box>
                         </Flex>
+                        <IconButton
+                            aria-label="Go to previous section"
+                            icon={<FaChevronLeft />}
+                            onClick={prevSection}
+                            size="lg"
+                            rounded="full"
+                            colorScheme="blue"
+                            boxShadow="lg"
+                            position="absolute"
+                            top="50%"
+                            left={8}
+                            transform="translateY(-50%)"
+                            zIndex={3}
+                        />
+                        <IconButton
+                            aria-label="Go to next section"
+                            icon={<FaChevronRight />}
+                            onClick={nextSection}
+                            size="lg"
+                            rounded="full"
+                            colorScheme="blue"
+                            boxShadow="lg"
+                            position="absolute"
+                            top="50%"
+                            right={8}
+                            transform="translateY(-50%)"
+                            zIndex={3}
+                        />
+                    </MotionBox>
+                )}
+            </AnimatePresence>
+
+            {/* 네 번째 섹션 (세무처리) */}
+            <AnimatePresence>
+                {currentSection === 3 && (
+                    <MotionBox
+                        ref={fourthSectionRef}
+                        initial={{ opacity: 0, x: '100%' }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: '-100%' }}
+                        transition={{ duration: 0.5 }}
+                        position="fixed"
+                        top={0}
+                        left={0}
+                        right={0}
+                        bottom={0}
+                        bg={bg}
+                        zIndex={10}
+                        overflowY="auto"
+                    >
+                        <Box minH="100vh" position="relative" overflow="hidden">
+                            <Box
+                                position="absolute"
+                                right={0}
+                                top={0}
+                                bottom={0}
+                                w={["100%", "100%", "60%", "65%"]}
+                                bg={textBg}
+                                clipPath="polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%)"
+                                zIndex={1}
+                            />
+                            <Flex
+                                direction="column"
+                                align="flex-start"
+                                justify="center"
+                                h="100%"
+                                w="100%"
+                                p={[4, 6, 8, 12, 16]}
+                                zIndex={2}
+                                position="relative"
+                            >
+                                <Box maxW="600px" ml={[0, 0, 8, 16]}>
+                                    <Heading as="h2" size="2xl" mb={6}>
+                                        스마트한 <Text as="span" color="green.500">세무처리</Text>로 비즈니스에 집중하세요
+                                    </Heading>
+                                    <Text fontSize="xl" mb={8}>
+                                        JIWOO의 첨단 AI 기술을 활용한 세무처리 서비스로 복잡한 세금 문제를 간편하게 해결하세요.
+                                        정확하고 효율적인 세무 관리로 시간과 비용을 절약하고, 법적 리스크를 최소화할 수 있습니다.
+                                    </Text>
+                                    <SimpleGrid columns={2} spacing={4} mb={8}>
+                                        <Box>
+                                            <Heading as="h3" size="md" mb={2}>자동 세금 계산</Heading>
+                                            <Text>AI가 모든 거래를 분석하여 정확한 세금을 자동으로 계산합니다.</Text>
+                                        </Box>
+                                        <Box>
+                                            <Heading as="h3" size="md" mb={2}>실시간 세무 조언</Heading>
+                                            <Text>필요할 때 언제든 전문가 수준의 세무 조언을 받을 수 있습니다.</Text>
+                                        </Box>
+                                        <Box>
+                                            <Heading as="h3" size="md" mb={2}>간편한 신고 절차</Heading>
+                                            <Text>복잡한 세금 신고 절차를 간소화하여 쉽고 빠르게 처리합니다.</Text>
+                                        </Box>
+                                        <Box>
+                                            <Heading as="h3" size="md" mb={2}>맞춤형 보고서</Heading>
+                                            <Text>사업 특성에 맞는 세무 보고서를 자동으로 생성합니다.</Text>
+                                        </Box>
+                                    </SimpleGrid>
+                                    <Button leftIcon={<FaCalculator />} colorScheme="green" size="lg">
+                                        세무처리 시작하기
+                                    </Button>
+                                </Box>
+                            </Flex>
+                            <Box
+                                position="absolute"
+                                right={[4, 6, 8, 12, 16]}
+                                top="50%"
+                                transform="translateY(-50%)"
+                                w={["80%", "80%", "40%", "35%"]}
+                                h="60%"
+                                bg="gray.200"
+                                borderRadius="lg"
+                                boxShadow="xl"
+                                zIndex={2}
+                            >
+                                <Flex h="100%" justify="center" align="center">
+                                    <Text fontSize="xl" fontWeight="bold">세무처리 시각화 이미지</Text>
+                                </Flex>
+                            </Box>
+                            <IconButton
+                                aria-label="Go to previous section"
+                                icon={<FaChevronLeft />}
+                                onClick={prevSection}
+                                size="lg"
+                                rounded="full"
+                                colorScheme="blue"
+                                boxShadow="lg"
+                                position="absolute"
+                                top="50%"
+                                left={8}
+                                transform="translateY(-50%)"
+                                zIndex={3}
+                            />
+                            <IconButton
+                                aria-label="Go to next section"
+                                icon={<FaChevronRight />}
+                                onClick={nextSection}
+                                size="lg"
+                                rounded="full"
+                                colorScheme="blue"
+                                boxShadow="lg"
+                                position="absolute"
+                                top="50%"
+                                right={8}
+                                transform="translateY(-50%)"
+                                zIndex={3}
+                            />
+                        </Box>
                     </MotionBox>
                 )}
             </AnimatePresence>
