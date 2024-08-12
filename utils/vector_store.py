@@ -1,10 +1,10 @@
+import logging
 from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, utility
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
 from utils.embedding_utils import get_embedding_function
 from utils.database import connect_to_milvus, get_collection
 from config.settings import settings
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +59,10 @@ class VectorStore:
         }
         collection.create_index("embedding", index_params)
 
-    def add_texts(self, texts, metadatas=None):
+    def add_texts(self, texts):
         """
         텍스트를 벡터 저장소에 추가
         :param texts: 추가할 텍스트 리스트
-        :param metadatas: 텍스트에 대한 메타데이터 (사용되지 않음)
         """
         collection = get_collection(self.collection_name)
         embeddings = [self.embedding_function(text) for text in texts]
@@ -81,6 +80,8 @@ class VectorStore:
         """
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
+        
+        # 검색 실행
         results = collection.search(
             data=[self.embedding_function(query)],
             anns_field="embedding",
@@ -88,7 +89,58 @@ class VectorStore:
             limit=k,
             output_fields=["content"]
         )
-        return [{"page_content": hit.entity.get('content'), "metadata": {}} for hit in results[0]]
+        
+        # 검색 결과 로깅
+        if not results or len(results[0]) == 0:
+            logger.info("No results found in vector store.")
+            return []
+
+        # 결과가 존재할 경우 내용 반환
+        hits = [{"content": hit.entity.get('content'), "metadata": {}} for hit in results[0] if hit.entity.get('content')]
+
+        if not hits:
+            logger.info("No content found in the search results.")
+            return []
+        
+        return hits
+    
+    def search_with_similarity_threshold(self, query, k=5, threshold=0.7):
+        """
+        유사도 검색 수행, 유사도 임계값을 넘지 않으면 빈 리스트 반환
+        :param query: 검색 쿼리
+        :param k: 반환할 결과 수
+        :param threshold: 유사도 임계값
+        :return: 유사한 문서 리스트. 임계값을 넘지 않으면 빈 리스트를 반환.
+        """
+        collection = get_collection(self.collection_name)
+        search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
+        
+        # 검색 실행
+        results = collection.search(
+            data=[self.embedding_function(query)],
+            anns_field="embedding",
+            param=search_params,
+            limit=k,
+            output_fields=["content"]
+        )
+        
+        # 검색 결과 로깅
+        if not results or len(results[0]) == 0:
+            logger.info("No results found in vector store.")
+            return []
+
+        # 임계값을 넘는 결과만 반환
+        hits = []
+        for hit in results[0]:
+            distance = hit.distance
+            similarity = 1 - (distance / max(results[0][0].distance, 1))  # 거리 기반 유사도 계산
+            if similarity >= threshold:
+                hits.append({"content": hit.entity.get('content'), "metadata": {}})
+        
+        if not hits:
+            logger.info(f"No results met the similarity threshold of {threshold}.")
+        
+        return hits
 
     def load_documents(self, file_path):
         """
