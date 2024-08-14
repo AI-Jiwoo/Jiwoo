@@ -32,6 +32,7 @@ import Confetti from 'react-confetti';
 import {useNavigate} from "react-router-dom";
 import axios from 'axios';
 import '../style/Join.css';
+import api from "../apis/api";
 
 const steps = [
     { title: '약관동의', description: '01' },
@@ -72,7 +73,7 @@ function Join() {
             return;
         }
         try {
-            const response = await axios.post('http://localhost:5000/auth/exist/email', { email: email });
+            const response = await api.post('/auth/exist/email', { email: email });
             setIsEmailVerified(true);
             toast({
                 title: "사용 가능한 이메일입니다.",

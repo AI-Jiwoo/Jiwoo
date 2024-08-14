@@ -18,6 +18,7 @@ import BusinessInfoForm from "../component/BusinessInfoForm";
 import "react-datepicker/dist/react-datepicker.css";
 import '../style/MyPage.css';
 import DatePicker from "react-datepicker";
+import api from "../apis/api";
 
 const MyPage = () => {
     const { user } = useAuth();
@@ -48,7 +49,7 @@ const MyPage = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/category/names', {
+            const response = await api.get('/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             console.log('Raw category data:', response.data);
@@ -78,7 +79,7 @@ const MyPage = () => {
     };
     const fetchUserInfo = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/auth/profile', {
+            const response = await api.get('/auth/profile', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             const userData = response.data;
@@ -97,7 +98,7 @@ const MyPage = () => {
 
     const fetchBusinessInfos = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/business/user', {
+            const response = await api.get('/business/user', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             console.log('Raw response:', response.data);
@@ -179,7 +180,7 @@ const MyPage = () => {
     const handleSaveInfo = async () => {
         try {
             console.log('Saving user info:', userInfo);
-            const response = await axios.post('http://localhost:5000/auth/edit/info', {
+            const response = await api.post('/auth/edit/info', {
                 gender: userInfo.gender,
                 phoneNo: userInfo.phoneNo
             }, {
@@ -206,7 +207,7 @@ const MyPage = () => {
 
             console.log('Submitting business info:', processedInfo);
 
-            const response = await axios.post('http://localhost:5000/business/regist', processedInfo, {
+            const response = await api.post('/business/regist', processedInfo, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
                     'Content-Type': 'application/json'

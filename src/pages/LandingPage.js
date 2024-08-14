@@ -149,6 +149,9 @@ const LandingPage = () => {
                         <Flex mt={4}>
                             <Button colorScheme="gray" mr={4} size="lg">App Store</Button>
                             <Button colorScheme="gray" size="lg">Google Play</Button>
+                            <Button as={RouterLink} to="/main" colorScheme="gray" size="lg">
+                                웹으로 체험하기
+                            </Button>
                         </Flex>
                     </VStack>
                     <Flex
