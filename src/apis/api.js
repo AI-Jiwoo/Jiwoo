@@ -52,5 +52,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
-export const getCurrentApiUrl = () => API_BASE_URL;

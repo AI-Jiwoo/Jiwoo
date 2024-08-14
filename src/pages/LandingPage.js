@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import React, {useEffect, useRef, useState} from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
 import chatbotIntro from '../images/chatbotInfo.jpg';
 import Accerlator from '../images/Accerlator.png'
@@ -29,7 +29,6 @@ const MotionButton = motion(Button);
 
 const LandingPage = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const bg = useColorModeValue('white', 'gray.800');
     const color = useColorModeValue('black', 'white');
     const textBg = useColorModeValue('gray.100', 'gray.700');
@@ -38,10 +37,6 @@ const LandingPage = () => {
     const secondSectionRef = useRef(null);
     const thirdSectionRef = useRef(null);
     const fourthSectionRef = useRef(null);
-
-    const redirectToLogin = () => {
-        navigate('/login');
-    };
 
     const scrollToSection = (sectionNumber) => {
         setCurrentSection(sectionNumber);
@@ -58,6 +53,14 @@ const LandingPage = () => {
     const prevSection = () => {
         setCurrentSection((prev) => (prev - 1 + 4) % 4);
     };
+
+    // useEffect(() => {
+    //     const timer = setInterval(() => {
+    //         nextSection();
+    //     }, 20000);
+    //
+    //     return () => clearInterval(timer);
+    // }, []);
 
     const sentences = [
         { color: "red.500", text: "Journey to success starts here," },
@@ -79,6 +82,7 @@ const LandingPage = () => {
                 style={{ display: currentSection === 0 ? 'flex' : 'none' }}
             >
                 <Flex
+                    ref={firstSectionRef}
                     direction="column"
                     minH="100vh"
                     px={[4, 6, 8, 12, 16]}
@@ -87,8 +91,25 @@ const LandingPage = () => {
                     <Flex justify="space-between" align="center" py={6}>
                         <Heading as="h1" size="lg">JIWOO</Heading>
                         <Flex>
-                            <Button onClick={redirectToLogin} variant="ghost" mx={3}>로그인</Button>
-                            <Button onClick={redirectToLogin} colorScheme="blue" mx={3}>회원가입</Button>
+                            {user ? (
+                                <>
+                                    <Link as={RouterLink} to="/mypage" mx={3}>
+                                        <Button variant="ghost">마이페이지</Button>
+                                    </Link>
+                                    <Link as={RouterLink} to="/main" mx={3}>
+                                        <Button colorScheme="blue">메인페이지</Button>
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    <Link as={RouterLink} to="/login" mx={3}>
+                                        <Button variant="ghost">로그인</Button>
+                                    </Link>
+                                    <Link as={RouterLink} to="/join" mx={3}>
+                                        <Button colorScheme="blue">회원가입</Button>
+                                    </Link>
+                                </>
+                            )}
                         </Flex>
                     </Flex>
 
@@ -126,9 +147,9 @@ const LandingPage = () => {
                             </Heading>
                             <Text fontSize={["2xl", "3xl"]} fontWeight="bold">창업의 여정, JIWOO가 함께합니다</Text>
                             <Flex mt={4}>
-                                <Button onClick={redirectToLogin} colorScheme="gray" mr={4} size="lg">App Store</Button>
-                                <Button onClick={redirectToLogin} colorScheme="gray" size="lg">Google Play</Button>
-                                <Button onClick={redirectToLogin} colorScheme="gray" size="lg">
+                                <Button colorScheme="gray" mr={4} size="lg">App Store</Button>
+                                <Button colorScheme="gray" size="lg">Google Play</Button>
+                                <Button as={RouterLink} to="/main" colorScheme="gray" size="lg">
                                     웹으로 체험하기
                                 </Button>
                             </Flex>
@@ -170,6 +191,7 @@ const LandingPage = () => {
                 style={{ display: currentSection === 1 ? 'block' : 'none' }}
             >
                 <Box
+                    ref={secondSectionRef}
                     minH="100vh"
                     position="relative"
                     overflow="hidden"
@@ -194,6 +216,7 @@ const LandingPage = () => {
                         p={[4, 6, 8, 12, 16]}
                         zIndex={2}
                         position="relative"
+
                     >
                         <Box maxW="600px" ml={[0, 0, 8, 16]} mt="300px" ml="100px">
                             <Heading as="h2" size="2xl" mb={6}>
@@ -203,7 +226,7 @@ const LandingPage = () => {
                                 JIWOO의 AI 챗봇이 창업 과정을 안내하며, 필요한 정보를 손쉽게 제공해 드립니다.
                                 이제 JIWOO와 함께 창업의 모든 단계를 더욱 효율적으로 진행하세요!
                             </Text>
-                            <Button leftIcon={<FaRobot />} colorScheme="blue" size="lg" onClick={redirectToLogin}>
+                            <Button leftIcon={<FaRobot />} colorScheme="blue" size="lg">
                                 AI 챗봇 시작하기
                             </Button>
                         </Box>
@@ -306,7 +329,7 @@ const LandingPage = () => {
                                         여러분의 아이디어를 성공적인 비즈니스로 발전시킵니다.
                                         전문적인 인사이트와 데이터 기반의 분석으로 여러분의 성공을 지원합니다.
                                     </Text>
-                                    <Button leftIcon={<FaChartLine />} colorScheme="green" size="lg" onClick={redirectToLogin}>
+                                    <Button leftIcon={<FaChartLine />} colorScheme="green" size="lg">
                                         엑셀러레이팅 시작하기
                                     </Button>
                                 </Box>
@@ -324,6 +347,7 @@ const LandingPage = () => {
                                 zIndex={2}
                             >
                                 <Flex h="100%" justify="center" align="center">
+
                                     <Image
                                         src={Accerlator}
                                         alt="AI Chatbot Introduction"
@@ -431,7 +455,7 @@ const LandingPage = () => {
                                             <Text>사업 특성에 맞는 세무 보고서를 자동으로 생성합니다.</Text>
                                         </Box>
                                     </SimpleGrid>
-                                    <Button leftIcon={<FaCalculator />} colorScheme="green" size="lg" onClick={redirectToLogin}>
+                                    <Button leftIcon={<FaCalculator />} colorScheme="green" size="lg">
                                         세무처리 시작하기
                                     </Button>
                                 </Box>
@@ -455,8 +479,7 @@ const LandingPage = () => {
                                         objectFit="cover"
                                         w="100%"
                                         h="100%"
-                                    />
-                                </Flex>
+                                    />                                </Flex>
                             </Box>
                             <IconButton
                                 aria-label="Go to previous section"
