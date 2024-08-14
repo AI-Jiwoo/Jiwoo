@@ -7,11 +7,13 @@ import MarketResearch from "./MarketResearch";
 import BusinessModel from "./BusinessModel";
 import SideNavigation from "../component/SideNavigation";
 import Footer from "../component/common/Footer";
+import Accounting from "./Accounting";
 
 function MainPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
     const marketResearchRef = useRef(null);
     const businessModelRef = useRef(null);
+    const accountingRef = useRef(null); // 새로 추가
     const [activeSection, setActiveSection] = useState('marketSize');
 
 
@@ -27,20 +29,23 @@ function MainPage() {
                 const scrollPosition = window.scrollY;
                 if (scrollPosition < businessModelRef.current.offsetTop) {
                     setActiveSection('marketResearchRef');
-                } else {
+                } else if (scrollPosition < accountingRef.current.offsetTop) {
                     setActiveSection('businessModelRef');
+                } else {
+                    setActiveSection('accountingRef');
                 }
             };
 
             window.addEventListener('scroll', handleScroll);
             return () => window.removeEventListener('scroll', handleScroll);
         }
-    }, [marketResearchRef, businessModelRef]);
+    }, [marketResearchRef, businessModelRef, accountingRef]);
 
     const scrollToSection = (sectionName) => {
         const refMap = {
             marketSize: marketResearchRef,
             similarServices: businessModelRef,
+            accounting: accountingRef,
         };
         if (refMap[sectionName]?.current) {
             refMap[sectionName].current.scrollIntoView({ behavior: 'smooth' });
@@ -73,12 +78,19 @@ function MainPage() {
         businessModelRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const scrollToAccounting = () => {
+        accountingRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+
     return (
         <Box>
             <MainHeader
                 scrollToMarketResearch={scrollToMarketResearch}
                 scrollToBusinessModel={scrollToBusinessModel}
-   />
+                scrollToAccounting={scrollToAccounting}
+
+            />
             <Chatbot />
 
             <Box
@@ -164,6 +176,11 @@ function MainPage() {
             <Box ref={businessModelRef}>
                 <BusinessModel />
             </Box>
+
+            <Box ref={accountingRef}>
+                <Accounting />
+            </Box>
+
             <Footer/>
         </Box>
     );
