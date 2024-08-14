@@ -2,25 +2,21 @@ import React, { useState, useRef } from 'react';
 import {
     Box, VStack, HStack, Text, Button, Input, Card, CardBody, CardHeader,
     Alert, AlertIcon, Icon, Heading, useDisclosure, Modal, ModalOverlay,
-    ModalContent, ModalHeader, ModalBody, ModalCloseButton, Progress
+    ModalContent, ModalHeader, ModalBody, ModalCloseButton, Progress,
+    SimpleGrid
 } from '@chakra-ui/react';
 import { FaUpload, FaFileInvoiceDollar, FaInfoCircle } from "react-icons/fa";
 
 const Accounting = () => {
-    const [receipts, setReceipts] = useState([]);
-    const [bankStatement, setBankStatement] = useState(null);
+    const [transactions, setTransactions] = useState([]);
     const [taxDocument, setTaxDocument] = useState(null);
     const [conversionResult, setConversionResult] = useState(null);
     const [analysisResult, setAnalysisResult] = useState(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const fileInputRef = useRef(null);
+    const transactionInputRef = useRef(null);
 
-    const handleReceiptUpload = (event) => {
-        setReceipts([...receipts, ...event.target.files]);
-    };
-
-    const handleBankStatementUpload = (event) => {
-        setBankStatement(event.target.files[0]);
+    const handleTransactionUpload = (event) => {
+        setTransactions([...transactions, ...event.target.files]);
     };
 
     const handleTaxDocumentUpload = (event) => {
@@ -35,31 +31,9 @@ const Accounting = () => {
 
     return (
         <Box width="70%" margin="auto" pt={24} pb={12} minHeight="1000px">
-            <Heading as="h1" size="2xl" mb={8}>회계 관리📊</Heading>
+            <Heading as="h1" size="2xl" mb={8}>세무 관리📊</Heading>
 
-            <VStack spacing={8} align="stretch">
-                <Card>
-                    <CardHeader>
-                        <HStack>
-                            <Icon as={FaFileInvoiceDollar} />
-                            <Heading size="md">영수증 업로드</Heading>
-                        </HStack>
-                    </CardHeader>
-                    <CardBody>
-                        <Input
-                            type="file"
-                            multiple
-                            onChange={handleReceiptUpload}
-                            display="none"
-                            ref={fileInputRef}
-                        />
-                        <Button leftIcon={<FaUpload />} onClick={() => fileInputRef.current.click()}>
-                            영수증 선택
-                        </Button>
-                        <Text mt={2}>업로드된 영수증: {receipts.length}개</Text>
-                    </CardBody>
-                </Card>
-
+            <SimpleGrid columns={2} spacing={8}>
                 <Card>
                     <CardHeader>
                         <HStack>
@@ -68,8 +42,20 @@ const Accounting = () => {
                         </HStack>
                     </CardHeader>
                     <CardBody>
-                        <Input type="file" onChange={handleBankStatementUpload} />
-                        {bankStatement && <Text mt={2}>파일명: {bankStatement.name}</Text>}
+                        <Input
+                            type="file"
+                            multiple
+                            onChange={handleTransactionUpload}
+                            display="none"
+                            ref={transactionInputRef}
+                        />
+                        <Button leftIcon={<FaUpload />} onClick={() => transactionInputRef.current.click()}>
+                            거래내역 선택 (다중 선택 가능)
+                        </Button>
+                        <Text mt={2}>업로드된 거래내역: {transactions.length}개</Text>
+                        <Text mt={2} fontSize="sm" color="gray.500">
+                            은행/카드사에서 거래내역을 다운로드해주세요.
+                        </Text>
                     </CardBody>
                 </Card>
 
@@ -92,37 +78,39 @@ const Accounting = () => {
                         </Button>
                     </CardBody>
                 </Card>
+            </SimpleGrid>
 
-                <Button
-                    colorScheme="blue"
-                    onClick={handleConversion}
-                    isDisabled={!bankStatement}
-                >
-                    변환 및 분석
-                </Button>
+            <Button
+                colorScheme="blue"
+                onClick={handleConversion}
+                isDisabled={transactions.length === 0}
+                mt={8}
+                width="100%"
+            >
+                변환 및 분석
+            </Button>
 
-                {conversionResult && (
-                    <Card>
-                        <CardHeader>
-                            <Heading size="md">변환 결과</Heading>
-                        </CardHeader>
-                        <CardBody>
-                            <Text>{conversionResult}</Text>
-                        </CardBody>
-                    </Card>
-                )}
+            {conversionResult && (
+                <Card mt={8}>
+                    <CardHeader>
+                        <Heading size="md">변환 결과</Heading>
+                    </CardHeader>
+                    <CardBody>
+                        <Text>{conversionResult}</Text>
+                    </CardBody>
+                </Card>
+            )}
 
-                {analysisResult && (
-                    <Card>
-                        <CardHeader>
-                            <Heading size="md">분석 결과</Heading>
-                        </CardHeader>
-                        <CardBody>
-                            <Text>{analysisResult}</Text>
-                        </CardBody>
-                    </Card>
-                )}
-            </VStack>
+            {analysisResult && (
+                <Card mt={8}>
+                    <CardHeader>
+                        <Heading size="md">분석 결과</Heading>
+                    </CardHeader>
+                    <CardBody>
+                        <Text>{analysisResult}</Text>
+                    </CardBody>
+                </Card>
+            )}
 
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
@@ -130,7 +118,6 @@ const Accounting = () => {
                     <ModalHeader>홈택스에서 파일 다운로드 방법</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
-                        {/* 여기에 다운로드 방법에 대한 설명이나 이미지를 추가 */}
                         <Text>1. 홈택스 로그인</Text>
                         <Text>2. 조회/발급 메뉴 선택</Text>
                         <Text>3. 소득공제 자료 조회</Text>
