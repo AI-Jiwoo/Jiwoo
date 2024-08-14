@@ -2,6 +2,8 @@ import React, {useEffect, useRef, useState} from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
 import chatbotIntro from '../images/chatbotInfo.jpg';
+import Accerlator from '../images/Accerlator.png'
+import Account from '../images/Account.png'
 
 import {
     Box,
@@ -52,13 +54,13 @@ const LandingPage = () => {
         setCurrentSection((prev) => (prev - 1 + 4) % 4);
     };
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            nextSection();
-        }, 20000);
-
-        return () => clearInterval(timer);
-    }, []);
+    // useEffect(() => {
+    //     const timer = setInterval(() => {
+    //         nextSection();
+    //     }, 20000);
+    //
+    //     return () => clearInterval(timer);
+    // }, []);
 
     const sentences = [
         { color: "red.500", text: "Journey to success starts here," },
@@ -213,7 +215,7 @@ const LandingPage = () => {
                     position="relative"
 
                 >
-                    <Box maxW="600px" ml={[0, 0, 8, 16]} mt="200px">
+                    <Box maxW="600px" ml={[0, 0, 8, 16]} mt="300px" ml="100px">
                         <Heading as="h2" size="2xl" mb={6}>
                             AI 챗봇으로 창업의 <Text as="span" color="blue.500">모든 단계</Text>를 지원합니다
                         </Heading>
@@ -315,7 +317,7 @@ const LandingPage = () => {
                                 zIndex={2}
                                 position="relative"
                             >
-                                <Box maxW="600px" ml={[0, 0, 8, 16]}>
+                                <Box maxW="600px" ml={[0, 0, 8, 16]} mt="300px" ml="150px">
                                     <Heading as="h2" size="2xl" mb={6}>
                                         엑셀러레이팅으로 <Text as="span" color="blue.500">비즈니스를 가속화</Text>하세요
                                     </Heading>
@@ -342,7 +344,14 @@ const LandingPage = () => {
                                 zIndex={2}
                             >
                                 <Flex h="100%" justify="center" align="center">
-                                    <Text fontSize="xl" fontWeight="bold">엑셀러레이팅 이미지 영역</Text>
+
+                                        <Image
+                                            src={Accerlator}
+                                            alt="AI Chatbot Introduction"
+                                            objectFit="cover"
+                                            w="100%"
+                                            h="100%"
+                                        />
                                 </Flex>
                             </Box>
                         </Flex>
@@ -417,7 +426,7 @@ const LandingPage = () => {
                                 zIndex={2}
                                 position="relative"
                             >
-                                <Box maxW="600px" ml={[0, 0, 8, 16]}>
+                                <Box maxW="600px" ml={[0, 0, 8, 16]} mt="200px" ml="100px">
                                     <Heading as="h2" size="2xl" mb={6}>
                                         스마트한 <Text as="span" color="green.500">세무처리</Text>로 비즈니스에 집중하세요
                                     </Heading>
@@ -461,8 +470,13 @@ const LandingPage = () => {
                                 zIndex={2}
                             >
                                 <Flex h="100%" justify="center" align="center">
-                                    <Text fontSize="xl" fontWeight="bold">세무처리 시각화 이미지</Text>
-                                </Flex>
+                                    <Image
+                                        src={Account}
+                                        alt="AI Chatbot Introduction"
+                                        objectFit="cover"
+                                        w="100%"
+                                        h="100%"
+                                    />                                </Flex>
                             </Box>
                             <IconButton
                                 aria-label="Go to previous section"
