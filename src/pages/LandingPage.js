@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
+import chatbotIntro from '../images/chatbotInfo.jpg';
 
 import {
     Box,
@@ -38,7 +39,9 @@ const LandingPage = () => {
     const scrollToSection = (sectionNumber) => {
         setCurrentSection(sectionNumber);
         const sectionRefs = [firstSectionRef, secondSectionRef, thirdSectionRef, fourthSectionRef];
-        sectionRefs[sectionNumber].current?.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => {
+            sectionRefs[sectionNumber].current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
     };
 
     const nextSection = () => {
@@ -49,13 +52,13 @@ const LandingPage = () => {
         setCurrentSection((prev) => (prev - 1 + 4) % 4);
     };
 
-    // useEffect(() => {
-    //     const timer = setInterval(() => {
-    //         nextSection();
-    //     }, 10000);
-    //
-    //     return () => clearInterval(timer);
-    // }, []);
+    useEffect(() => {
+        const timer = setInterval(() => {
+            nextSection();
+        }, 20000);
+
+        return () => clearInterval(timer);
+    }, []);
 
     const sentences = [
         { color: "red.500", text: "Journey to success starts here," },
@@ -68,6 +71,14 @@ const LandingPage = () => {
     return (
         <Box bg={bg} color={color} overflowX="hidden">
             {/* 첫 번째 섹션 */}
+            <MotionBox
+                ref={firstSectionRef}
+                initial={{ y : 0 }}
+                animate={{ y : currentSection === 0 ? 1 : 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                style={{ display: currentSection === 0 ? 'flex' : 'none' }}
+            >
             <Flex
                 ref={firstSectionRef}
                 direction="column"
@@ -163,8 +174,17 @@ const LandingPage = () => {
                     />
                 </Flex>
             </Flex>
+            </MotionBox>
 
             {/* 두 번째 섹션 */}
+            <MotionBox
+                ref={secondSectionRef}
+                initial={{ y: 0 }}
+                animate={{ y: currentSection === 1 ? 1 : "100vh" }}
+                exit={{ y: "100vh" }}
+                transition={{ duration: 0.5 }}
+                style={{ display: currentSection === 1 ? 'block' : 'none' }}
+            >
             <Box
                 ref={secondSectionRef}
                 minH="100vh"
@@ -191,8 +211,9 @@ const LandingPage = () => {
                     p={[4, 6, 8, 12, 16]}
                     zIndex={2}
                     position="relative"
+
                 >
-                    <Box maxW="600px" ml={[0, 0, 8, 16]}>
+                    <Box maxW="600px" ml={[0, 0, 8, 16]} mt="200px">
                         <Heading as="h2" size="2xl" mb={6}>
                             AI 챗봇으로 창업의 <Text as="span" color="blue.500">모든 단계</Text>를 지원합니다
                         </Heading>
@@ -212,14 +233,18 @@ const LandingPage = () => {
                     transform="translateY(-50%)"
                     w={["80%", "80%", "40%", "35%"]}
                     h="60%"
-                    bg="gray.200"
                     borderRadius="lg"
                     boxShadow="xl"
                     zIndex={2}
+                    overflow="hidden"
                 >
-                    <Flex h="100%" justify="center" align="center">
-                        <Text fontSize="xl" fontWeight="bold">챗봇 이미지 영역</Text>
-                    </Flex>
+                    <Image
+                        src={chatbotIntro}
+                        alt="AI Chatbot Introduction"
+                        objectFit="cover"
+                        w="100%"
+                        h="100%"
+                    />
                 </Box>
                 <IconButton
                     aria-label="Go to previous section"
@@ -250,6 +275,7 @@ const LandingPage = () => {
                     zIndex={3}
                 />
             </Box>
+            </MotionBox>
 
             {/* 세 번째 섹션 (엑셀러레이팅) */}
             <AnimatePresence>
