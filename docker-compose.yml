@@ -11,7 +11,8 @@ services:
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/etcd:/etcd
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
-    # etcd: Milvus의 메타데이터 저장소
+    networks:
+      - milvus
 
   minio:
     container_name: milvus-minio
@@ -27,7 +28,8 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-    # MinIO: Milvus의 객체 저장소
+    networks:
+      - milvus
 
   standalone:
     container_name: milvus-standalone
@@ -39,20 +41,41 @@ services:
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
     ports:
-      - "19530:19530"  # Milvus 서버 포트
-      - "9091:9091"    # 메트릭 포트
+      - "19530:19530"
+      - "9091:9091"
     depends_on:
-      - "etcd"
-      - "minio"
-    # Milvus: 벡터 데이터베이스 서버
+      - etcd
+      - minio
+    networks:
+      - milvus
+
+  app:
+    build: .
+    container_name: jiwoo-ai-app
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME:-Jiwoo-AI-Server}
+      - DEBUG=${DEBUG:-True}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MILVUS_HOST=standalone
+      - MILVUS_PORT=19530
+      - COLLECTION_NAME=${COLLECTION_NAME:-business_info}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-intfloat/multilingual-e5-base}
+      - EMBEDDING_DIMENSION=${EMBEDDING_DIMENSION:-768}
+      - API_V1_STR=${API_V1_STR:-/api/v1}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - SERPAPI_KEY=${SERPAPI_KEY}
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"
+    depends_on:
+      - standalone
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - milvus
 
 networks:
-  default:
-    name: milvus
-
-# 주요 설명:
-# 1. etcd: Milvus의 메타데이터를 저장하는 키-값 저장소입니다.
-# 2. MinIO: Milvus의 대용량 데이터를 저장하는 객체 저장소입니다.
-# 3. Milvus: 벡터 검색 엔진으로, etcd와 MinIO에 의존합니다.
-# 4. 모든 서비스는 'milvus'라는 이름의 Docker 네트워크에 연결됩니다.
-# 5. ${DOCKER_VOLUME_DIRECTORY:-./} 는 환경 변수 DOCKER_VOLUME_DIRECTORY가 설정되어 있지 않으면 현재 디렉토리를 사용합니다.
+  milvus:
+    driver: bridge
