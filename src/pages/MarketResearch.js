@@ -83,12 +83,12 @@ const MarketResearch = () => {
         if (!selectedHistory) return null;
 
         return (
-            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} size="xl">
+            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} size="6xl">
                 <ModalOverlay />
-                <ModalContent>
+                <ModalContent maxWidth="90vw" maxHeight="90vh">
                     <ModalHeader>분석 결과 상세</ModalHeader>
                     <ModalCloseButton />
-                    <ModalBody>
+                    <ModalBody overflowY="auto" p={6}>
                         <Tabs>
                             <TabList>
                                 <Tab>시장 규모</Tab>
@@ -97,13 +97,31 @@ const MarketResearch = () => {
                             </TabList>
                             <TabPanels>
                                 <TabPanel>
-                                    {selectedHistory.marketInformation && renderMarketSizeGrowth(selectedHistory.marketInformation)}
+                                    <VStack align="stretch" spacing={4}>
+                                        <Heading size="md">시장 규모 및 성장률</Heading>
+                                        {selectedHistory.marketInformation ?
+                                            renderMarketSizeGrowth(selectedHistory.marketInformation) :
+                                            <Text>시장 규모 정보가 없습니다.</Text>
+                                        }
+                                    </VStack>
                                 </TabPanel>
                                 <TabPanel>
-                                    {selectedHistory.competitorAnalysis && renderSimilarServices(selectedHistory.competitorAnalysis)}
+                                    <VStack align="stretch" spacing={4}>
+                                        <Heading size="md">유사 서비스 분석</Heading>
+                                        {selectedHistory.competitorAnalysis ?
+                                            renderSimilarServices(selectedHistory.competitorAnalysis) :
+                                            <Text>유사 서비스 분석 정보가 없습니다.</Text>
+                                        }
+                                    </VStack>
                                 </TabPanel>
                                 <TabPanel>
-                                    {selectedHistory.marketTrends && renderTrendCustomerTechnology(selectedHistory.marketTrends)}
+                                    <VStack align="stretch" spacing={4}>
+                                        <Heading size="md">트렌드, 고객 분포, 기술 동향</Heading>
+                                        {selectedHistory.marketTrends ?
+                                            renderTrendCustomerTechnology(selectedHistory.marketTrends) :
+                                            <Text>트렌드/고객/기술 정보가 없습니다.</Text>
+                                        }
+                                    </VStack>
                                 </TabPanel>
                             </TabPanels>
                         </Tabs>
@@ -112,7 +130,6 @@ const MarketResearch = () => {
             </Modal>
         );
     };
-
 
     useEffect(() => {
         const marketResearchElement = document.getElementById('market-research');
