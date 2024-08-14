@@ -1,55 +1,32 @@
-# Web framework and ASGI server
+# 웹 프레임워크 및 ASGI 서버
 fastapi
 uvicorn[standard]
 
-# Vector database and embedding model
+# 벡터 데이터베이스 및 임베딩 모델
 pymilvus
 sentence-transformers
 
-# Environment variable management
+# 환경 변수 관리
 python-dotenv
 
-# LangChain and its dependencies
+# LangChain 및 관련 의존성
 langchain
 langchain-core
 langchain-openai
 langchain_community
 
-# OpenAI API for chatbot
+# OpenAI API (챗봇용)
 openai
 
-# Data validation and settings management
+# 데이터 검증 및 설정 관리
 pydantic
 pydantic-settings
 
-# General-purpose scientific libraries
+# 일반적인 과학 계산 라이브러리
 numpy
-pandas
-scikit-learn
 
-# Deep learning and NLP
-torch
-transformers
-tqdm
-
-# HTTP requests and web scraping
+# HTTP 요청
 requests
-aiohttp
-beautifulsoup4
-httpx
 
-# Scheduling tasks
-apscheduler
-
-# SQL and Arrow support
-sqlalchemy
-pyarrow
-
-# Resiliency
-tenacity
-
-# Tokenization
-tiktoken
-
-# SerpAPI for web search
+# 웹 검색용 SerpAPI
 serpapi
