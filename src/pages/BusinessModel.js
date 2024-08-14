@@ -6,6 +6,7 @@ import {
     useBreakpointValue, Heading, UnorderedList, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton
 } from '@chakra-ui/react';
 import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye } from "react-icons/fa";
+import api from "../apis/api";
 
 const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
     const [selectedBusiness, setSelectedBusiness] = useState(null);
@@ -39,7 +40,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
 
     const fetchBusinesses = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/business/user', {
+            const response = await api.get('/business/user', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             setBusinesses(response.data.business || []);
@@ -50,7 +51,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/category/names', {
+            const response = await api.get('/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             setCategories(response.data || []);
@@ -96,7 +97,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
 
 
         try {
-            const response = await axios.post('http://localhost:5000/business-model/similar-services', data, { headers });
+            const response = await api.post('/business-model/similar-services', data, { headers });
             setSimilarServices(response.data);
             setCurrentStep(2);
         } catch (error) {
@@ -116,7 +117,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         };
 
         try {
-            const response = await axios.post('http://localhost:5000/business-model/analyze', similarServices, { headers });
+            const response = await api.post('/business-model/analyze', similarServices, { headers });
             setAnalyzedBusinessModel(response.data);
             setCurrentStep(3);
         } catch (error) {
@@ -136,7 +137,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         };
 
         try {
-            const response = await axios.post('http://localhost:5000/business-model/propose', JSON.stringify(analyzedBusinessModel), { headers });
+            const response = await api.post('/business-model/propose', JSON.stringify(analyzedBusinessModel), { headers });
             setBusinessProposal(response.data);
             setCurrentStep(4);
         } catch (error) {

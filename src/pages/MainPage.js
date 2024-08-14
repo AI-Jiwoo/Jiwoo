@@ -13,9 +13,7 @@ function MainPage() {
     const marketResearchRef = useRef(null);
     const businessModelRef = useRef(null);
     const [activeSection, setActiveSection] = useState('marketSize');
-    const marketSizeRef = useRef(null);
-    const similarServicesRef = useRef(null);
-    const trendCustomerTechnologyRef = useRef(null);
+
 
 
     useEffect(() => {

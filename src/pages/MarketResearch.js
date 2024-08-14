@@ -43,6 +43,7 @@ import { motion } from 'framer-motion';
 import MarketGrowthChart from "../component/MarketGrowthChart";
 import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaQuestionCircle, FaRedo} from 'react-icons/fa';
 import Cookies from 'js-cookie';
+import api from "../apis/api";
 
 const MarketResearch = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -158,7 +159,7 @@ const MarketResearch = () => {
 
     const fetchBusinesses = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/business/user', {
+            const response = await api.get('/business/user', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             setBusinesses(response.data.business || []);
@@ -172,7 +173,7 @@ const MarketResearch = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://localhost:5000/market-research/history?page=${currentPage}&size=10`, {
+            const response = await api.get(`/market-research/history?page=${currentPage}&size=10`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             console.log('Research history response:', response.data);  // 디버깅용
@@ -194,7 +195,7 @@ const MarketResearch = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/category/names', {
+            const response = await api.get('/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             setCategories(response.data || []);

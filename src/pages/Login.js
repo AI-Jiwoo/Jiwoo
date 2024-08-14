@@ -47,7 +47,7 @@ function LoginPage() {
             const performLogin = async () => {
                 try {
                     console.log('Attempting login...');
-                    const response = await axios.post('http://localhost:5000/login', { email, password });
+                    const response = await api.post('/login', { email, password });
                     console.log('Login response:', response);
 
                     if (response.status === 200) {
