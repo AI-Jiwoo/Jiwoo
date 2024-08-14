@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     global vector_store
     try:
         # Milvus 연결 및 VectorStore 초기화
-        connect_to_milvus(host=settings.MILVUS_HOST, port=settings.MILVUS_PORT)
+        connect_to_milvus()
         vector_store = VectorStore()
         logger.info("Startup completed successfully")
     except Exception as e:
