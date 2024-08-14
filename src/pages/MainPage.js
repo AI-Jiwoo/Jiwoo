@@ -17,6 +17,12 @@ function MainPage() {
     const similarServicesRef = useRef(null);
     const trendCustomerTechnologyRef = useRef(null);
 
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+
     useEffect(() => {
         if (marketResearchRef.current && businessModelRef.current) {
             const handleScroll = () => {
