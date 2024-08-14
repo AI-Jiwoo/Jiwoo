@@ -1,15 +1,16 @@
 from pymilvus import connections, Collection, utility, FieldSchema, CollectionSchema, DataType
 import logging
 from config.settings import settings
+import os
 
 logger = logging.getLogger(__name__)
 
-def connect_to_milvus(host: str = settings.MILVUS_HOST, port: str = settings.MILVUS_PORT) -> None:
+def connect_to_milvus():
     """
     Milvus 데이터베이스에 연결하는 함수
-    :param host: Milvus 서버 호스트 주소
-    :param port: Milvus 서버 포트 번호
     """
+    host = os.getenv('MILVUS_HOST', settings.MILVUS_HOST)
+    port = os.getenv('MILVUS_PORT', settings.MILVUS_PORT)
     try:
         connections.connect("default", host=host, port=port, ignore_partition=True)
         logger.info(f"Successfully connected to Milvus at {host}:{port}")

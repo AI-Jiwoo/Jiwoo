@@ -19,7 +19,7 @@ class VectorStore:
         """
         self.embedding_function = get_embedding_function()
         self.collection_name = settings.COLLECTION_NAME
-        connect_to_milvus(host, port)
+        connect_to_milvus()
         self._ensure_collection_exists()
 
     def _ensure_collection_exists(self):
