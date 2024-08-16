@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import {
     VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
@@ -7,6 +7,7 @@ import {
 } from '@chakra-ui/react';
 import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye } from "react-icons/fa";
 import api from "../apis/api";
+import LoadingScreen from "../component/common/LoadingMotion";
 
 const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
     const [selectedBusiness, setSelectedBusiness] = useState(null);
@@ -21,11 +22,31 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const columnCount = useBreakpointValue({ base: 1, md: 2 });
     const businessModelRef = useRef(null);
+    const [isLoading, setIsLoading] = useState(true);
 
+    const businessModelMessages = [
+        "비즈니스 모델을 분석 중입니다...",
+        "수익 구조를 최적화하고 있어요.",
+        "고객 세그먼트를 정의하고 있습니다.",
+        "가치 제안을 구체화하고 있어요.",
+        "핵심 자원과 활동을 파악 중입니다.",
+        "JIWOO AI가 당신의 비즈니스 모델을 혁신하고 있어요!",
+    ];
 
     useEffect(() => {
-        fetchBusinesses();
-        fetchCategories();
+        const fetchInitialData = async () => {
+            setIsLoading(true);
+            try {
+                await fetchBusinesses();
+                await fetchCategories();
+            } catch (error) {
+                console.error("초기 데이터 로딩 실패:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -67,6 +88,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         }
 
         setLoading(true);
+        setIsLoading(true);
         setError(null);
 
         const headers = {
@@ -91,10 +113,9 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         } else {
             data = {
                 ...customData,
-                businessName: customData.category, // 카테고리를 businessName으로 사용
+                businessName: customData.category,
             };
         }
-
 
         try {
             const response = await api.post('/business-model/similar-services', data, { headers });
@@ -104,11 +125,13 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             handleError('유사 서비스 조회에 실패했습니다', error);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     };
 
     const analyzeBusinessModels = async () => {
         setLoading(true);
+        setIsLoading(true);
         setError(null);
 
         const headers = {
@@ -124,11 +147,13 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             handleError('비즈니스 모델 분석에 실패했습니다', error);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     };
 
     const proposeBusinessModel = async () => {
         setLoading(true);
+        setIsLoading(true);
         setError(null);
 
         const headers = {
@@ -144,6 +169,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             handleError('비즈니스 모델 제안에 실패했습니다', error);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -170,7 +196,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         const selected = businesses.find(b => b.id === selectedId);
         console.log("Business selected:", selected);
         if (selected) {
-            setSelectedBusiness(selected);  // 직접 상태 업데이트
+            setSelectedBusiness(selected);
             if (typeof onBusinessSelect === 'function') {
                 onBusinessSelect(selected);
             }
@@ -347,38 +373,6 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         </Card>
     );
 
-    const parseAnalysis = (analysisText) => {
-        const companies = analysisText.split('\n\n');
-        return companies.map(company => {
-            const [name, ...details] = company.split('\n');
-            const parsedDetails = details.reduce((acc, detail) => {
-                const [key, value] = detail.split(': ');
-                acc[key.slice(2)] = value;
-                return acc;
-            }, {});
-            return { name: name.slice(3), ...parsedDetails };
-        });
-    };
-
-    const parseProposal = (proposalText) => {
-        const lines = proposalText.split('\n');
-        const result = {};
-        let currentKey = '';
-        lines.forEach(line => {
-            if (line.includes(':')) {
-                const [key, value] = line.split(':');
-                currentKey = key.trim();
-                result[currentKey] = value.trim();
-            } else if (line.startsWith('-') && currentKey) {
-                if (!Array.isArray(result[currentKey])) {
-                    result[currentKey] = [];
-                }
-                result[currentKey].push(line.slice(2));
-            }
-        });
-        return result;
-    };
-
     const renderFullResults = () => (
         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="full">
             <ModalOverlay />
@@ -429,51 +423,48 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         setError(null);
     };
 
-    if (loading) {
-        return (
-            <Flex align="center" justify="center" height="100vh">
-                <Spinner size="xl" />
-            </Flex>
-        );
-    }
-
     return (
         <Box ref={businessModelRef} width="70%" margin="auto" pt={24} mb={12} minHeight="1000px">
             <Box mt={8}/>
-            <Flex justifyContent="space-between" alignItems="center" mb={8}>
-                <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
-            </Flex>
-            {renderStepIndicator()}
-            <VStack spacing={8} align="stretch">
-                {error && (
-                    <Alert status="error">
-                        <AlertIcon />
-                        {error}
-                    </Alert>
-                )}
-                {currentStep === 1 && renderBusinessSelection()}
-                {currentStep === 2 && renderSimilarServices()}
-                {currentStep === 3 && renderAnalyzedBusinessModel()}
-                {currentStep === 4 && renderBusinessProposal()}
-                {currentStep > 1 && (
-                    <HStack justifyContent="space-between">
-                        <Button
-                            leftIcon={<Icon as={FaRedo} />}
-                            onClick={handleNewAnalysis}
-                        >
-                            새로운 분석 시작
-                        </Button>
-                        <Button
-                            rightIcon={<Icon as={FaEye} />}
-                            onClick={() => setIsModalOpen(true)}
-                            isDisabled={!analyzedBusinessModel || !businessProposal}
-                        >
-                            전체 결과 보기
-                        </Button>
-                    </HStack>
-                )}
-            </VStack>
-            {renderFullResults()}
+            <LoadingScreen isLoading={isLoading} messages={businessModelMessages} />
+            {!isLoading && (
+                <>
+                    <Flex justifyContent="space-between" alignItems="center" mb={8}>
+                        <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
+                    </Flex>
+                    {renderStepIndicator()}
+                    <VStack spacing={8} align="stretch">
+                        {error && (
+                            <Alert status="error">
+                                <AlertIcon />
+                                {error}
+                            </Alert>
+                        )}
+                        {currentStep === 1 && renderBusinessSelection()}
+                        {currentStep === 2 && renderSimilarServices()}
+                        {currentStep === 3 && renderAnalyzedBusinessModel()}
+                        {currentStep === 4 && renderBusinessProposal()}
+                        {currentStep > 1 && (
+                            <HStack justifyContent="space-between">
+                                <Button
+                                    leftIcon={<Icon as={FaRedo} />}
+                                    onClick={handleNewAnalysis}
+                                >
+                                    새로운 분석 시작
+                                </Button>
+                                <Button
+                                    rightIcon={<Icon as={FaEye} />}
+                                    onClick={() => setIsModalOpen(true)}
+                                    isDisabled={!analyzedBusinessModel || !businessProposal}
+                                >
+                                    전체 결과 보기
+                                </Button>
+                            </HStack>
+                        )}
+                    </VStack>
+                    {renderFullResults()}
+                </>
+            )}
         </Box>
     );
 };
