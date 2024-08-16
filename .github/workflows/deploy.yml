@@ -52,7 +52,7 @@ jobs:
           
             # .env 파일 생성
             echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
-            echo "MILVUS_HOST=standalone" >> .env
+            echo "MILVUS_HOST=localhost" >> .env
             echo "MILVUS_PORT=19530" >> .env
             echo "LOG_LEVEL=INFO" >> .env
             echo "SERPAPI_KEY=${{ secrets.SERPAPI_KEY }}" >> .env
