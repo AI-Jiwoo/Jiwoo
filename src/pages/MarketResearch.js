@@ -271,25 +271,25 @@ const MarketResearch = () => {
             const timestamp = new Date().getTime();
             switch (type) {
                 case 'marketSize':
-                    const marketSizeResponse = await axios.post(`http://localhost:5000/market-research/market-size-growth?t=${timestamp}`, data, { headers });
+                    const marketSizeResponse = await api.post(`/market-research/market-size-growth?t=${timestamp}`, data, { headers });
                     setMarketSizeGrowth(marketSizeResponse.data.data);
                     marketInformation = JSON.stringify(marketSizeResponse.data.data);
                     break;
                 case 'similarServices':
-                    const similarServicesResponse = await axios.post(`http://localhost:5000/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
+                    const similarServicesResponse = await api.post(`/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
                     setSimilarServices(similarServicesResponse.data.data);
                     competitorAnalysis = JSON.stringify(similarServicesResponse.data.data);
                     break;
                 case 'trendCustomerTechnology':
-                    const trendResponse = await axios.post(`http://localhost:5000/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
+                    const trendResponse = await api.post(`/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
                     setTrendCustomerTechnology(trendResponse.data.data);
                     marketTrends = JSON.stringify(trendResponse.data.data);
                     break;
                 case 'all':
                     const [marketSizeGrowthRes, similarServicesRes, trendCustomerTechnologyRes] = await Promise.all([
-                        axios.post(`http://localhost:5000/market-research/market-size-growth?t=${timestamp}`, data, { headers }),
-                        axios.post(`http://localhost:5000/market-research/similar-services-analysis?t=${timestamp}`, data, { headers }),
-                        axios.post(`http://localhost:5000/market-research/trend-customer-technology?t=${timestamp}`, data, { headers })
+                        api.post(`/market-research/market-size-growth?t=${timestamp}`, data, { headers }),
+                        api.post(`/market-research/similar-services-analysis?t=${timestamp}`, data, { headers }),
+                        api.post(`/market-research/trend-customer-technology?t=${timestamp}`, data, { headers })
                     ]);
                     setMarketSizeGrowth(marketSizeGrowthRes.data.data);
                     setSimilarServices(similarServicesRes.data.data);
@@ -309,7 +309,7 @@ const MarketResearch = () => {
                 marketEntryStrategy,
                 businessId: selectedBusiness?.id || -1
             };
-            await axios.post('http://localhost:5000/market-research/save-history', historyData, { headers });
+            await api.post('/market-research/save-history', historyData, { headers });
             setCurrentStep(3);
 
             const newHistory = [...researchHistory, historyData];

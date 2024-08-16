@@ -1,54 +1,47 @@
 import axios from 'axios';
 import {getAccessTokenHeader, isTokenExpired, refreshToken, removeToken} from '../utils/TokenUtils';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://13.124.128.228:5000';
+const AI_BASE_URL = process.env.REACT_APP_AI_URL || 'http://13.124.128.228:8001';
 
-const api = axios.create({
-    baseURL: API_BASE_URL,
-});
+const createApiInstance = (baseURL) => {
+    const instance = axios.create({ baseURL });
 
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response && error.response.status === 401) {
-            // 토큰이 만료되었거나 유효하지 않은 경우
-            removeToken();
-            // 로그인 페이지로 리다이렉트
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
-
-// 요청 인터셉터
-api.interceptors.request.use(
-    async (config) => {
-        let accessToken = getAccessTokenHeader();
-        if (accessToken && isTokenExpired(accessToken)) {
-            // 액세스 토큰이 만료된 경우 리프레시 토큰으로 갱신
-            const newToken = await refreshToken();
-            if (newToken) {
-                accessToken = `Bearer ${newToken}`;
+    instance.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response && error.response.status === 401) {
+                removeToken();
+                window.location.href = '/login';
             }
+            return Promise.reject(error);
         }
+    );
 
-        if (accessToken) {
-            config.headers['Authorization'] = accessToken;
+    instance.interceptors.request.use(
+        async (config) => {
+            let accessToken = getAccessTokenHeader();
+            if (accessToken && isTokenExpired(accessToken)) {
+                const newToken = await refreshToken();
+                if (newToken) {
+                    accessToken = `Bearer ${newToken}`;
+                }
+            }
+
+            if (accessToken) {
+                config.headers['Authorization'] = accessToken;
+            }
+            return config;
+        },
+        (error) => {
+            return Promise.reject(error);
         }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
+    );
 
-// 응답 인터셉터 (필요한 경우)
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        // 에러 처리 로직
-        return Promise.reject(error);
-    }
-);
+    return instance;
+};
 
-export default api;
+export const api = createApiInstance(API_BASE_URL);
+export const aiApi = createApiInstance(AI_BASE_URL);
+
+export default api;  // 기본 export를 유지하여 기존 import 문을 깨지지 않게 합니다.

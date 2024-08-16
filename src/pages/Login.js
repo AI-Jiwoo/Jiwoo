@@ -47,47 +47,46 @@ function LoginPage() {
             const performLogin = async () => {
                 try {
                     console.log('Attempting login...');
-                    const response = await axios.post('http://localhost:5000/login', { email, password });
-                    console.log('Login response:', response);
+                    const response = await api.post('/login', { email, password });
+                    console.log('Full response:', response);
 
-                    if (response.status === 200) {
-                        console.log('Full response:', response);
+                    // 응답 헤더 로깅
+                    console.log('Response headers:', response.headers);
 
-                        let token = response.headers['authorization'];
+                    let token = response.headers['authorization'] || response.headers['Authorization'];
+                    console.log('Raw token:', token);
 
-                        if (token && token.startsWith('Bearer ')) {
-                            token = token.slice(7); // 'Bearer ' 제거
-                        } else {
-                            throw new Error('Token not found in server response');
-                        }
+                    if (token && token.startsWith('Bearer ')) {
+                        token = token.slice(7); // 'Bearer ' 제거
+                    } else if (response.data && response.data.token) {
+                        // 토큰이 응답 본문에 있는 경우
+                        token = response.data.token;
+                    } else {
+                        throw new Error('Token not found in server response');
+                    }
 
-                        console.log('Extracted token:', token);
+                    console.log('Extracted token:', token);
 
-                        if (isValidToken(token)) {
-                            // access 토큰과 refresh 토큰을 같은 값으로 설정
-                            saveToken({ 'access-token': token, 'refresh-token': token });
+                    if (isValidToken(token)) {
+                        saveToken({ 'access-token': token, 'refresh-token': token });
 
-                            try {
-                                const decodedToken = jwtDecode(token);
-                                console.log('Decoded token:', decodedToken);
+                        try {
+                            const decodedToken = jwtDecode(token);
+                            console.log('Decoded token:', decodedToken);
 
-                                // userrole 헤더에서 역할 정보 추출
-                                const role = response.headers['userrole'] || decodedToken.role || 'USER';
+                            const role = response.headers['userrole'] || decodedToken.role || 'USER';
 
-                                setUser({ email: decodedToken.sub || email, role: role });
+                            setUser({ email: decodedToken.sub || email, role: role });
 
-                                console.log('Login successful, navigating to home page');
-                                toast(successToast);
-                                navigate('/');
-                            } catch (decodeError) {
-                                console.error('Token decoding error:', decodeError);
-                                throw new Error('Login failed: Invalid token structure');
-                            }
-                        } else {
-                            throw new Error('Invalid token format received from server');
+                            console.log('Login successful, navigating to home page');
+                            toast(successToast);
+                            navigate('/');
+                        } catch (decodeError) {
+                            console.error('Token decoding error:', decodeError);
+                            throw new Error('Login failed: Invalid token structure');
                         }
                     } else {
-                        throw new Error('Login failed: Unexpected response status');
+                        throw new Error('Invalid token format received from server');
                     }
                 } catch (error) {
                     console.error('Login error:', error);
