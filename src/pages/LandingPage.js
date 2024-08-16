@@ -81,104 +81,104 @@ const LandingPage = () => {
                 transition={{ duration: 0.5 }}
                 style={{ display: currentSection === 0 ? 'flex' : 'none' }}
             >
-            <Flex
-                ref={firstSectionRef}
-                direction="column"
-                minH="100vh"
-                px={[4, 6, 8, 12, 16]}
-                style={{display: currentSection === 0 ? 'flex' : 'none'}}
-            >
-                <Flex justify="space-between" align="center" py={6}>
-                    <Heading as="h1" size="lg">JIWOO</Heading>
-                    <Flex>
-                        {user ? (
-                            <>
-                                <Link as={RouterLink} to="/mypage" mx={3}>
-                                    <Button variant="ghost">마이페이지</Button>
-                                </Link>
-                                <Link as={RouterLink} to="/main" mx={3}>
-                                    <Button colorScheme="blue">메인페이지</Button>
-                                </Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link as={RouterLink} to="/login" mx={3}>
-                                    <Button variant="ghost">로그인</Button>
-                                </Link>
-                                <Link as={RouterLink} to="/join" mx={3}>
-                                    <Button colorScheme="blue">회원가입</Button>
-                                </Link>
-                            </>
-                        )}
-                    </Flex>
-                </Flex>
-
-                <Flex flex={1} position="relative">
-                    <Box
-                        position="absolute"
-                        left={0}
-                        top={0}
-                        bottom={0}
-                        w={["100%", "100%", "60%", "65%"]}
-                        bg={textBg}
-                        clipPath="polygon(0 0, 100% 0, 80% 100%, 0 100%)"
-                        zIndex={1}
-                    />
-                    <VStack
-                        align="flex-start"
-                        w={["100%", "100%", "55%", "60%"]}
-                        spacing={12}
-                        p={[4, 6, 8, 12, 16]}
-                        zIndex={2}
-                    >
-                        <Heading as="h2" fontSize={["4xl", "5xl", "6xl", "7xl"]} lineHeight={1.5} fontWeight="extrabold">
-                            {sentences.map((sentence, index) => (
-                                <MotionText
-                                    key={index}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.3 }}
-                                    mb={6}
-                                >
-                                    <Text as="span" color={sentence.color}>{sentence.text[0]}</Text>
-                                    {sentence.text.slice(1)}
-                                </MotionText>
-                            ))}
-                        </Heading>
-                        <Text fontSize={["2xl", "3xl"]} fontWeight="bold">창업의 여정, JIWOO가 함께합니다</Text>
-                        <Flex mt={4}>
-                            <Button colorScheme="gray" mr={4} size="lg">App Store</Button>
-                            <Button colorScheme="gray" size="lg">Google Play</Button>
-                            <Button as={RouterLink} to="/main" colorScheme="gray" size="lg">
-                                웹으로 체험하기
-                            </Button>
+                <Flex
+                    ref={firstSectionRef}
+                    direction="column"
+                    minH="100vh"
+                    px={[4, 6, 8, 12, 16]}
+                    style={{display: currentSection === 0 ? 'flex' : 'none'}}
+                >
+                    <Flex justify="space-between" align="center" py={6}>
+                        <Heading as="h1" size="lg">JIWOO</Heading>
+                        <Flex>
+                            {user ? (
+                                <>
+                                    <Link as={RouterLink} to="/mypage" mx={3}>
+                                        <Button variant="ghost">마이페이지</Button>
+                                    </Link>
+                                    <Link as={RouterLink} to="/main" mx={3}>
+                                        <Button colorScheme="blue">메인페이지</Button>
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    <Link as={RouterLink} to="/login" mx={3}>
+                                        <Button variant="ghost">로그인</Button>
+                                    </Link>
+                                    <Link as={RouterLink} to="/join" mx={3}>
+                                        <Button colorScheme="blue">회원가입</Button>
+                                    </Link>
+                                </>
+                            )}
                         </Flex>
-                    </VStack>
-                    <Flex
-                        w={["100%", "100%", "40%", "35%"]}
-                        justify="center"
-                        align="center"
-                        zIndex={2}
-                    >
-                        <Image
-                            src={landingImage}
-                            alt="AI assistant for IT startups"
-                            maxW="90%"
-                            maxH="90%"
-                            objectFit="contain"
+                    </Flex>
+
+                    <Flex flex={1} position="relative">
+                        <Box
+                            position="absolute"
+                            left={0}
+                            top={0}
+                            bottom={0}
+                            w={["100%", "100%", "60%", "65%"]}
+                            bg={textBg}
+                            clipPath="polygon(0 0, 100% 0, 80% 100%, 0 100%)"
+                            zIndex={1}
+                        />
+                        <VStack
+                            align="flex-start"
+                            w={["100%", "100%", "55%", "60%"]}
+                            spacing={12}
+                            p={[4, 6, 8, 12, 16]}
+                            zIndex={2}
+                        >
+                            <Heading as="h2" fontSize={["4xl", "5xl", "6xl", "7xl"]} lineHeight={1.5} fontWeight="extrabold">
+                                {sentences.map((sentence, index) => (
+                                    <MotionText
+                                        key={index}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.3 }}
+                                        mb={6}
+                                    >
+                                        <Text as="span" color={sentence.color}>{sentence.text[0]}</Text>
+                                        {sentence.text.slice(1)}
+                                    </MotionText>
+                                ))}
+                            </Heading>
+                            <Text fontSize={["2xl", "3xl"]} fontWeight="bold">창업의 여정, JIWOO가 함께합니다</Text>
+                            <Flex mt={4}>
+                                <Button colorScheme="gray" mr={4} size="lg">App Store</Button>
+                                <Button colorScheme="gray" size="lg">Google Play</Button>
+                                <Button as={RouterLink} to="/main" colorScheme="gray" size="lg">
+                                    웹으로 체험하기
+                                </Button>
+                            </Flex>
+                        </VStack>
+                        <Flex
+                            w={["100%", "100%", "40%", "35%"]}
+                            justify="center"
+                            align="center"
+                            zIndex={2}
+                        >
+                            <Image
+                                src={landingImage}
+                                alt="AI assistant for IT startups"
+                                maxW="90%"
+                                maxH="90%"
+                                objectFit="contain"
+                            />
+                        </Flex>
+                    </Flex>
+                    <Flex justify="center" py={8}>
+                        <IconButton
+                            aria-label="Scroll to next section"
+                            icon={<FaChevronDown />}
+                            onClick={() => scrollToSection(1)}
+                            size="lg"
+                            rounded="full"
                         />
                     </Flex>
                 </Flex>
-                <Flex justify="center" py={8}>
-                    <IconButton
-                        aria-label="Scroll to next section"
-                        icon={<FaChevronDown />}
-                        onClick={() => scrollToSection(1)}
-                        size="lg"
-                        rounded="full"
-                    />
-                </Flex>
-            </Flex>
             </MotionBox>
 
             {/* 두 번째 섹션 */}
@@ -190,96 +190,96 @@ const LandingPage = () => {
                 transition={{ duration: 0.5 }}
                 style={{ display: currentSection === 1 ? 'block' : 'none' }}
             >
-            <Box
-                ref={secondSectionRef}
-                minH="100vh"
-                position="relative"
-                overflow="hidden"
-                style={{display: currentSection === 1 ? 'block' : 'none'}}
-            >
                 <Box
-                    position="absolute"
-                    right={0}
-                    top={0}
-                    bottom={0}
-                    w={["100%", "100%", "60%", "65%"]}
-                    bg={textBg}
-                    clipPath="polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%)"
-                    zIndex={1}
-                />
-                <Flex
-                    direction="column"
-                    align="flex-start"
-                    justify="center"
-                    h="100%"
-                    w="100%"
-                    p={[4, 6, 8, 12, 16]}
-                    zIndex={2}
+                    ref={secondSectionRef}
+                    minH="100vh"
                     position="relative"
-
-                >
-                    <Box maxW="600px" ml={[0, 0, 8, 16]} mt="300px" ml="100px">
-                        <Heading as="h2" size="2xl" mb={6}>
-                            AI 챗봇으로 창업의 <Text as="span" color="blue.500">모든 단계</Text>를 지원합니다
-                        </Heading>
-                        <Text fontSize="xl" mb={8}>
-                            JIWOO의 AI 챗봇이 창업 과정을 안내하며, 필요한 정보를 손쉽게 제공해 드립니다.
-                            이제 JIWOO와 함께 창업의 모든 단계를 더욱 효율적으로 진행하세요!
-                        </Text>
-                        <Button leftIcon={<FaRobot />} colorScheme="blue" size="lg">
-                            AI 챗봇 시작하기
-                        </Button>
-                    </Box>
-                </Flex>
-                <Box
-                    position="absolute"
-                    right={[4, 6, 8, 12, 16]}
-                    top="50%"
-                    transform="translateY(-50%)"
-                    w={["80%", "80%", "40%", "35%"]}
-                    h="60%"
-                    borderRadius="lg"
-                    boxShadow="xl"
-                    zIndex={2}
                     overflow="hidden"
+                    style={{display: currentSection === 1 ? 'block' : 'none'}}
                 >
-                    <Image
-                        src={chatbotIntro}
-                        alt="AI Chatbot Introduction"
-                        objectFit="cover"
-                        w="100%"
+                    <Box
+                        position="absolute"
+                        right={0}
+                        top={0}
+                        bottom={0}
+                        w={["100%", "100%", "60%", "65%"]}
+                        bg={textBg}
+                        clipPath="polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%)"
+                        zIndex={1}
+                    />
+                    <Flex
+                        direction="column"
+                        align="flex-start"
+                        justify="center"
                         h="100%"
+                        w="100%"
+                        p={[4, 6, 8, 12, 16]}
+                        zIndex={2}
+                        position="relative"
+
+                    >
+                        <Box maxW="600px" ml={[0, 0, 8, 16]} mt="300px" ml="100px">
+                            <Heading as="h2" size="2xl" mb={6}>
+                                AI 챗봇으로 창업의 <Text as="span" color="blue.500">모든 단계</Text>를 지원합니다
+                            </Heading>
+                            <Text fontSize="xl" mb={8}>
+                                JIWOO의 AI 챗봇이 창업 과정을 안내하며, 필요한 정보를 손쉽게 제공해 드립니다.
+                                이제 JIWOO와 함께 창업의 모든 단계를 더욱 효율적으로 진행하세요!
+                            </Text>
+                            <Button leftIcon={<FaRobot />} colorScheme="blue" size="lg">
+                                AI 챗봇 시작하기
+                            </Button>
+                        </Box>
+                    </Flex>
+                    <Box
+                        position="absolute"
+                        right={[4, 6, 8, 12, 16]}
+                        top="50%"
+                        transform="translateY(-50%)"
+                        w={["80%", "80%", "40%", "35%"]}
+                        h="60%"
+                        borderRadius="lg"
+                        boxShadow="xl"
+                        zIndex={2}
+                        overflow="hidden"
+                    >
+                        <Image
+                            src={chatbotIntro}
+                            alt="AI Chatbot Introduction"
+                            objectFit="cover"
+                            w="100%"
+                            h="100%"
+                        />
+                    </Box>
+                    <IconButton
+                        aria-label="Go to previous section"
+                        icon={<FaChevronLeft />}
+                        onClick={prevSection}
+                        size="lg"
+                        rounded="full"
+                        colorScheme="blue"
+                        boxShadow="lg"
+                        position="absolute"
+                        top="50%"
+                        left={8}
+                        transform="translateY(-50%)"
+                        zIndex={3}
+                    />
+                    <IconButton
+                        aria-label="Go to next section"
+                        icon={<FaChevronRight />}
+                        onClick={nextSection}
+                        size="lg"
+                        rounded="full"
+                        colorScheme="blue"
+                        boxShadow="lg"
+                        position="absolute"
+                        top="50%"
+                        right={8}
+                        transform="translateY(-50%)"
+                        zIndex={3}
                     />
                 </Box>
-                <IconButton
-                    aria-label="Go to previous section"
-                    icon={<FaChevronLeft />}
-                    onClick={prevSection}
-                    size="lg"
-                    rounded="full"
-                    colorScheme="blue"
-                    boxShadow="lg"
-                    position="absolute"
-                    top="50%"
-                    left={8}
-                    transform="translateY(-50%)"
-                    zIndex={3}
-                />
-                <IconButton
-                    aria-label="Go to next section"
-                    icon={<FaChevronRight />}
-                    onClick={nextSection}
-                    size="lg"
-                    rounded="full"
-                    colorScheme="blue"
-                    boxShadow="lg"
-                    position="absolute"
-                    top="50%"
-                    right={8}
-                    transform="translateY(-50%)"
-                    zIndex={3}
-                />
-            </Box>
             </MotionBox>
 
             {/* 세 번째 섹션 (엑셀러레이팅) */}
@@ -348,13 +348,13 @@ const LandingPage = () => {
                             >
                                 <Flex h="100%" justify="center" align="center">
 
-                                        <Image
-                                            src={Accerlator}
-                                            alt="AI Chatbot Introduction"
-                                            objectFit="cover"
-                                            w="100%"
-                                            h="100%"
-                                        />
+                                    <Image
+                                        src={Accerlator}
+                                        alt="AI Chatbot Introduction"
+                                        objectFit="cover"
+                                        w="100%"
+                                        h="100%"
+                                    />
                                 </Flex>
                             </Box>
                         </Flex>

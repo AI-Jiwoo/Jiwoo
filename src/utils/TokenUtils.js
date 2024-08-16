@@ -3,9 +3,13 @@ import api from "../apis/api";
 
 const BEARER = 'Bearer ';
 
-export const saveToken = (headers) => {
-    localStorage.setItem("access-token", headers['access-token']);
-    localStorage.setItem("refresh-token", headers['refresh-token']);
+export const saveToken = (tokens) => {
+    if (tokens['access-token']) {
+        localStorage.setItem("access-token", tokens['access-token']);
+    }
+    if (tokens['refresh-token']) {
+        localStorage.setItem("refresh-token", tokens['refresh-token']);
+    }
 }
 
 export const removeToken = () => {
@@ -16,29 +20,37 @@ export const removeToken = () => {
 const getAccessToken = () => localStorage.getItem('access-token');
 const getRefreshToken = () => localStorage.getItem('refresh-token');
 
-export const getAccessTokenHeader = () => BEARER + getAccessToken();
-export const getRefreshTokenHeader = () => BEARER + getRefreshToken();
+export const getAccessTokenHeader = () => {
+    const token = getAccessToken();
+    return token ? `${BEARER}${token}` : null;
+}
 
-const getDecodeAccessToken = () => jwtDecode(getAccessToken());
-const getDecodeRefreshToken = () => jwtDecode(getRefreshToken());
+export const getRefreshTokenHeader = () => {
+    const token = getRefreshToken();
+    return token ? `${BEARER}${token}` : null;
+}
+
+const decodeToken = (token) => {
+    if (!token) return null;
+    try {
+        return jwtDecode(token);
+    } catch (error) {
+        console.error('Token decoding error:', error);
+        return null;
+    }
+}
 
 export const isLogin = () => {
-    const token = localStorage.getItem('access-token');
+    const token = getAccessToken();
     if (!token) return false;
-    try {
-        const decodedToken = jwtDecode(token);
-        return Date.now() < decodedToken.exp * 1000;
-    } catch (error) {
-        console.error('Token validation error:', error);
-        return false;
-    }
+    const decodedToken = decodeToken(token);
+    return decodedToken && Date.now() < decodedToken.exp * 1000;
 };
 
-// 새로 추가된 함수들
 export const isTokenExpired = (token) => {
     if (!token) return true;
-    const decodedToken = jwtDecode(token.replace(BEARER, ''));
-    return decodedToken.exp * 1000 < Date.now();
+    const decodedToken = decodeToken(token.replace(BEARER, ''));
+    return !decodedToken || decodedToken.exp * 1000 < Date.now();
 }
 
 export const refreshToken = async () => {
@@ -48,12 +60,14 @@ export const refreshToken = async () => {
     try {
         const response = await api.post('/auth/refresh', { refreshToken });
         const newAccessToken = response.data.accessToken;
-        saveToken({ 'access-token': newAccessToken, 'refresh-token': refreshToken });
-        return newAccessToken;
+        if (newAccessToken) {
+            saveToken({ 'access-token': newAccessToken });
+            return newAccessToken;
+        }
+        throw new Error('New access token not received');
     } catch (error) {
         console.error('토큰 리프레시 실패:', error);
         removeToken();
         return null;
     }
 };
-

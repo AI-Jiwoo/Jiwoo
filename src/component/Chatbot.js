@@ -15,6 +15,7 @@ import {
 import {ChatIcon, CloseIcon} from '@chakra-ui/icons';
 import chatbotIcon from '../images/chatbot.png';
 import axios from "axios";
+import {aiApi} from "../apis/api";
 
     const Chatbot = () => {
         const { isOpen, onToggle, onClose } = useDisclosure();
@@ -68,7 +69,7 @@ import axios from "axios";
             setIsLoading(true);
 
             try {
-                const response = await axios.post('http://localhost:8000/chat', { message: inputMessage });
+                const response = await aiApi.post('/chat', { message: inputMessage });
                 const botMessage = { text: response.data.message, sender: 'bot' };
                 setMessages(prev => [...prev, botMessage]);
             } catch (error) {

@@ -151,7 +151,7 @@ const MyPage = () => {
             return;
         }
         try {
-            await axios.post('http://localhost:5000/auth/edit/password', {
+            await api.post('/auth/edit/password', {
                 oldPassword: passwordForm.oldPassword,
                 newPassword: passwordForm.newPassword
             }, {

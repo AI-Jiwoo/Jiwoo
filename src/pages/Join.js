@@ -132,7 +132,7 @@ function Join() {
 
             console.log('Sending signup data:', signupData);
 
-            const signupResponse = await axios.post('http://localhost:5000/auth/signup', signupData);
+            const signupResponse = await api.post('/auth/signup', signupData);
 
             console.log('Signup response:', signupResponse);
 
@@ -147,7 +147,7 @@ function Join() {
                 // 사업자 정보가 있는 경우, 별도로 등록
                 if (hasBusiness && businessInfo) {
                     try {
-                        const businessResponse = await axios.post('http://localhost:5000/business/regist', {
+                        const businessResponse = await api.post('/business/regist', {
                             ...businessInfo,
                             email: email // 사용자 이메일을 함께 전송
                         });
