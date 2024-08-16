@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(default="")
     
     # Milvus 벡터 데이터베이스 설정
-    MILVUS_HOST: str = Field(default="standalone")
+    MILVUS_HOST: str = Field(default="localhost")
     MILVUS_PORT: str = Field(default="19530")
     COLLECTION_NAME: str = "business_info"
     
