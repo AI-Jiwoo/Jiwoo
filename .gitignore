@@ -118,4 +118,4 @@ dmypy.json
 .pytype/
 
 # pem
-.pem
+deploy_key.pem

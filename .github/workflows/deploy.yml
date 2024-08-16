@@ -1,0 +1,78 @@
+name: EC2에 Python AI 서버 배포
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: AWS 자격 증명 구성
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: EC2에 배포
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} 'mkdir -p ~/Jiwoo-AI-Server'
+          scp -i private_key -o StrictHostKeyChecking=no -r ./* ${USER}@${HOST}:~/Jiwoo-AI-Server/
+          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
+            # 의존성 업데이트 및 설치
+            sudo apt-get update
+            sudo apt-get install -y docker.io docker-compose
+          
+            # 프로젝트 디렉토리로 이동
+            cd ~/Jiwoo-AI-Server
+          
+            # Python 의존성 설치
+            sudo apt-get install -y python3-pip
+            pip3 install -r requirements.txt
+          
+            # 볼륨을 위한 필요한 디렉토리 생성
+            mkdir -p volumes/etcd volumes/minio volumes/milvus
+          
+            # Docker 볼륨 디렉토리를 위한 환경 변수 설정
+            export DOCKER_VOLUME_DIRECTORY=~/Jiwoo-AI-Server
+          
+            # .env 파일 생성
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+            echo "MILVUS_HOST=standalone" >> .env
+            echo "MILVUS_PORT=19530" >> .env
+            echo "LOG_LEVEL=INFO" >> .env
+            echo "SERPAPI_KEY=${{ secrets.SERPAPI_KEY }}" >> .env
+          
+            # Docker Hub 로그인
+            echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+          
+            # 최신 이미지 가져오기
+            sudo docker-compose pull
+          
+            # Docker Compose를 사용하여 서비스 빌드 및 시작
+            sudo docker-compose up -d --build
+          
+            # 서비스 실행 상태 확인
+            sudo docker-compose ps
+          
+            # Python 앱의 로그 출력
+            sudo docker-compose logs app
+          '
+
+      - name: 정리
+        if: always()
+        run: rm -f private_key
