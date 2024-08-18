@@ -1,22 +1,26 @@
-from pymilvus import connections, Collection, utility, FieldSchema, CollectionSchema, DataType
 import logging
-from config.settings import settings
 import os
 
+from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, connections, utility
+
+from config.settings import settings
+
 logger = logging.getLogger(__name__)
+
 
 def connect_to_milvus():
     """
     Milvus 데이터베이스에 연결하는 함수
     """
-    host = os.getenv('MILVUS_HOST', settings.MILVUS_HOST)
-    port = os.getenv('MILVUS_PORT', settings.MILVUS_PORT)
+    host = os.getenv("MILVUS_HOST", settings.MILVUS_HOST)
+    port = os.getenv("MILVUS_PORT", settings.MILVUS_PORT)
     try:
         connections.connect("default", host=host, port=port, ignore_partition=True)
         logger.info(f"Successfully connected to Milvus at {host}:{port}")
     except Exception as e:
         logger.error(f"Failed to connect to Milvus: {str(e)}")
         raise
+
 
 def create_collection(collection_name: str, dim: int) -> Collection:
     """
@@ -28,19 +32,20 @@ def create_collection(collection_name: str, dim: int) -> Collection:
     fields = [
         FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
         FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
-        FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=dim)
+        FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=dim),
     ]
     schema = CollectionSchema(fields, f"Collection for {collection_name}")
     collection = Collection(collection_name, schema)
-    
+
     index_params = {
         "index_type": "IVF_FLAT",
         "metric_type": "L2",
-        "params": {"nlist": 1024}
+        "params": {"nlist": 1024},
     }
     collection.create_index("embedding", index_params)
     logger.info(f"Collection {collection_name} created successfully")
     return collection
+
 
 def get_collection(collection_name: str = settings.COLLECTION_NAME) -> Collection:
     """
@@ -61,6 +66,7 @@ def get_collection(collection_name: str = settings.COLLECTION_NAME) -> Collectio
         logger.error(f"Error while getting collection {collection_name}: {str(e)}")
         raise
 
+
 def close_milvus_connection() -> None:
     """
     Milvus 연결을 종료하는 함수
@@ -71,6 +77,7 @@ def close_milvus_connection() -> None:
     except Exception as e:
         logger.error(f"Error while disconnecting from Milvus: {str(e)}")
         raise
+
 
 # 데이터베이스 연결을 위한 컨텍스트 매니저
 class MilvusConnectionManager:

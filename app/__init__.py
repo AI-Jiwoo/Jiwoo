@@ -1,1 +1,1 @@
-from .api import routes
+from .api import routes  # noqa: F401
