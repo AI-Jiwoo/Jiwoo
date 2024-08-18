@@ -1,24 +1,26 @@
+import logging
+from contextlib import asynccontextmanager
+
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
+
 from app.api import routes
-from utils.database import connect_to_milvus, close_milvus_connection
-from utils.vector_store import VectorStore
 from config.settings import settings
-from dotenv import load_dotenv
-import logging
-import os
+from utils.database import close_milvus_connection, connect_to_milvus
+from utils.vector_store import VectorStore
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # 전역 변수로 VectorStore 인스턴스 선언
 vector_store = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,6 +42,7 @@ async def lifespan(app: FastAPI):
     # 종료 시 Milvus 연결 해제
     close_milvus_connection()
     logger.info("Shutting down")
+
 
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
