@@ -81,6 +81,10 @@ const MarketResearch = () => {
         setIsHistoryModalOpen(true);
     };
 
+    useEffect(() => {
+        console.log('isLoading:', isLoading);
+    }, [isLoading]);
+
     const renderHistoryModal = () => {
         if (!selectedHistory) return null;
 
