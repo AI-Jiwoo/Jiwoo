@@ -44,6 +44,7 @@ import MarketGrowthChart from "../component/MarketGrowthChart";
 import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaQuestionCircle, FaRedo} from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import api from "../apis/api";
+import LoadingScreen from "../component/common/LoadingMotion";
 
 const MarketResearch = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -787,6 +788,7 @@ const MarketResearch = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
         >
+            <LoadingScreen isLoading={isLoading} />
             <Box id="market-research" width="70%" margin="auto" pt={24} pb={12} minHeight="1000px">
                 <Box mt={8}/>
                 <Flex justifyContent="space-between" alignItems="center" mb={8}>
