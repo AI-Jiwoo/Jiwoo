@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import List
 
 from fastapi import APIRouter, HTTPException
@@ -9,6 +10,8 @@ from services.models import ChatInput, ChatResponse, CompanyInfo, CompanyInput, 
 from utils.database import get_collection
 from utils.embedding_utils import get_company_embedding, get_support_program_embedding
 from utils.vector_store import VectorStore
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 chatbot = Chatbot()
@@ -30,11 +33,13 @@ async def insert_company(input: CompanyInput):
     data = [[company_info], [embedding]]  # 회사 정보  # 임베딩 벡터
     try:
         result = collection.insert(data)
+        logger.info(f"Company inserted successfully: {input.businessName}")
         return {
             "message": "Company inserted successfully",
             "id": result.primary_keys[0],
         }
     except Exception as e:
+        logger.error(f"Failed to insert company: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to insert company: {str(e)}")
 
 
@@ -62,14 +67,18 @@ async def search_similar_companies(input: CompanyInfo):
     search_results = []
     for hits in results:
         for hit in hits:
-            content = json.loads(hit.entity.get("content"))
-            search_results.append(
-                CompanySearchResult(
-                    businessName=content.get("businessName"),
-                    info=CompanyInfo(**content.get("info")),
-                    similarityScore=1 - hit.distance,
+            try:
+                content = json.loads(hit.entity.get("content"))
+                search_results.append(
+                    CompanySearchResult(
+                        businessName=content.get("businessName"),
+                        info=CompanyInfo(**content.get("info")),
+                        similarityScore=1 - hit.distance,
+                    )
                 )
-            )
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON Decode Error: {e}")
+    logger.info(f"Found {len(search_results)} similar companies")
     return search_results
 
 
@@ -82,8 +91,10 @@ async def chat(chat_input: ChatInput):
     """
     try:
         response = chatbot.get_response(chat_input.message)
+        logger.info("Chat response generated successfully")
         return ChatResponse(message=response)
     except Exception as e:
+        logger.error(f"Error in chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -101,8 +112,10 @@ async def similarity_search(request: SimilaritySearchRequest):
     """
     try:
         results = vector_store.similarity_search(request.query, request.k)
+        logger.info(f"Similarity search completed. Found {len(results)} results")
         return results
     except Exception as e:
+        logger.error(f"Error in similarity search: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -139,6 +152,14 @@ async def business_viability_assessment_search(input: SupportProgramInfoSearchRe
             distance = hit.distance
             similarity = 1 - (distance / max(results[0][0].distance, 1))  # 거리 기반 유사도 계산
             if similarity >= input.threshold:
-                search_results.append({"content": json.loads(hit.entity.get("content")), "metadata": {}})
+                content = hit.entity.get("content")
+                logger.debug(f"Content: {content}")  # 디버그 로그 추가
+                try:
+                    parsed_content = json.loads(content) if isinstance(content, str) else content
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON Decode Error: {e}")  # JSON 디코드 오류 로그
+                    parsed_content = content  # 파싱 실패 시 원본 사용
+                search_results.append({"content": parsed_content, "metadata": {}})
 
+    logger.info(f"Viability search completed. Found {len(search_results)} results")
     return search_results
