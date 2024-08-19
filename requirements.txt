@@ -30,3 +30,8 @@ requests
 
 # 웹 검색용 SerpAPI
 serpapi
+
+# formatter
+pre-commit
+black
+isort

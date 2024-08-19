@@ -1,10 +1,12 @@
-import os
 import logging
+import os
+
 import requests
 
 # 로그 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class WebSearch:
     """SerpAPI를 사용한 웹 검색 기능을 제공하는 클래스"""
@@ -25,11 +27,7 @@ class WebSearch:
 
         try:
             # SerpAPI 요청 파라미터 설정
-            params = {
-                "q": query,
-                "num": num_results,
-                "api_key": self.api_key
-            }
+            params = {"q": query, "num": num_results, "api_key": self.api_key}
             # API 요청 수행
             response = requests.get(self.base_url, params=params)
             response.raise_for_status()

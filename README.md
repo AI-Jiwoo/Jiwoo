@@ -134,6 +134,75 @@ Python기반 VectorDB 유사도 검증 및 Jiwoo chat-bot서버입니다.
 ```
 
 
+
+> ## Viability-Search
+> URL: POST /viability_search
+```
+# Request
+{
+    "query": {
+        "name": "농식품 판로지원",
+        "target": "농식품 분야 창업기업(창업 7년 이내)",
+        "scare_of_support": "(예산현황) 8.05억원\r\n(지원규모) 세부 공고별 상이",
+        "support_content": "온라인 운영매장 및 기획전 추진으로 판로지원",
+        "support_characteristics": "우수 창업제품 전시·홍보를 통한 온라인 마켓 유통지원",
+        "support_info": "농식품 분야 벤처·창업기업의 판로확보 지원 및 유통채널 입점 지원",
+        "support_year": 2024
+    },
+    "k": 5,
+    "threshold": 0.7
+}
+```
+
+```
+# Response
+[
+  {
+    "content": {
+      "businessName": "식품테크스타트업",
+      "info": {
+        "businessPlatform": "식품 제조",
+        "businessScale": "스타트업",
+        "business_field": "식품 제조",
+        "businessStartDate": "2023-01-15",
+        "investmentStatus": "시드 투자 40억 원 유치",
+        "customerType": "B2C, B2B"
+      }
+    },
+    "metadata": {}
+  },
+  {
+    "content": {
+      "businessName": "에코패키징",
+      "info": {
+        "businessPlatform": "제조업",
+        "businessScale": "중소기업",
+        "business_field": "제조업",
+        "businessStartDate": "2021-06-10",
+        "investmentStatus": "정부 지원금 50억 원 및 시리즈 A 30억 원 유치",
+        "customerType": "B2B"
+      }
+    },
+    "metadata": {}
+  },
+  {
+    "content": {
+      "businessName": "드론물류서비스",
+      "info": {
+        "businessPlatform": "드론 서비스",
+        "businessScale": "스타트업",
+        "business_field": "드론 서비스",
+        "businessStartDate": "2022-11-10",
+        "investmentStatus": "시드 투자 50억 원 유치",
+        "customerType": "B2B, B2C"
+      }
+    },
+    "metadata": {}
+  }
+]
+```
+
+
 ## Spec
 > VectorDB: Milvus <br>
 > Model: intfloat/multilingual-e5-base

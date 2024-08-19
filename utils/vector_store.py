@@ -1,12 +1,15 @@
 import logging
-from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, utility
-from langchain_community.document_loaders import TextLoader
+
 from langchain.text_splitter import CharacterTextSplitter
-from utils.embedding_utils import get_embedding_function
-from utils.database import connect_to_milvus, get_collection
+from langchain_community.document_loaders import TextLoader
+from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, utility
+
 from config.settings import settings
+from utils.database import connect_to_milvus, get_collection
+from utils.embedding_utils import get_embedding_function
 
 logger = logging.getLogger(__name__)
+
 
 class VectorStore:
     """Milvus를 사용한 벡터 저장소 클래스"""
@@ -34,7 +37,11 @@ class VectorStore:
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
             FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
-            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=settings.EMBEDDING_DIMENSION)
+            FieldSchema(
+                name="embedding",
+                dtype=DataType.FLOAT_VECTOR,
+                dim=settings.EMBEDDING_DIMENSION,
+            ),
         ]
         schema = CollectionSchema(fields, "Business information for similarity search")
         collection = Collection(name=self.collection_name, schema=schema)
@@ -55,7 +62,7 @@ class VectorStore:
         index_params = {
             "index_type": "IVF_FLAT",
             "metric_type": "L2",
-            "params": {"nlist": 1024}
+            "params": {"nlist": 1024},
         }
         collection.create_index("embedding", index_params)
 
@@ -80,31 +87,31 @@ class VectorStore:
         """
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
-        
+
         # 검색 실행
         results = collection.search(
             data=[self.embedding_function(query)],
             anns_field="embedding",
             param=search_params,
             limit=k,
-            output_fields=["content"]
+            output_fields=["content"],
         )
-        
+
         # 검색 결과 로깅
         if not results or len(results[0]) == 0:
             logger.info("No results found in vector store.")
             return []
 
         # 결과가 존재할 경우 내용 반환
-        hits = [{"content": hit.entity.get('content'), "metadata": {}} for hit in results[0] if hit.entity.get('content')]
+        hits = [{"content": hit.entity.get("content"), "metadata": {}} for hit in results[0] if hit.entity.get("content")]
 
         if not hits:
             logger.info("No content found in the search results.")
             return []
-        
+
         return hits
-    
-    def search_with_similarity_threshold(self, query, k=5, threshold=0.7):
+
+    def search_with_similarity_threshold(self, query, k=5, threshold=0.4):
         """
         유사도 검색 수행, 유사도 임계값을 넘지 않으면 빈 리스트 반환
         :param query: 검색 쿼리
@@ -114,16 +121,16 @@ class VectorStore:
         """
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
-        
+
         # 검색 실행
         results = collection.search(
             data=[self.embedding_function(query)],
             anns_field="embedding",
             param=search_params,
             limit=k,
-            output_fields=["content"]
+            output_fields=["content"],
         )
-        
+
         # 검색 결과 로깅
         if not results or len(results[0]) == 0:
             logger.info("No results found in vector store.")
@@ -135,11 +142,11 @@ class VectorStore:
             distance = hit.distance
             similarity = 1 - (distance / max(results[0][0].distance, 1))  # 거리 기반 유사도 계산
             if similarity >= threshold:
-                hits.append({"content": hit.entity.get('content'), "metadata": {}})
-        
+                hits.append({"content": hit.entity.get("content"), "metadata": {}})
+
         if not hits:
             logger.info(f"No results met the similarity threshold of {threshold}.")
-        
+
         return hits
 
     def load_documents(self, file_path):
