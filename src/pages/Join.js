@@ -73,7 +73,7 @@ function Join() {
             return;
         }
         try {
-            const response = await api.post('/auth/exist/email', { email: email });
+            const response = await api.post('/api/auth/exist/email', { email: email });
             setIsEmailVerified(true);
             toast({
                 title: "사용 가능한 이메일입니다.",
@@ -132,7 +132,7 @@ function Join() {
 
             console.log('Sending signup data:', signupData);
 
-            const signupResponse = await api.post('/auth/signup', signupData);
+            const signupResponse = await api.post('/api/auth/signup', signupData);
 
             console.log('Signup response:', signupResponse);
 
@@ -147,7 +147,7 @@ function Join() {
                 // 사업자 정보가 있는 경우, 별도로 등록
                 if (hasBusiness && businessInfo) {
                     try {
-                        const businessResponse = await api.post('/business/regist', {
+                        const businessResponse = await api.post('/api/business/regist', {
                             ...businessInfo,
                             email: email // 사용자 이메일을 함께 전송
                         });

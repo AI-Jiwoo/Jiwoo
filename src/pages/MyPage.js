@@ -49,7 +49,7 @@ const MyPage = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await api.get('/category/names', {
+            const response = await api.get('/api/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             console.log('Raw category data:', response.data);
@@ -79,7 +79,7 @@ const MyPage = () => {
     };
     const fetchUserInfo = async () => {
         try {
-            const response = await api.get('/auth/profile', {
+            const response = await api.get('/api/auth/profile', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             const userData = response.data;
@@ -98,7 +98,7 @@ const MyPage = () => {
 
     const fetchBusinessInfos = async () => {
         try {
-            const response = await api.get('/business/user', {
+            const response = await api.get('/api/business/user', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             console.log('Raw response:', response.data);
@@ -151,7 +151,7 @@ const MyPage = () => {
             return;
         }
         try {
-            await api.post('/auth/edit/password', {
+            await api.post('/api/auth/edit/password', {
                 oldPassword: passwordForm.oldPassword,
                 newPassword: passwordForm.newPassword
             }, {
@@ -180,7 +180,7 @@ const MyPage = () => {
     const handleSaveInfo = async () => {
         try {
             console.log('Saving user info:', userInfo);
-            const response = await api.post('/auth/edit/info', {
+            const response = await api.post('/api/auth/edit/info', {
                 gender: userInfo.gender,
                 phoneNo: userInfo.phoneNo
             }, {
@@ -207,7 +207,7 @@ const MyPage = () => {
 
             console.log('Submitting business info:', processedInfo);
 
-            const response = await api.post('/business/regist', processedInfo, {
+            const response = await api.post('/api/business/regist', processedInfo, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
                     'Content-Type': 'application/json'

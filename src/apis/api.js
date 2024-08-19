@@ -1,8 +1,8 @@
 import axios from 'axios';
 import {getAccessTokenHeader, isTokenExpired, refreshToken, removeToken} from '../utils/TokenUtils';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://13.124.128.228:5000';
-const AI_BASE_URL = process.env.REACT_APP_AI_URL || 'http://13.124.128.228:8001';
+const API_BASE_URL = '/api';
+const AI_BASE_URL = '/ai';
 
 const createApiInstance = (baseURL) => {
     const instance = axios.create({ baseURL });

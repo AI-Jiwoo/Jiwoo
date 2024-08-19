@@ -47,7 +47,7 @@ function LoginPage() {
             const performLogin = async () => {
                 try {
                     console.log('Attempting login...');
-                    const response = await api.post('/login', { email, password });
+                    const response = await api.post('/api/login', { email, password });
                     console.log('Full response:', response);
 
                     // 응답 헤더 로깅

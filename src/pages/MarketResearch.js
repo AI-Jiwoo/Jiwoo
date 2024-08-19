@@ -160,7 +160,7 @@ const MarketResearch = () => {
 
     const fetchBusinesses = async () => {
         try {
-            const response = await api.get('/business/user', {
+            const response = await api.get('/api/business/user', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             setBusinesses(response.data.business || []);
@@ -174,7 +174,7 @@ const MarketResearch = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await api.get(`/market-research/history?page=${currentPage}&size=10`, {
+            const response = await api.get(`/api/market-research/history?page=${currentPage}&size=10`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             console.log('Research history response:', response.data);  // 디버깅용
@@ -196,7 +196,7 @@ const MarketResearch = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await api.get('/category/names', {
+            const response = await api.get('/api/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             setCategories(response.data || []);
@@ -272,25 +272,25 @@ const MarketResearch = () => {
             const timestamp = new Date().getTime();
             switch (type) {
                 case 'marketSize':
-                    const marketSizeResponse = await api.post(`/market-research/market-size-growth?t=${timestamp}`, data, { headers });
+                    const marketSizeResponse = await api.post(`/api/market-research/market-size-growth?t=${timestamp}`, data, { headers });
                     setMarketSizeGrowth(marketSizeResponse.data.data);
                     marketInformation = JSON.stringify(marketSizeResponse.data.data);
                     break;
                 case 'similarServices':
-                    const similarServicesResponse = await api.post(`/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
+                    const similarServicesResponse = await api.post(`/api/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
                     setSimilarServices(similarServicesResponse.data.data);
                     competitorAnalysis = JSON.stringify(similarServicesResponse.data.data);
                     break;
                 case 'trendCustomerTechnology':
-                    const trendResponse = await api.post(`/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
+                    const trendResponse = await api.post(`/api/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
                     setTrendCustomerTechnology(trendResponse.data.data);
                     marketTrends = JSON.stringify(trendResponse.data.data);
                     break;
                 case 'all':
                     const [marketSizeGrowthRes, similarServicesRes, trendCustomerTechnologyRes] = await Promise.all([
-                        api.post(`/market-research/market-size-growth?t=${timestamp}`, data, { headers }),
-                        api.post(`/market-research/similar-services-analysis?t=${timestamp}`, data, { headers }),
-                        api.post(`/market-research/trend-customer-technology?t=${timestamp}`, data, { headers })
+                        api.post(`/api/market-research/market-size-growth?t=${timestamp}`, data, { headers }),
+                        api.post(`/api/market-research/similar-services-analysis?t=${timestamp}`, data, { headers }),
+                        api.post(`/api/market-research/trend-customer-technology?t=${timestamp}`, data, { headers })
                     ]);
                     setMarketSizeGrowth(marketSizeGrowthRes.data.data);
                     setSimilarServices(similarServicesRes.data.data);
@@ -310,7 +310,7 @@ const MarketResearch = () => {
                 marketEntryStrategy,
                 businessId: selectedBusiness?.id || -1
             };
-            await api.post('/market-research/save-history', historyData, { headers });
+            await api.post('/api/market-research/save-history', historyData, { headers });
             setCurrentStep(3);
 
             const newHistory = [...researchHistory, historyData];
