@@ -310,7 +310,7 @@ const MarketResearch = () => {
                 marketEntryStrategy,
                 businessId: selectedBusiness?.id || -1
             };
-            await api.post('/api/market-research/save-history', historyData, { headers });
+            await api.post('/market-research/save-history', historyData, { headers });
             setCurrentStep(3);
 
             const newHistory = [...researchHistory, historyData];
