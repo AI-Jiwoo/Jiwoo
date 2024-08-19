@@ -69,7 +69,7 @@ import {aiApi} from "../apis/api";
             setIsLoading(true);
 
             try {
-                const response = await aiApi.post('/ai/chat', { message: inputMessage });
+                const response = await aiApi.post('/chat', { message: inputMessage });
                 const botMessage = { text: response.data.message, sender: 'bot' };
                 setMessages(prev => [...prev, botMessage]);
             } catch (error) {
