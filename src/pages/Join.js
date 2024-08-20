@@ -58,13 +58,53 @@ function Join() {
     const [birthDate, setBirthDate] = useState('');
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [isBusinessInfoValid, setIsBusinessInfoValid] = useState(false);
+    const [emailError, setEmailError] = useState('');
+    const [birthDateError, setBirthDateError] = useState('');
     const toast = useToast();
 
+
+    const validateEmail = (email) => {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    };
+
+    const handleEmailChange = (e) => {
+        const newEmail = e.target.value;
+        setEmail(newEmail);
+        setIsEmailVerified(false);
+        if (!validateEmail(newEmail)) {
+            setEmailError('올바른 이메일 형식이 아닙니다.');
+        } else {
+            setEmailError('');
+        }
+    };
+
+    const handleBirthDateChange = (e) => {
+        const selectedDate = new Date(e.target.value);
+        const today = new Date();
+
+        if (selectedDate > today) {
+            setBirthDateError('미래의 날짜는 선택할 수 없습니다.');
+        } else {
+            setBirthDateError('');
+            setBirthDate(e.target.value);
+        }
+    };
 
     const handleEmailCheck = async () => {
         if (!email) {
             toast({
                 title: "이메일을 입력해주세요.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+                position: "top",
+            });
+            return;
+        }
+        if (emailError) {
+            toast({
+                title: "올바른 이메일 형식이 아닙니다.",
                 status: "warning",
                 duration: 3000,
                 isClosable: true,
@@ -107,10 +147,6 @@ function Join() {
         }
     };
 
-    const handleEmailChange = (e) => {
-        setEmail(e.target.value);
-        setIsEmailVerified(false);  // 이메일이 변경되면 검증 상태 초기화
-    };
 
     const handleSignup = async () => {
         if (!isEmailVerified) {
@@ -176,7 +212,7 @@ function Join() {
                     }
                 }
 
-                handleNextStep();
+                setActiveStep(steps.length - 1);
             }
         } catch (error) {
             console.error('Signup error:', error.response?.data || error.message);
@@ -202,10 +238,6 @@ function Join() {
         setActiveStep((prevStep) => prevStep + 1);
     };
 
-    const handleBusinessInfoSubmit = (info, isValid) => {
-        setBusinessInfo(info);
-        setIsBusinessInfoValid(isValid);
-    };
 
     const handleLogin = () => {
         navigate('/login');
@@ -216,14 +248,19 @@ function Join() {
             case 0:
                 return (
                     <>
+                        <FormControl>
                         <Flex align="center">
                             <Checkbox
+                                id="termsAgreed"
                                 isChecked={termsAgreed}
                                 onChange={(e) => setTermsAgreed(e.target.checked)}
                                 mr={4}
                             />
+                            <FormLabel htmlFor="termsAgreed" mb={0} cursor="pointer">
                             <Heading as="h3" size="md">홈페이지 이용약관 동의 (필수)</Heading>
+                            </FormLabel>
                         </Flex>
+                        </FormControl>
                         <Textarea
                             height="200px"
                             readOnly
@@ -231,15 +268,19 @@ function Join() {
                             overflowY="scroll"
                             whiteSpace="pre-line"
                         />
-
+                            <FormControl mt={4}>
                         <Flex align="center" mt={4}>
                             <Checkbox
+                                id="privacyAgreed"
                                 isChecked={privacyAgreed}
                                 onChange={(e) => setPrivacyAgreed(e.target.checked)}
                                 mr={4}
                             />
+                            <FormLabel htmlFor="privacyAgreed" mb={0} cursor="pointer">
                             <Heading as="h3" size="md">개인정보 이용약관 동의 (필수)</Heading>
+                            </FormLabel>
                         </Flex>
+                            </FormControl>
                         <Textarea
                             height="200px"
                             readOnly
@@ -301,12 +342,13 @@ function Join() {
                                 </InputRightElement>
                             </InputGroup>
                         </FormControl>
-                        <FormControl isRequired>
+                        <FormControl isRequired isInvalid={birthDateError !== ''}>
                             <FormLabel>생년월일</FormLabel>
                             <Input
                                 type="date"
                                 value={birthDate}
                                 onChange={(e) => setBirthDate(e.target.value)}
+                                max={new Date().toISOString().split('T')[0]}
                             />
                         </FormControl>
 
@@ -320,7 +362,7 @@ function Join() {
                             <Button
                                 colorScheme="teal"
                                 onClick={handleSignup}
-                                isDisabled={hasBusiness && !isBusinessInfoValid}
+                                isDisabled={hasBusiness && !isBusinessInfoValid || emailError !== '' || birthDateError !== ''}
                             >
                                 가입완료
                             </Button>
