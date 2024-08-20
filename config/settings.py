@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     HOST: str = Field(default="0.0.0.0")
     PORT: int = Field(default=8000)
 
-    # SerpAPI 설정 (웹 검색용)
-    SERPAPI_KEY: str = Field(default="")
+    # Exa API 설정 (웹 검색용)
+    EXA_API_KEY: str = Field(default="")
 
     # 환경 변수 설정
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)

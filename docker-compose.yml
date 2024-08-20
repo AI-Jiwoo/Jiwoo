@@ -65,7 +65,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - HOST=0.0.0.0
       - PORT=8000
-      - SERPAPI_KEY=${SERPAPI_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
     volumes:
       - .:/app
     ports:
