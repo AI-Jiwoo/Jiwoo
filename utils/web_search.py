@@ -1,20 +1,17 @@
 import logging
 import os
-
 import requests
 
-# 로그 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class WebSearch:
-    """SerpAPI를 사용한 웹 검색 기능을 제공하는 클래스"""
+    """Exa API를 사용한 웹 검색 기능을 제공하는 클래스"""
 
     def __init__(self):
-        """SerpAPI 키 설정 및 기본 URL 초기화"""
-        self.api_key = os.getenv("SERPAPI_KEY")
-        self.base_url = "https://serpapi.com/search"
+        """Exa API 키 설정 및 기본 URL 초기화"""
+        self.api_key = os.getenv("EXA_API_KEY")
+        self.base_url = "https://api.exa.ai/search"
 
     def search(self, query: str, num_results: int = 3):
         """
@@ -26,16 +23,20 @@ class WebSearch:
         logger.info(f"Executing web search for query: '{query}' with num_results={num_results}")
 
         try:
-            # SerpAPI 요청 파라미터 설정
-            params = {"q": query, "num": num_results, "api_key": self.api_key}
-            # API 요청 수행
-            response = requests.get(self.base_url, params=params)
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "query": query,
+                "num_results": num_results
+            }
+            response = requests.post(self.base_url, headers=headers, json=data)
             response.raise_for_status()
             results = response.json()
 
-            # 검색 결과 처리 및 반환
-            if "organic_results" in results:
-                search_results = [{"content": result.get("snippet", "")} for result in results["organic_results"]]
+            if "results" in results:
+                search_results = [{"content": result.get("text", "")} for result in results["results"]]
                 logger.info(f"Search completed. Number of results found: {len(search_results)}")
                 return search_results
             else:
