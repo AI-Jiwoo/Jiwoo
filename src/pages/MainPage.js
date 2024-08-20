@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Text, Flex, Image, IconButton, HStack, VStack } from '@chakra-ui/react';
-import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons';
+import { Box, Text, Flex, VStack, Grid, Button, Spinner, useToast } from '@chakra-ui/react';
 import MainHeader from '../component/common/MainHeader';
 import Chatbot from "../component/Chatbot";
 import MarketResearch from "./MarketResearch";
@@ -8,19 +7,77 @@ import BusinessModel from "./BusinessModel";
 import SideNavigation from "../component/SideNavigation";
 import Footer from "../component/common/Footer";
 import Accounting from "./Accounting";
+import api, {aiApi} from "../apis/api";
+import { useAuth } from '../context/AuthContext';
+import {getAccessTokenHeader, isLogin, refreshToken} from "../utils/TokenUtils";
+import axios from "axios";
 
 function MainPage() {
-    const [currentSlide, setCurrentSlide] = useState(0);
+    const [recommendedPrograms, setRecommendedPrograms] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
     const marketResearchRef = useRef(null);
     const businessModelRef = useRef(null);
-    const accountingRef = useRef(null); // 새로 추가
+    const accountingRef = useRef(null);
     const [activeSection, setActiveSection] = useState('marketSize');
-
-
+    const toast = useToast();
+    const { user, setUser } = useAuth();
 
     useEffect(() => {
+        const checkAuthAndFetchPrograms = async () => {
+            if (isLogin()) {
+                fetchRecommendedPrograms();
+            } else {
+                const newToken = await refreshToken();
+                if (newToken) {
+                    setUser({ email: newToken.email });
+                    fetchRecommendedPrograms();
+                }
+            }
+        };
+
+        checkAuthAndFetchPrograms();
         window.scrollTo(0, 0);
-    }, []);
+    }, [setUser]);
+
+    const fetchRecommendedPrograms = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axios.get('http://localhost:5000/support_program/recommend', {
+                headers: {
+                    'Authorization': getAccessTokenHeader()
+                }
+            });
+            console.log('Recommended programs response:', response.data); // 디버깅 로그
+            setRecommendedPrograms(response.data);
+        } catch (error) {
+            console.error('Error fetching recommended programs:', error);
+            if (error.response?.status === 401) {
+                const newToken = await refreshToken();
+                if (newToken) {
+                    fetchRecommendedPrograms();
+                } else {
+                    toast({
+                        title: "로그인 필요",
+                        description: "세션이 만료되었습니다. 다시 로그인해 주세요.",
+                        status: "warning",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
+            } else {
+                toast({
+                    title: "추천 프로그램 로딩 실패",
+                    description: "프로그램을 불러오는 중 오류가 발생했습니다.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
 
     useEffect(() => {
@@ -52,24 +109,6 @@ function MainPage() {
         }
     };
 
-    const features = [
-        { title: "창업 가이드", description: "AI 기반 맞춤형 창업 전략", icon: "/path/to/icon1.png" },
-        { title: "비즈니스 모델", description: "혁신적인 비즈니스 모델 설계", icon: "/path/to/icon2.png" },
-        { title: "세무 처리", description: "간편한 세무 관리 솔루션", icon: "/path/to/icon3.png" },
-        { title: "시장 조사", description: "AI 기반 시장 트렌드 분석", icon: "/path/to/icon4.png" },
-    ];
-
-    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % features.length);
-    const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + features.length) % features.length);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            nextSlide();
-        }, 5000); // 5초마다 자동 슬라이드
-
-        return () => clearInterval(timer);
-    }, []);
-
     const scrollToMarketResearch = () => {
         marketResearchRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -82,92 +121,71 @@ function MainPage() {
         accountingRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-
     return (
         <Box>
             <MainHeader
                 scrollToMarketResearch={scrollToMarketResearch}
                 scrollToBusinessModel={scrollToBusinessModel}
                 scrollToAccounting={scrollToAccounting}
-
             />
             <Chatbot />
 
             <Box
                 bg="#010B1A"
                 color="white"
-                height="100vh"
+                minHeight="100vh"
+                py={20}
                 position="relative"
                 overflow="hidden"
             >
-                <Flex height="100%" pl="10%" pr="5%" pt="10%" position="relative">
-                    <VStack align="flex-start" width="40%" mr="10%">
-                        <Text fontSize="6xl" fontWeight="bold" mb={4}>
+                <Flex maxWidth="1200px" margin="auto" direction="column">
+                    <VStack align="flex-start" spacing={6} mb={12}>
+                        <Text fontSize="6xl" fontWeight="bold" lineHeight="1.2">
                             JIWOO AI HELPER
                         </Text>
-                        <Text fontSize="xl" mb={16}>
+                        <Text fontSize="2xl" maxWidth="600px">
                             1인 IT 창업을 위한 최고의 AI 파트너<br />
                             혁신적인 기술로 당신의 창업 여정을 가속화합니다
                         </Text>
                     </VStack>
 
-                    <Flex position="relative" width="50%" height="400px" alignItems="flex-end">
-                        {features.map((feature, index) => (
-                            <Box
-                                key={index}
-                                bg={index === currentSlide ? "white" : "rgba(255,255,255,0.1)"}
-                                color={index === currentSlide ? "black" : "white"}
-                                p={8}
-                                mr={index === currentSlide ? 0 : "-80%"}
-                                width={index === currentSlide ? "100%" : "20%"}
-                                height={index === currentSlide ? "100%" : "80%"}
-                                borderRadius="2xl"
-                                cursor="pointer"
-                                onClick={() => setCurrentSlide(index)}
-                                transition="all 0.5s"
-                                zIndex={features.length - index}
-                                position="absolute"
-                                right="0"
-                                bottom="0"
-                            >
-                                <VStack align="flex-start" height="100%" justify="space-between">
-                                    <Box>
-                                        <Text fontWeight="bold" fontSize="2xl" mb={4}>{feature.title}</Text>
-                                        <Text fontSize="md">{feature.description}</Text>
-                                    </Box>
-                                    <Flex justify="space-between" align="center" width="100%">
-                                        <Image src={feature.icon} boxSize="40px" />
-                                        <ChevronRightIcon boxSize={8} />
-                                    </Flex>
-                                </VStack>
+                    {user ? (
+                        isLoading ? (
+                            <Flex justify="center" align="center" mt={12}>
+                                <Spinner size="xl" />
+                            </Flex>
+                        ) : (
+                            <Box mt={12}>
+                                <Text fontSize="3xl" fontWeight="bold" mb={6}>맞춤 추천 지원 프로그램</Text>
+                                {recommendedPrograms.length > 0 ? (
+                                    <Grid templateColumns={["1fr", "1fr", "repeat(2, 1fr)"]} gap={6}>
+                                        {recommendedPrograms.map((program, index) => (
+                                            <Box key={index} bg="rgba(255,255,255,0.1)" borderRadius="md" p={6}>
+                                                <Text fontSize="xl" fontWeight="bold" mb={3}>{program.name}</Text>
+                                                <Text mb={2}>대상: {program.target}</Text>
+                                                <Text mb={2}>지원 규모: {program.scareOfSupport}</Text>
+                                                <Text mb={2}>지원 내용: {program.supportContent}</Text>
+                                                <Text mb={2}>지원 특징: {program.supportCharacteristics}</Text>
+                                                <Text mb={2}>사업 소개: {program.supportInfo}</Text>
+                                                <Text mb={2}>지원 연도: {program.supportYear}</Text>
+                                                <Button as="a" href={program.originUrl} target="_blank" colorScheme="blue" size="md">
+                                                    자세히 보기
+                                                </Button>
+                                            </Box>
+                                        ))}
+                                    </Grid>
+                                ) : (
+                                    <Text textAlign="center" fontSize="xl">현재 추천할 수 있는 프로그램이 없습니다.</Text>
+                                )}
                             </Box>
-                        ))}
-                    </Flex>
+                        )
+                    ) : (
+                        <Text mt={12} textAlign="center" fontSize="xl">추천 프로그램을 보려면 로그인이 필요합니다.</Text>
+                    )}
                 </Flex>
-
-                <HStack position="absolute" right="5%" top="5%" color="white">
-                    <IconButton
-                        icon={<ChevronLeftIcon />}
-                        onClick={prevSlide}
-                        variant="ghost"
-                        color="white"
-                        _hover={{ bg: "transparent" }}
-                        aria-label="Previous slide"
-                    />
-                    <Text>{`${String(currentSlide + 1).padStart(2, '0')} / ${String(features.length).padStart(2, '0')}`}</Text>
-                    <IconButton
-                        icon={<ChevronRightIcon />}
-                        onClick={nextSlide}
-                        variant="ghost"
-                        color="white"
-                        _hover={{ bg: "transparent" }}
-                        aria-label="Next slide"
-                    />
-                </HStack>
             </Box>
 
             <SideNavigation activeSection={activeSection} scrollToSection={scrollToSection} />
-
 
             <Box ref={marketResearchRef}>
                 <MarketResearch />

@@ -1,76 +1,90 @@
-import React from 'react';
-import { Box, Text, Flex, VStack, HStack, Image, Grid } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
-import { ChevronRightIcon } from '@chakra-ui/icons';
-
-function MainBanner() {
-    const features = [
-        { title: "창업 가이드", description: "AI 기반 맞춤형 창업 전략", icon: "path/to/icon1.png" },
-        { title: "비즈니스 모델", description: "혁신적인 비즈니스 모델 설계", icon: "path/to/icon2.png" },
-        { title: "세무 처리", description: "간편한 세무 관리 솔루션", icon: "path/to/icon3.png" },
-        { title: "시장 조사", description: "AI 기반 시장 트렌드 분석", icon: "path/to/icon4.png" },
-    ];
-
-    return (
-        <Box
-            bg="linear-gradient(to right, #000428, #004e92)"
-            color="white"
-            py={20}
-            position="relative"
-            overflow="hidden"
-        >
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-            >
-                <Flex maxWidth="1200px" margin="auto" flexDirection="column">
-                    <VStack align="flex-start" spacing={6} mb={12}>
-                        <Text fontSize="6xl" fontWeight="bold" lineHeight="1.2">
-                            JIWOO AI HELPER
-                        </Text>
-                        <Text fontSize="2xl" maxWidth="600px">
-                            1인 IT 창업을 위한 최고의 AI 파트너
-                            혁신적인 기술로 당신의 창업 여정을 가속화합니다
-                        </Text>
-                    </VStack>
-
-                    <Grid templateColumns="repeat(4, 1fr)" gap={6}>
-                        {features.map((feature, index) => (
-                            <Box
-                                key={index}
-                                bg="rgba(255,255,255,0.1)"
-                                borderRadius="md"
-                                p={4}
-                                _hover={{ bg: "rgba(255,255,255,0.2)" }}
-                                cursor="pointer"
-                            >
-                                <HStack>
-                                    <Image src={feature.icon} boxSize="40px" mr={3} />
-                                    <VStack align="start" spacing={1}>
-                                        <Text fontWeight="bold">{feature.title}</Text>
-                                        <Text fontSize="sm">{feature.description}</Text>
-                                    </VStack>
-                                    <ChevronRightIcon ml="auto" />
-                                </HStack>
-                            </Box>
-                        ))}
-                    </Grid>
-                </Flex>
-            </motion.div>
-            <Box
-                position="absolute"
-                bottom="-10%"
-                right="-5%"
-                width="50%"
-                height="120%"
-                bg="url('path/to/your/wave-image.png')"
-                backgroundSize="cover"
-                backgroundPosition="center"
-                opacity="0.2"
-            />
-        </Box>
-    );
-}
-
-export default MainBanner;
+// import React, { useState, useEffect } from 'react';
+// import { Box, Text, Flex, VStack, Grid, Button, Spinner, useToast } from '@chakra-ui/react';
+// import { motion } from 'framer-motion';
+// import api from "../../apis/api";
+//
+// function MainBanner() {
+//     const [recommendedPrograms, setRecommendedPrograms] = useState([]);
+//     const [isLoading, setIsLoading] = useState(false);
+//     const toast = useToast();
+//
+//     const fetchRecommendedPrograms = async () => {
+//         setIsLoading(true);
+//         try {
+//             const response = await api.get('/support_program/recommend');
+//             setRecommendedPrograms(response.data);
+//         } catch (error) {
+//             console.error('Error fetching recommended programs:', error);
+//             toast({
+//                 title: "추천 프로그램 로딩 실패",
+//                 description: "프로그램을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+//                 status: "error",
+//                 duration: 5000,
+//                 isClosable: true,
+//             });
+//         } finally {
+//             setIsLoading(false);
+//         }
+//     };
+//
+//     useEffect(() => {
+//         fetchRecommendedPrograms();
+//     }, []);
+//
+//     return (
+//         <Box
+//             bg="linear-gradient(to right, #000428, #004e92)"
+//             color="white"
+//             py={20}
+//             position="relative"
+//             overflow="hidden"
+//         >
+//             <motion.div
+//                 initial={{ opacity: 0, y: 20 }}
+//                 animate={{ opacity: 1, y: 0 }}
+//                 transition={{ duration: 0.8 }}
+//             >
+//                 <Flex maxWidth="1200px" margin="auto" flexDirection="column">
+//                     <VStack align="flex-start" spacing={6} mb={12}>
+//                         <Text fontSize="6xl" fontWeight="bold" lineHeight="1.2">
+//                             JIWOO AI HELPER
+//                         </Text>
+//                         <Text fontSize="2xl" maxWidth="600px">
+//                             1인 IT 창업을 위한 최고의 AI 파트너
+//                             혁신적인 기술로 당신의 창업 여정을 가속화합니다
+//                         </Text>
+//                     </VStack>
+//
+//                     {isLoading ? (
+//                         <Flex justify="center" align="center" mt={12}>
+//                             <Spinner size="xl" />
+//                         </Flex>
+//                     ) : recommendedPrograms.length > 0 ? (
+//                         <Box mt={12}>
+//                             <Text fontSize="3xl" fontWeight="bold" mb={6}>맞춤 추천 지원 프로그램</Text>
+//                             <Grid templateColumns={["1fr", "1fr", "repeat(2, 1fr)"]} gap={6}>
+//                                 {recommendedPrograms.map((program, index) => (
+//                                     <Box key={index} bg="rgba(255,255,255,0.1)" borderRadius="md" p={6}>
+//                                         <Text fontSize="xl" fontWeight="bold" mb={3}>{program.name}</Text>
+//                                         <Text mb={2}>대상: {program.target}</Text>
+//                                         <Text mb={2}>지원 규모: {program.scareOfSupport}</Text>
+//                                         <Text mb={2}>지원 내용: {program.supportContent}</Text>
+//                                         <Text mb={2}>지원 특징: {program.supportCharacteristics}</Text>
+//                                         <Text mb={4}>지원 연도: {program.supportYear}</Text>
+//                                         <Button as="a" href={program.originUrl} target="_blank" colorScheme="blue" size="md">
+//                                             자세히 보기
+//                                         </Button>
+//                                     </Box>
+//                                 ))}
+//                             </Grid>
+//                         </Box>
+//                     ) : (
+//                         <Text mt={12} textAlign="center" fontSize="xl">현재 추천할 수 있는 프로그램이 없습니다.</Text>
+//                     )}
+//                 </Flex>
+//             </motion.div>
+//         </Box>
+//     );
+// }
+//
+// export default MainBanner;
