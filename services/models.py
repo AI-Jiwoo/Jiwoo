@@ -1,11 +1,8 @@
 from typing import List
-
 from pydantic import BaseModel, Field
-
 
 class CompanyInfo(BaseModel):
     """회사 정보를 나타내는 모델"""
-
     businessPlatform: str = Field(..., description="사업 유형 (예: SaaS, 제조업 등)")
     businessScale: str = Field(..., description="사업 규모 (예: 스타트업, 중소기업, 대기업 등)")
     business_field: str = Field(..., description="사업 분야 (예: IT, 바이오, 금융, 교육 등)")
@@ -47,6 +44,9 @@ class SimilaritySearchInput(BaseModel):
     query: str = Field(..., description="검색 쿼리")
     k: int = Field(5, description="반환할 결과의 수")
 
+class SimilaritySearchRequest(BaseModel):
+    query: str = Field(..., description="검색 쿼리")
+    k: int = Field(5, description="반환할 결과의 수")
 
 class SimilaritySearchResponse(BaseModel):
     """유사도 검색 응답을 위한 모델"""
@@ -70,3 +70,8 @@ class SupportProgramInfo(BaseModel):
     support_characteristics: str = Field(..., description="지원 특징")
     support_info: str = Field(..., description="사업 소개 정보")
     support_year: int = Field(..., description="사업 년도")
+
+class SupportProgramInfoSearchRequest(BaseModel):
+    query: SupportProgramInfo
+    threshold: float = Field(0.7, description="유사도 임계값")
+    k: int = Field(5, description="반환할 결과의 수")
