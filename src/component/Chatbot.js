@@ -10,7 +10,7 @@ import { FaBusinessTime, FaChartLine, FaHome, FaLightbulb, FaPaperPlane, FaRobot
 import { Link, useNavigate } from 'react-router-dom';
 import api, {aiApi} from "../apis/api";
 import jsPDF from "jspdf";
-import ViewModeToggle from "./ViewModeToggle";
+import ViewModeToggle from "../component/ViewModeToggle";
 
 const JiwooChatbot = () => {
     const [messages, setMessages] = useState([]);
