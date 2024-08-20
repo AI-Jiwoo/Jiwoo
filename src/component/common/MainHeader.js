@@ -64,15 +64,7 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                     </Link>
 
                     <HStack spacing={8}>
-                        <Link
-                            as={RouterLink}
-                            to="/startup-guide"
-                            fontWeight="bold"
-                            p={2}
-                            borderRadius="md"
-                        >
-                            창업가이드
-                        </Link>
+
                         <Link
                             href="#"
                             onClick={handleMarketResearchClick}
