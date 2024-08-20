@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import BusinessModel from "./pages/BusinessModel";
 import MainHeader from "./component/common/MainHeader";
 import MyPageLayout from "./component/common/MyPageLayout";
+import Chatbot from "./component/Chatbot";
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ function App() {
                         <Route path="/main" element={<PageLayout><MainPage /></PageLayout>} /> {/* MainPage는 PageLayout을 사용하지 않음 */}
                         <Route path="/market-research" element={<PageLayout><MainPage /></PageLayout>} />
                         <Route path="/business-model" element={<PageLayout><BusinessModel /></PageLayout>} />
+                        <Route path="/chatbot" element={<Chatbot/>} />
                         <Route path="/home" element={
                             <PrivateRoute>
                                 <PageLayout>

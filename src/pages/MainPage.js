@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Text, Flex, Image, IconButton, HStack, VStack } from '@chakra-ui/react';
-import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons';
+import {Box, Text, Flex, Image, IconButton, HStack, VStack, Button} from '@chakra-ui/react';
+import {ChevronRightIcon, ChevronLeftIcon, ChatIcon} from '@chakra-ui/icons';
 import MainHeader from '../component/common/MainHeader';
-import Chatbot from "../component/Chatbot";
 import MarketResearch from "./MarketResearch";
 import BusinessModel from "./BusinessModel";
 import SideNavigation from "../component/SideNavigation";
 import Footer from "../component/common/Footer";
 import Accounting from "./Accounting";
+import {navigate} from "@storybook/addon-links";
+import {useNavigate} from "react-router-dom";
 
 function MainPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -15,8 +16,13 @@ function MainPage() {
     const businessModelRef = useRef(null);
     const accountingRef = useRef(null); // 새로 추가
     const [activeSection, setActiveSection] = useState('marketSize');
+    const navigate = useNavigate();
 
 
+
+    const navigateToChatPage = () => {
+        navigate('/chatbot');
+    }
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -91,8 +97,6 @@ function MainPage() {
                 scrollToAccounting={scrollToAccounting}
 
             />
-            <Chatbot />
-
             <Box
                 bg="#010B1A"
                 color="white"
@@ -145,25 +149,23 @@ function MainPage() {
                     </Flex>
                 </Flex>
 
-                <HStack position="absolute" right="5%" top="5%" color="white">
-                    <IconButton
-                        icon={<ChevronLeftIcon />}
-                        onClick={prevSlide}
-                        variant="ghost"
-                        color="white"
-                        _hover={{ bg: "transparent" }}
-                        aria-label="Previous slide"
-                    />
-                    <Text>{`${String(currentSlide + 1).padStart(2, '0')} / ${String(features.length).padStart(2, '0')}`}</Text>
-                    <IconButton
-                        icon={<ChevronRightIcon />}
-                        onClick={nextSlide}
-                        variant="ghost"
-                        color="white"
-                        _hover={{ bg: "transparent" }}
-                        aria-label="Next slide"
-                    />
-                </HStack>
+                <Button
+                    position="fixed"
+                    bottom="20px"
+                    right="20px"
+                    colorScheme="blue"
+                    onClick={navigateToChatPage}
+                    zIndex={1000}
+                    borderRadius="full"
+                    width="60px"
+                    height="60px"
+                    boxShadow="lg"
+                    _hover={{ transform: 'scale(1.05)' }}
+                    transition="all 0.2s"
+                >
+                    <ChatIcon boxSize={6} />
+                </Button>
+
             </Box>
 
             <SideNavigation activeSection={activeSection} scrollToSection={scrollToSection} />
