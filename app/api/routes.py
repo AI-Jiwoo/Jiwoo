@@ -6,7 +6,18 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from services.chatbot import Chatbot
-from services.models import ChatInput, ChatResponse, CompanyInfo, CompanyInput, CompanySearchResult, SupportProgramInfo
+from services.models import (
+    ChatInput, 
+    ChatResponse, 
+    CompanyInfo, 
+    CompanyInput, 
+    CompanySearchResult, 
+    SupportProgramInfo,
+    SimilaritySearchRequest,
+    SimilaritySearchResponse,
+    SupportProgramInfoSearchRequest,
+    ContentInfo
+)
 from utils.database import get_collection
 from utils.embedding_utils import get_company_embedding, get_support_program_embedding
 from utils.vector_store import VectorStore
@@ -17,8 +28,7 @@ router = APIRouter()
 chatbot = Chatbot()
 vector_store = VectorStore()
 
-
-@router.post("/insert_company")
+@router.post("/insert_company", response_model=dict)
 async def insert_company(input: CompanyInput):
     """
     사업 정보를 데이터베이스에 저장하는 엔드포인트
@@ -30,7 +40,8 @@ async def insert_company(input: CompanyInput):
     # Milvus에 삽입할 데이터 준비
     # 회사 정보를 JSON 문자열로 변환
     company_info = json.dumps({"businessName": input.businessName, "info": input.info.dict()})
-    data = [[company_info], [embedding]]  # 회사 정보  # 임베딩 벡터
+    url = str(input.url) if input.url else ""  # URL이 제공되지 않으면 빈 문자열 사용
+    data = [[company_info], [url], [embedding]]  # 회사 정보, URL, 임베딩 벡터
     try:
         result = collection.insert(data)
         logger.info(f"Company inserted successfully: {input.businessName}")
@@ -42,8 +53,7 @@ async def insert_company(input: CompanyInput):
         logger.error(f"Failed to insert company: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to insert company: {str(e)}")
 
-
-@router.post("/search_similar_companies")
+@router.post("/search_similar_companies", response_model=List[CompanySearchResult])
 async def search_similar_companies(input: CompanyInfo):
     """
     입력된 회사 정보와 유사한 회사들을 검색하는 엔드포인트
@@ -81,7 +91,6 @@ async def search_similar_companies(input: CompanyInfo):
     logger.info(f"Found {len(search_results)} similar companies")
     return search_results
 
-
 @router.post("/chat", response_model=ChatResponse)
 async def chat(chat_input: ChatInput):
     """
@@ -97,13 +106,7 @@ async def chat(chat_input: ChatInput):
         logger.error(f"Error in chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-class SimilaritySearchRequest(BaseModel):
-    query: str
-    k: int = 5
-
-
-@router.post("/similarity_search")
+@router.post("/similarity_search", response_model=List[ContentInfo])
 async def similarity_search(request: SimilaritySearchRequest):
     """
     벡터 저장소에서 유사한 문서를 검색하는 엔드포인트
@@ -113,19 +116,12 @@ async def similarity_search(request: SimilaritySearchRequest):
     try:
         results = vector_store.similarity_search(request.query, request.k)
         logger.info(f"Similarity search completed. Found {len(results)} results")
-        return results
+        return [ContentInfo(content=result['content']) for result in results]
     except Exception as e:
         logger.error(f"Error in similarity search: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-class SupportProgramInfoSearchRequest(BaseModel):
-    query: SupportProgramInfo
-    threshold: float = 0.7
-    k: int = 5
-
-
-@router.post("/viability_search")
+@router.post("/viability_search", response_model=List[ContentInfo])
 async def business_viability_assessment_search(input: SupportProgramInfoSearchRequest):
     """
     입력된 지원 목록 중 회사의 지원 가능성을 평가하여 결과를 반환
@@ -159,7 +155,7 @@ async def business_viability_assessment_search(input: SupportProgramInfoSearchRe
                 except json.JSONDecodeError as e:
                     logger.error(f"JSON Decode Error: {e}")  # JSON 디코드 오류 로그
                     parsed_content = content  # 파싱 실패 시 원본 사용
-                search_results.append({"content": parsed_content, "metadata": {}})
+                search_results.append(ContentInfo(content=str(parsed_content)))
 
     logger.info(f"Viability search completed. Found {len(search_results)} results")
     return search_results
