@@ -71,9 +71,6 @@ function MainPage() {
         }
     ];
 
-    const navigateToChatPage = () => {
-        navigate('/chatbot');
-    }
 
     useEffect(() => {
         window.scrollTo(0, 0);
