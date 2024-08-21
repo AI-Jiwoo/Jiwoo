@@ -17,7 +17,7 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
 
     const handleMyPageClick = (e) => {
         e.preventDefault();
-        navigate('/mypage');
+        navigate('/main');
     };
 
     const handleMarketResearchClick = (e) => {
@@ -97,8 +97,8 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                     <Flex alignItems="center">
                         {user ? (
                             <>
-                                <Link as={RouterLink} to="/mypage" mx={3} onClick={handleMyPageClick}>
-                                    <Text fontWeight="bold" >마이페이지</Text>
+                                <Link as={RouterLink} to="/main" mx={3} onClick={handleMyPageClick}>
+                                    <Text fontWeight="bold">메인페이지</Text>
                                 </Link>
                                 <Text fontWeight="bold" mx={2}>|</Text>
                                 <Link onClick={handleLogout} ml={3}>

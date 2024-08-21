@@ -21,6 +21,7 @@ import {
 import { FaChevronDown, FaChevronRight, FaChevronLeft, FaRobot, FaChartLine, FaCalculator } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import landingImage from '../images/landing.png';
+import {navigate} from "@storybook/addon-links";
 
 const MotionBox = motion(Box);
 const MotionText = motion(Text);
@@ -28,7 +29,7 @@ const MotionHeading = motion(Heading);
 const MotionButton = motion(Button);
 
 const LandingPage = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const bg = useColorModeValue('white', 'gray.800');
     const color = useColorModeValue('black', 'white');
     const textBg = useColorModeValue('gray.100', 'gray.700');
@@ -44,6 +45,15 @@ const LandingPage = () => {
         setTimeout(() => {
             sectionRefs[sectionNumber].current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/');  // 로그아웃 후 랜딩 페이지로 리다이렉트
+        } catch (error) {
+            console.error('로그아웃 중 오류 발생:', error);
+        }
     };
 
     const nextSection = () => {
@@ -97,8 +107,11 @@ const LandingPage = () => {
                                         <Button variant="ghost">마이페이지</Button>
                                     </Link>
                                     <Link as={RouterLink} to="/main" mx={3}>
-                                        <Button colorScheme="blue">메인페이지</Button>
+                                        <Button variant="ghost">메인페이지</Button>
                                     </Link>
+                                    <Button onClick={handleLogout} variant="ghost" ml={3}>
+                                        로그아웃
+                                    </Button>
                                 </>
                             ) : (
                                 <>
@@ -147,10 +160,8 @@ const LandingPage = () => {
                             </Heading>
                             <Text fontSize={["2xl", "3xl"]} fontWeight="bold">창업의 여정, JIWOO가 함께합니다</Text>
                             <Flex mt={4}>
-                                <Button colorScheme="gray" mr={4} size="lg">App Store</Button>
-                                <Button colorScheme="gray" size="lg">Google Play</Button>
                                 <Button as={RouterLink} to="/main" colorScheme="gray" size="lg">
-                                    웹으로 체험하기
+
                                 </Button>
                             </Flex>
                         </VStack>
@@ -226,7 +237,7 @@ const LandingPage = () => {
                                 JIWOO의 AI 챗봇이 창업 과정을 안내하며, 필요한 정보를 손쉽게 제공해 드립니다.
                                 이제 JIWOO와 함께 창업의 모든 단계를 더욱 효율적으로 진행하세요!
                             </Text>
-                            <Button leftIcon={<FaRobot />} colorScheme="blue" size="lg">
+                            <Button as={RouterLink} to="/login" leftIcon={<FaRobot />} colorScheme="blue" size="lg">
                                 AI 챗봇 시작하기
                             </Button>
                         </Box>
@@ -329,7 +340,7 @@ const LandingPage = () => {
                                         여러분의 아이디어를 성공적인 비즈니스로 발전시킵니다.
                                         전문적인 인사이트와 데이터 기반의 분석으로 여러분의 성공을 지원합니다.
                                     </Text>
-                                    <Button leftIcon={<FaChartLine />} colorScheme="green" size="lg">
+                                    <Button as={RouterLink} to="/login" leftIcon={<FaChartLine />} colorScheme="green" size="lg">
                                         엑셀러레이팅 시작하기
                                     </Button>
                                 </Box>
@@ -455,7 +466,7 @@ const LandingPage = () => {
                                             <Text>사업 특성에 맞는 세무 보고서를 자동으로 생성합니다.</Text>
                                         </Box>
                                     </SimpleGrid>
-                                    <Button leftIcon={<FaCalculator />} colorScheme="green" size="lg">
+                                    <Button as={RouterLink} to="/login" leftIcon={<FaCalculator />} colorScheme="green" size="lg">
                                         세무처리 시작하기
                                     </Button>
                                 </Box>
