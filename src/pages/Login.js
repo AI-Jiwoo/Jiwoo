@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 import api from '../apis/api';
 import { saveToken, isLogin } from '../utils/TokenUtils';
 import {jwtDecode} from 'jwt-decode';
-import axios from "axios";
 
 const successToast = {
     title: "로그인 성공",
@@ -77,6 +76,13 @@ function LoginPage() {
                             const role = response.headers['userrole'] || decodedToken.role || 'USER';
 
                             setUser({ email: decodedToken.sub || email, role: role });
+
+                            // 로그인시 아이디 저장
+                            if (rememberMe) {
+                                localStorage.setItem('savedEmail', email);
+                            } else {
+                                localStorage.removeItem('savedEmail')
+                            }
 
                             console.log('Login successful, navigating to home page');
                             toast(successToast);
