@@ -50,7 +50,9 @@ services:
       - milvus
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: jiwoo-ai-app
     environment:
       - PROJECT_NAME=${PROJECT_NAME:-Jiwoo-AI-Server}
@@ -65,14 +67,14 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - HOST=0.0.0.0
       - PORT=8000
-      - SERPAPI_KEY=${SERPAPI_KEY}
+      - SERPER_API_KEY=${SERPER_API_KEY}
     volumes:
       - .:/app
     ports:
       - "8001:8000"
     depends_on:
       - standalone
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
     networks:
       - milvus
 
