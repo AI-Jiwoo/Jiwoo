@@ -1,5 +1,5 @@
-from typing import List
-from pydantic import BaseModel, Field
+from typing import List, Optional
+from pydantic import BaseModel, Field, HttpUrl
 
 class CompanyInfo(BaseModel):
     """회사 정보를 나타내는 모델"""
@@ -16,6 +16,7 @@ class CompanyInput(BaseModel):
 
     businessName: str = Field(..., description="회사명")
     info: CompanyInfo = Field(..., description="회사 정보")
+    url: Optional[HttpUrl] = Field(None, description="회사 웹사이트 URL")
 
 
 class CompanySearchResult(BaseModel):
