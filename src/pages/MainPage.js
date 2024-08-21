@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Box, Text, Flex, Image, IconButton, HStack, VStack, Button, Select, useToast } from '@chakra-ui/react';
 import { ChevronRightIcon, ChevronLeftIcon, ChatIcon } from '@chakra-ui/icons';
@@ -7,6 +8,7 @@ import BusinessModel from "./BusinessModel";
 import SideNavigation from "../component/SideNavigation";
 import Footer from "../component/common/Footer";
 import Accounting from "./Accounting";
+
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
 import api from "../apis/api";
@@ -23,11 +25,13 @@ function MainPage() {
     const accountingRef = useRef(null);
     const [activeSection, setActiveSection] = useState('marketSize');
     const navigate = useNavigate();
+
     const { user } = useAuth();
     const [allRecommendedPrograms, setAllRecommendedPrograms] = useState([]);
     const [businessInfos, setBusinessInfos] = useState([]);
     const [selectedBusinessId, setSelectedBusinessId] = useState(null);
     const toast = useToast();
+
 
     const features = [
         { title: "창업 가이드", description: "AI 기반 맞춤형 창업 전략", icon: bannerImage },
@@ -66,6 +70,10 @@ function MainPage() {
             link: "/ai-features"
         }
     ];
+
+    const navigateToChatPage = () => {
+        navigate('/chatbot');
+    }
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -356,6 +364,8 @@ function MainPage() {
                 >
                     <ChatIcon boxSize={6} />
                 </Button>
+
+
             </Box>
 
             <SideNavigation activeSection={activeSection} scrollToSection={scrollToSection} />
