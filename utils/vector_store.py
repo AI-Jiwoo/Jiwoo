@@ -1,5 +1,5 @@
 import logging
-
+from typing import List, Dict
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
 from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, utility
@@ -9,7 +9,6 @@ from utils.database import connect_to_milvus, get_collection
 from utils.embedding_utils import get_embedding_function
 
 logger = logging.getLogger(__name__)
-
 
 class VectorStore:
     """Milvus를 사용한 벡터 저장소 클래스"""
@@ -37,6 +36,7 @@ class VectorStore:
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
             FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
+            FieldSchema(name="url", dtype=DataType.VARCHAR, max_length=1024),  # URL 필드 추가
             FieldSchema(
                 name="embedding",
                 dtype=DataType.FLOAT_VECTOR,
@@ -66,19 +66,33 @@ class VectorStore:
         }
         collection.create_index("embedding", index_params)
 
-    def add_texts(self, texts):
+    def add_texts(self, texts: List[str], urls: List[str] = None):
         """
         텍스트를 벡터 저장소에 추가
         :param texts: 추가할 텍스트 리스트
+        :param urls: 텍스트에 해당하는 URL 리스트 (선택적)
         """
         collection = get_collection(self.collection_name)
         embeddings = [self.embedding_function(text) for text in texts]
-        entities = [texts, embeddings]
+        
+        if urls is None:
+            urls = [""] * len(texts)
+        
+        entities = [texts, urls, embeddings]
         collection.insert(entities)
         collection.flush()
         logger.info(f"Added {len(texts)} texts to the collection")
 
-    def similarity_search(self, query, k=5):
+    def add_search_results(self, results: List[Dict[str, str]]):
+        """
+        검색 결과를 벡터 저장소에 추가
+        :param results: 검색 결과 리스트 (각 항목은 'content'와 'url' 키를 포함하는 딕셔너리)
+        """
+        texts = [result['content'] for result in results]
+        urls = [result['url'] for result in results]
+        self.add_texts(texts, urls)
+
+    def similarity_search(self, query: str, k: int = 5) -> List[Dict[str, str]]:
         """
         유사도 검색 수행
         :param query: 검색 쿼리
@@ -88,68 +102,77 @@ class VectorStore:
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
 
-        # 검색 실행
         results = collection.search(
             data=[self.embedding_function(query)],
             anns_field="embedding",
             param=search_params,
             limit=k,
-            output_fields=["content"],
+            output_fields=["content", "url"],
         )
 
-        # 검색 결과 로깅
         if not results or len(results[0]) == 0:
             logger.info("No results found in vector store.")
             return []
 
-        # 결과가 존재할 경우 내용 반환
-        hits = [{"content": hit.entity.get("content"), "metadata": {}} for hit in results[0] if hit.entity.get("content")]
+        hits = [
+            {"content": hit.entity.get("content"), "url": hit.entity.get("url"), "metadata": {}}
+            for hit in results[0] if hit.entity.get("content")
+        ]
 
         if not hits:
             logger.info("No content found in the search results.")
-            return []
 
         return hits
 
-    def search_with_similarity_threshold(self, query, k=5, threshold=0.4):
+    def search_with_similarity_threshold(self, query: str, k: int = 5, threshold: float = 0.4) -> List[Dict[str, str]]:
         """
-        유사도 검색 수행, 유사도 임계값을 넘지 않으면 빈 리스트 반환
+        유사도 임계값을 적용한 검색 수행
         :param query: 검색 쿼리
-        :param k: 반환할 결과 수
+        :param k: 반환할 최대 결과 수
         :param threshold: 유사도 임계값
-        :return: 유사한 문서 리스트. 임계값을 넘지 않으면 빈 리스트를 반환.
+        :return: 임계값을 넘는 유사한 문서 리스트
         """
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
 
-        # 검색 실행
         results = collection.search(
             data=[self.embedding_function(query)],
             anns_field="embedding",
             param=search_params,
             limit=k,
-            output_fields=["content"],
+            output_fields=["content", "url"],
         )
 
-        # 검색 결과 로깅
         if not results or len(results[0]) == 0:
             logger.info("No results found in vector store.")
             return []
 
-        # 임계값을 넘는 결과만 반환
         hits = []
         for hit in results[0]:
             distance = hit.distance
-            similarity = 1 - (distance / max(results[0][0].distance, 1))  # 거리 기반 유사도 계산
+            similarity = 1 - (distance / max(results[0][0].distance, 1))
             if similarity >= threshold:
-                hits.append({"content": hit.entity.get("content"), "metadata": {}})
+                hits.append({
+                    "content": hit.entity.get("content"),
+                    "url": hit.entity.get("url"),
+                    "metadata": {"similarity": similarity}
+                })
 
         if not hits:
             logger.info(f"No results met the similarity threshold of {threshold}.")
 
         return hits
 
-    def load_documents(self, file_path):
+    def get_relevant_info(self, query: str, k: int = 5) -> List[Dict[str, str]]:
+        """
+        주어진 쿼리에 대해 관련 정보를 검색
+        :param query: 검색 쿼리
+        :param k: 반환할 결과 수
+        :return: 관련 정보 리스트
+        """
+        return self.search_with_similarity_threshold(query, k=k, threshold=settings.SIMILARITY_THRESHOLD)
+
+    def load_documents(self, file_path: str):
         """
         파일에서 문서 로드 및 벡터 저장소에 추가
         :param file_path: 로드할 파일 경로
