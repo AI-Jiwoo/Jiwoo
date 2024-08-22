@@ -13,6 +13,7 @@ import api, { aiApi } from "../apis/api";
 import jsPDF from "jspdf";
 import ViewModeToggle from "../component/ViewModeToggle";
 import ReactTypingEffect from 'react-typing-effect';
+import koreanFontUrl from '../font/NanumMyeongjo-Regular.ttf'
 
 const JiwooChatbot = () => {
     const [messages, setMessages] = useState([]);
@@ -25,6 +26,26 @@ const JiwooChatbot = () => {
     const toast = useToast();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // 한국어 폰트 로드 함수
+    const loadKoreanFont = async () => {
+        const fontResponse = await fetch(koreanFontUrl);
+        const fontArrayBuffer = await fontResponse.arrayBuffer();
+        const fontBase64 = btoa(
+            new Uint8Array(fontArrayBuffer)
+                .reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        return fontBase64;
+    };
+
+    // Base64 인코딩/디코딩 함수 추가
+    function encodeBase64(str) {
+        return window.btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function decodeBase64(str) {
+        return decodeURIComponent(escape(window.atob(str)));
+    }
 
     useEffect(() => {
         fetchResearchHistory();
@@ -137,11 +158,22 @@ const JiwooChatbot = () => {
         });
     };
 
-    const downloadAsPDF = (text) => {
+
+    const downloadAsPDF = async (text) => {
+        const koreanFont = await loadKoreanFont();
+
         const doc = new jsPDF();
-        doc.text(text, 10, 10);
+
+        // Add font to the VFS
+        doc.addFileToVFS('NanumMyeongjo-Regular.ttf', koreanFont);
+        doc.addFont('NanumMyeongjo-Regular.ttf', 'NanumMyeongjo', 'normal');
+        doc.setFont('NanumMyeongjo');
+
+        const splitText = doc.splitTextToSize(text, 180);
+        doc.text(splitText, 10, 10);
         doc.save('jiwoo_ai_chat.pdf');
     };
+
 
     const renderAnswer = () => {
         return messages.map((message, index) => (
