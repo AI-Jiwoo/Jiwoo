@@ -38,15 +38,6 @@ const JiwooChatbot = () => {
         return fontBase64;
     };
 
-    // Base64 인코딩/디코딩 함수 추가
-    function encodeBase64(str) {
-        return window.btoa(unescape(encodeURIComponent(str)));
-    }
-
-    function decodeBase64(str) {
-        return decodeURIComponent(escape(window.atob(str)));
-    }
-
     useEffect(() => {
         fetchResearchHistory();
     }, []);
@@ -159,67 +150,106 @@ const JiwooChatbot = () => {
     };
 
 
-    const downloadAsPDF = async (text) => {
+    const downloadAsPDF = async (question, answer) => {
         const koreanFont = await loadKoreanFont();
 
-        const doc = new jsPDF();
+        const doc = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4'
+        });
 
         // Add font to the VFS
         doc.addFileToVFS('NanumMyeongjo-Regular.ttf', koreanFont);
         doc.addFont('NanumMyeongjo-Regular.ttf', 'NanumMyeongjo', 'normal');
         doc.setFont('NanumMyeongjo');
 
-        const splitText = doc.splitTextToSize(text, 180);
-        doc.text(splitText, 10, 10);
+        // Define template layout
+        const title = 'Jiwoo AI 답변';
+        const questionLabel = '질문:';
+        const answerLabel = '답변:';
+        const date = new Date().toLocaleDateString();
+
+        // Title
+        doc.setFontSize(18);
+        doc.text(title, 10, 10);
+
+        // Date
+        doc.setFontSize(10);
+        doc.text(`작성일: ${date}`, 10, doc.internal.pageSize.height - 10);
+
+        // Question
+        doc.setFontSize(14);
+        doc.text(questionLabel, 10, 20);
+        doc.setFontSize(12);
+        const questionSplitText = doc.splitTextToSize(question, 180);
+        doc.text(questionSplitText, 10, 30);
+
+        // Answer
+        doc.setFontSize(14);
+        doc.text(answerLabel, 10, 50);
+        doc.setFontSize(12);
+        const answerSplitText = doc.splitTextToSize(answer, 180);
+        doc.text(answerSplitText, 10, 60);
+
+        // Save the PDF
         doc.save('jiwoo_ai_chat.pdf');
     };
 
 
+
     const renderAnswer = () => {
-        return messages.map((message, index) => (
-            <Box key={index} mb={8}>
-                <Text fontSize="2xl" fontWeight="bold" mb={4}>
-                    {message.sender === 'user' ? message.text : '답변'}
-                </Text>
-                {message.sender === 'bot' && (
-                    <>
-                        <HStack mb={4}>
-                            <Avatar size="sm" icon={<FaRobot />} bg="blue.500" />
-                            <Text fontWeight="bold" fontSize="xl">Jiwoo</Text>
-                        </HStack>
-                        <Text fontSize="lg" mb={4}>
-                            <ReactTypingEffect
-                                text={message.text}
-                                typingDelay={50}
-                                speed={50}
-                                eraseDelay={1000000}
-                            />
-                        </Text>
+        return messages.map((message, index) => {
+            const isUserMessage = message.sender === 'user';
+            const isBotMessage = message.sender === 'bot';
+            const prevMessage = index > 0 ? messages[index - 1] : null;
+            const question = isUserMessage ? message.text : (prevMessage && prevMessage.sender === 'user' ? prevMessage.text : '');
+            const answer = isBotMessage ? message.text : '';
 
-                        <HStack spacing={2} mb={4}>
-                            <Button size="sm" leftIcon={<LinkIcon />} onClick={() => shareMessage(message.text)}>공유</Button>
-                            <Button size="sm" leftIcon={<CopyIcon />} onClick={() => copyToClipboard(message.text)}>복사</Button>
-                            <Button size="sm" leftIcon={<DownloadIcon />} onClick={() => downloadAsPDF(message.text)}>PDF 저장</Button>
-                        </HStack>
-                        <Accordion allowToggle>
-                            <AccordionItem>
-                                <h2>
-                                    <AccordionButton>
-                                        <Box flex="1" textAlign="left">출처</Box>
-                                    </AccordionButton>
-                                </h2>
-                                <AccordionPanel pb={4}>
-                                    <Text>출처 1: 예시 URL</Text>
-                                    <Text>출처 2: 예시 URL</Text>
-                                </AccordionPanel>
-                            </AccordionItem>
-                        </Accordion>
-                    </>
-                )}
-            </Box>
-        ));
+            return (
+                <Box key={index} mb={8}>
+                    <Text fontSize="2xl" fontWeight="bold" mb={4}>
+                        {isUserMessage ? `질문: ${message.text}` : '답변'}
+                    </Text>
+                    {isBotMessage && (
+                        <>
+                            <HStack mb={4}>
+                                <Avatar size="sm" icon={<FaRobot />} bg="blue.500" />
+                                <Text fontWeight="bold" fontSize="xl">Jiwoo</Text>
+                            </HStack>
+                            <Text fontSize="lg" mb={4}>
+                                <ReactTypingEffect
+                                    text={message.text}
+                                    typingDelay={50}
+                                    speed={50}
+                                    eraseDelay={1000000}
+                                />
+                            </Text>
+
+                            <HStack spacing={2} mb={4}>
+                                <Button size="sm" leftIcon={<LinkIcon />} onClick={() => shareMessage(message.text)}>공유</Button>
+                                <Button size="sm" leftIcon={<CopyIcon />} onClick={() => copyToClipboard(message.text)}>복사</Button>
+                                <Button size="sm" leftIcon={<DownloadIcon />} onClick={() => downloadAsPDF(question, message.text)}>PDF 저장</Button>
+                            </HStack>
+                            <Accordion allowToggle>
+                                <AccordionItem>
+                                    <h2>
+                                        <AccordionButton>
+                                            <Box flex="1" textAlign="left">출처</Box>
+                                        </AccordionButton>
+                                    </h2>
+                                    <AccordionPanel pb={4}>
+                                        <Text>출처 1: 예시 URL</Text>
+                                        <Text>출처 2: 예시 URL</Text>
+                                    </AccordionPanel>
+                                </AccordionItem>
+                            </Accordion>
+                        </>
+                    )}
+                </Box>
+            );
+        });
     };
-
     return (
         <Flex h="100vh">
             {/* 사이드바 */}
