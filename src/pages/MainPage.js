@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Box, Text, Flex, Image, IconButton, HStack, VStack, Button, Select, useToast } from '@chakra-ui/react';
 import { ChevronRightIcon, ChevronLeftIcon, ChatIcon } from '@chakra-ui/icons';
@@ -8,6 +7,8 @@ import BusinessModel from "./BusinessModel";
 import SideNavigation from "../component/SideNavigation";
 import Footer from "../component/common/Footer";
 import Accounting from "./Accounting";
+import {motion , AnimatePresence} from "framer-motion";
+
 
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
@@ -16,6 +17,7 @@ import bannerImage from '../images/banner1.png';
 import bannerImage2 from '../images/banner2.png';
 import bannerImage3 from '../images/banner3.png';
 import bannerImage4 from '../images/banner4.png';
+import JiwooChatbot from "../component/Chatbot";
 
 
 function MainPage() {
@@ -30,6 +32,8 @@ function MainPage() {
     const [allRecommendedPrograms, setAllRecommendedPrograms] = useState([]);
     const [businessInfos, setBusinessInfos] = useState([]);
     const [selectedBusinessId, setSelectedBusinessId] = useState(null);
+    const [isChatbotOpen, setIsChatbotOpen] = useState();
+    const chatbotButtonRef = useRef(null);
     const toast = useToast();
 
 
@@ -40,6 +44,30 @@ function MainPage() {
         { title: "시장 조사", description: "AI 기반 시장 트렌드 분석", icon: bannerImage4 },
     ];
 
+
+    const toggleChatbot = () => {
+        setIsChatbotOpen(!isChatbotOpen);
+    };
+
+    const chatbotVariants = {
+        hidden: { opacity: 0, scale: 0 },
+        visible: {
+            opacity: 1,
+            scale: 1,
+            transition: {
+                type: 'spring',
+                stiffness: 260,
+                damping: 20,
+            }
+        },
+        exit: {
+            opacity: 0,
+            scale: 0,
+            transition: {
+                duration: 0.2
+            }
+        }
+    };
     const alternativeContent = [
         {
             title: "창업 성공의 비결",
@@ -346,11 +374,12 @@ function MainPage() {
                 </HStack>
 
                 <Button
+                    ref={chatbotButtonRef}
                     position="fixed"
                     bottom="20px"
                     right="20px"
                     colorScheme="blue"
-                    onClick={navigateToChatPage}
+                    onClick={toggleChatbot}
                     zIndex={1000}
                     borderRadius="full"
                     width="60px"
@@ -361,8 +390,6 @@ function MainPage() {
                 >
                     <ChatIcon boxSize={6} />
                 </Button>
-
-
             </Box>
 
             <SideNavigation activeSection={activeSection} scrollToSection={scrollToSection} />
@@ -380,6 +407,32 @@ function MainPage() {
             </Box>
 
             <Footer/>
+
+            <AnimatePresence>
+                {isChatbotOpen && (
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        variants={chatbotVariants}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'white',
+                            zIndex: 2000,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                        transformOrigin={`${chatbotButtonRef.current?.getBoundingClientRect().right - 30}px ${chatbotButtonRef.current?.getBoundingClientRect().bottom - 30}px`}
+                    >
+                        <JiwooChatbot onClose={toggleChatbot} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </Box>
     );
 }

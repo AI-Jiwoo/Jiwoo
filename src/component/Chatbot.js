@@ -28,6 +28,7 @@ const JiwooChatbot = () => {
         fetchResearchHistory();
     }, []);
 
+
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text).then(() => {
             toast({
