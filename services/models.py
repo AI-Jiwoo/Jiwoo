@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 from pydantic import BaseModel, Field, HttpUrl
 
 class CompanyInfo(BaseModel):
@@ -36,7 +36,9 @@ class ChatInput(BaseModel):
 class ChatResponse(BaseModel):
     """채팅 응답을 위한 모델"""
 
-    message: str = Field(..., description="AI 응답 메시지")
+    text_response: str = Field(..., description="AI 응답 메시지")
+    graph_data: Optional[Any] = None
+    multimodal_result: Optional[Any] = None
 
 
 class SimilaritySearchInput(BaseModel):
