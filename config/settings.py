@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     SIMILARITY_THRESHOLD: float = Field(default=0.7)  # 유사도 임계값
     MAX_TOKENS: int = Field(default=4096)  # 생성할 최대 토큰 수
     TEMPERATURE: float = Field(default=0.7)  # 생성 모델의 온도 설정
+    
+    # 그래프 생성 설정
+    MAX_GRAPH_DATA_POINTS: int = Field(default=100)  # 그래프에 표시할 최대 데이터 포인트 수
+    DEFAULT_GRAPH_WIDTH: int = Field(default=800)  # 기본 그래프 너비
+    DEFAULT_GRAPH_HEIGHT: int = Field(default=600)  # 기본 그래프 높이
+    GRAPH_DPI: int = Field(default=100)  # 그래프 이미지 DPI
 
     # 환경 변수 설정
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
