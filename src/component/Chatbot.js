@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Box, Flex, Text, Input, Button, IconButton, Avatar, VStack, HStack,
     Spinner, Drawer, DrawerBody, DrawerHeader, DrawerOverlay, DrawerContent,
-    DrawerCloseButton, useDisclosure, Tooltip, Menu, MenuButton, MenuList, MenuItem, useToast
+    DrawerCloseButton, useDisclosure, Tooltip, Menu, MenuButton, MenuList, MenuItem, useToast,
+    Accordion, AccordionItem, AccordionButton, AccordionPanel, ListItem, UnorderedList
 } from '@chakra-ui/react';
-import { ChevronDownIcon, DownloadIcon, CopyIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, DownloadIcon, CopyIcon, LinkIcon, SearchIcon } from '@chakra-ui/icons';
 import * as FaIcons from 'react-icons/fa';
-import { FaBusinessTime, FaChartLine, FaHome, FaLightbulb, FaPaperPlane, FaRobot, FaShareAlt, FaCalculator } from "react-icons/fa";
-import { Link, useNavigate } from 'react-router-dom';
-import api, {aiApi} from "../apis/api";
+import { FaBusinessTime, FaChartLine, FaHome, FaLightbulb, FaRobot, FaShareAlt, FaCalculator } from "react-icons/fa";
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import api, { aiApi } from "../apis/api";
 import jsPDF from "jspdf";
 import ViewModeToggle from "../component/ViewModeToggle";
+import ReactTypingEffect from 'react-typing-effect';
 
 const JiwooChatbot = () => {
     const [messages, setMessages] = useState([]);
@@ -22,11 +24,87 @@ const JiwooChatbot = () => {
     const [selectedResearch, setSelectedResearch] = useState(null);
     const toast = useToast();
     const navigate = useNavigate();
-    const [pdfUrl, setPdfUrl] = useState(null);
+    const location = useLocation();
 
     useEffect(() => {
         fetchResearchHistory();
     }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const query = params.get('q');
+        if (query && messages.length === 0) {
+            sendMessage(query);
+        }
+    }, [location, messages.length]);
+
+    const fetchResearchHistory = async () => {
+        try {
+            const response = await api.get('/market-research/history');
+            if (Array.isArray(response.data)) {
+                setResearchHistory(response.data);
+            } else {
+                console.error('Unexpected response format:', response.data);
+                setResearchHistory([]);
+            }
+        } catch (error) {
+            console.error('Failed to fetch research history:', error);
+            toast({
+                title: "조회 이력을 불러오는데 실패했습니다.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            setResearchHistory([]);
+        }
+    };
+
+    const sendMessage = useCallback(async (message = inputMessage) => {
+        if (!message.trim() || isLoading) return;
+
+        const userMessage = { sender: 'user', text: message };
+        setMessages(prev => [...prev, userMessage]);
+
+        setIsLoading(true);
+        setInputMessage('');
+
+        try {
+            const response = await aiApi.post('/chat', { message });
+            const botMessage = { sender: 'bot', text: response.data.message };
+            setMessages(prev => [...prev, botMessage]);
+        } catch (error) {
+            console.error('Error sending message to chatbot:', error);
+            const errorMessage = { sender: 'bot', text: '죄송합니다. 오류가 발생했습니다.' };
+            setMessages(prev => [...prev, errorMessage]);
+            toast({
+                title: "메시지 전송 실패",
+                description: "죄송합니다. 오류가 발생했습니다.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        } finally {
+            setIsLoading(false);
+        }
+
+        navigate(`?q=${encodeURIComponent(message)}`, { replace: true });
+    }, [inputMessage, isLoading, navigate, toast]);
+
+    const selectResearch = (research) => {
+        setSelectedResearch(research);
+        toast({
+            title: "시장조사 선택됨",
+            description: `"${research.title}" 컨텍스트로 설정되었습니다.`,
+            status: "success",
+            duration: 2000,
+            isClosable: true,
+        });
+    };
+
+    const quickAsk = (question) => {
+        setInputMessage(question);
+        sendMessage(question);
+    };
 
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text).then(() => {
@@ -59,138 +137,56 @@ const JiwooChatbot = () => {
         });
     };
 
-    const handleViewPDF = () => {
-        // 여기에 PDF 파일 URL을 설정합니다.
-        setPdfUrl('/path/to/your/pdf/file.pdf');
-        onOpen();
-    };
-
     const downloadAsPDF = (text) => {
         const doc = new jsPDF();
         doc.text(text, 10, 10);
-        doc.save('message.pdf');
+        doc.save('jiwoo_ai_chat.pdf');
     };
 
+    const renderAnswer = () => {
+        return messages.map((message, index) => (
+            <Box key={index} mb={8}>
+                <Text fontSize="2xl" fontWeight="bold" mb={4}>
+                    {message.sender === 'user' ? message.text : '답변'}
+                </Text>
+                {message.sender === 'bot' && (
+                    <>
+                        <HStack mb={4}>
+                            <Avatar size="sm" icon={<FaRobot />} bg="blue.500" />
+                            <Text fontWeight="bold" fontSize="xl">Jiwoo</Text>
+                        </HStack>
+                        <Text fontSize="lg" mb={4}>
+                            <ReactTypingEffect
+                                text={message.text}
+                                typingDelay={50}
+                                speed={50}
+                                eraseDelay={1000000}
+                            />
+                        </Text>
 
-    const fetchResearchHistory = async () => {
-        try {
-            const response = await api.get('/market-research/history');
-            if (Array.isArray(response.data)) {
-                setResearchHistory(response.data);
-            } else {
-                console.error('Unexpected response format:', response.data);
-                setResearchHistory([]);
-            }
-        } catch (error) {
-            console.error('Failed to fetch research history:', error);
-            toast({
-                title: "조회 이력을 불러오는데 실패했습니다.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-            setResearchHistory([]);
-        }
-    };
-
-    const sendMessage = async () => {
-        if (!inputMessage.trim()) return;
-
-        const userMessage = { sender: 'user', text: inputMessage };
-        setMessages(prev => [...prev, userMessage]);
-
-        let context = selectedResearch
-            ? `Based on the market research "${selectedResearch.title}": ${selectedResearch.summary}. `
-            : '';
-
-        setIsLoading(true);
-        setInputMessage('');
-
-        try {
-            const response = await aiApi.post('/chat', {
-                message: context + inputMessage
-            });
-            const botMessage = { sender: 'bot', text: response.data.message };
-            setMessages(prev => [...prev, botMessage]);
-        } catch (error) {
-            console.error('Error sending message to chatbot:', error);
-            const errorMessage = { sender: 'bot', text: '죄송합니다. 오류가 발생했습니다.' };
-            setMessages(prev => [...prev, errorMessage]);
-            toast({
-                title: "메시지 전송 실패",
-                description: "죄송합니다. 오류가 발생했습니다.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const selectResearch = (research) => {
-        setSelectedResearch(research);
-        toast({
-            title: "시장조사 선택됨",
-            description: `"${research.title}" 컨텍스트로 설정되었습니다.`,
-            status: "success",
-            duration: 2000,
-            isClosable: true,
-        });
-    };
-
-    const quickAsk = (question) => {
-        setInputMessage(question);
-        sendMessage();
-    };
-
-    const renderMessages = () => {
-        return messages.map((msg, index) => (
-            <Box key={index} alignSelf={msg.sender === 'user' ? 'flex-end' : 'flex-start'} maxW="70%">
-                <Flex direction={msg.sender === 'user' ? 'row-reverse' : 'row'} alignItems="flex-start">
-                    {msg.sender === 'bot' && <Avatar size="md" icon={<FaRobot />} mr={2} bg="blue.500" color="white" />}
-                    <Box
-                        bg={msg.sender === 'user' ? 'blue.500' : 'gray.100'}
-                        color={msg.sender === 'user' ? 'white' : 'black'}
-                        borderRadius="lg"
-                        p={4}
-                        fontSize="lg"
-                    >
-                        <Text>{msg.text}</Text>
-                        {msg.sender === 'bot' && (
-                            <HStack mt={2} justify="flex-end">
-                                <Tooltip label="메시지 복사">
-                                    <IconButton
-                                        icon={<CopyIcon />}
-                                        aria-label="Copy message"
-                                        size="sm"
-                                        onClick={() => copyToClipboard(msg.text)}
-                                    />
-                                </Tooltip>
-                                <Tooltip label="메시지 공유">
-                                    <IconButton
-                                        icon={<FaShareAlt />}
-                                        aria-label="Share message"
-                                        size="sm"
-                                        onClick={() => shareMessage(msg.text)}
-                                    />
-                                </Tooltip>
-                                <Tooltip label="PDF로 다운로드">
-                                    <IconButton
-                                        icon={<DownloadIcon />}
-                                        aria-label="Download as PDF"
-                                        size="sm"
-                                        onClick={() => downloadAsPDF(msg.text)} // 수정: 메시지를 인자로 전달
-                                    />
-                                </Tooltip>
-                            </HStack>
-                        )}
-                    </Box>
-                </Flex>
+                        <HStack spacing={2} mb={4}>
+                            <Button size="sm" leftIcon={<LinkIcon />} onClick={() => shareMessage(message.text)}>공유</Button>
+                            <Button size="sm" leftIcon={<CopyIcon />} onClick={() => copyToClipboard(message.text)}>복사</Button>
+                            <Button size="sm" leftIcon={<DownloadIcon />} onClick={() => downloadAsPDF(message.text)}>PDF 저장</Button>
+                        </HStack>
+                        <Accordion allowToggle>
+                            <AccordionItem>
+                                <h2>
+                                    <AccordionButton>
+                                        <Box flex="1" textAlign="left">출처</Box>
+                                    </AccordionButton>
+                                </h2>
+                                <AccordionPanel pb={4}>
+                                    <Text>출처 1: 예시 URL</Text>
+                                    <Text>출처 2: 예시 URL</Text>
+                                </AccordionPanel>
+                            </AccordionItem>
+                        </Accordion>
+                    </>
+                )}
             </Box>
         ));
     };
-
 
     return (
         <Flex h="100vh">
@@ -219,7 +215,7 @@ const JiwooChatbot = () => {
             {/* 메인 컨텐츠 영역 */}
             <Flex flex={1} direction="column">
                 {/* 헤더 */}
-                <Flex align="center" justify="space-between" p={6} bg="white" borderBottomWidth={1}>
+                <Flex align="center" justify="space-between" p={6} bg="white" borderBottomWidth={1} boxShadow="sm">
                     <Text fontSize="3xl" fontWeight="bold" color="blue.600">Jiwoo AI 창업지원센터</Text>
                     <ViewModeToggle/>
                     <HStack>
@@ -255,8 +251,8 @@ const JiwooChatbot = () => {
                 </Flex>
 
                 {/* 챗봇 인터페이스 */}
-                <Flex flex={1} direction="column" bg="gray.50" p={8}>
-                    {messages.length === 0 && (
+                <Flex flex={1} direction="column" bg="white" p={8} overflowY="auto">
+                    {messages.length === 0 ? (
                         <VStack spacing={6} align="center" justify="center" flex={1}>
                             <Text fontSize="3xl" fontWeight="bold" color="blue.600">Jiwoo AI 챗봇에 오신 것을 환영합니다!</Text>
                             <Text fontSize="xl" color="gray.500" textAlign="center" maxW="600px">
@@ -264,64 +260,33 @@ const JiwooChatbot = () => {
                                 AI가 최선을 다해 답변해 드리겠습니다.
                             </Text>
                         </VStack>
+                    ) : (
+                        renderAnswer()
                     )}
-                    {/* 메시지 영역 */}
-                    <VStack flex={1} overflowY="auto" spacing={6} align="stretch" mb={6}>
-                        {renderMessages()}
-                        <div ref={messagesEndRef} />
-                    </VStack>
+                </Flex>
 
-                    {/* 입력 영역 */}
+                {/* 입력 영역 */}
+                <Box p={4} bg="white" borderTopWidth={1} boxShadow="sm">
                     <HStack>
                         <Input
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
-                            placeholder="메시지를 입력하세요..."
+                            placeholder="질문을 입력하세요..."
                             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                             size="lg"
-                            fontSize="xl"
+                            borderRadius="full"
                         />
-                        <Button
-                            onClick={sendMessage}
-                            colorScheme="blue"
+                        <IconButton
+                            icon={<SearchIcon />}
+                            onClick={() => sendMessage()}
                             isLoading={isLoading}
-                            leftIcon={<FaPaperPlane />}
+                            colorScheme="blue"
+                            aria-label="Send message"
                             size="lg"
-                            fontSize="xl"
-                        >
-                            전송
-                        </Button>
+                            borderRadius="full"
+                        />
                     </HStack>
-                </Flex>
-
-                {/* 하단 툴바 */}
-                <HStack justify="flex-end" p={4} bg="white" borderTopWidth={1}>
-                    <Tooltip label="답변 공유">
-                        <IconButton icon={<FaShareAlt />} aria-label="Share" size="lg" colorScheme="blue" variant="outline" />
-                    </Tooltip>
-                    <Tooltip label="답변 복사">
-                        <IconButton icon={<CopyIcon />} aria-label="Copy" size="lg" colorScheme="blue" variant="outline" />
-                    </Tooltip>
-                    <Menu>
-                        <MenuButton as={Button} rightIcon={<ChevronDownIcon />} size="lg" colorScheme="blue" variant="outline">
-                            다운로드
-                        </MenuButton>
-                        <MenuList>
-                            <MenuItem icon={<DownloadIcon />} onClick={downloadAsPDF}>
-                                PDF로 다운로드
-                            </MenuItem>
-                            <MenuItem icon={<DownloadIcon />} onClick={() => toast({
-                                title: "준비 중",
-                                description: "엑셀 다운로드 기능은 아직 구현되지 않았습니다.",
-                                status: "info",
-                                duration: 2000,
-                                isClosable: true,
-                            })}>
-                                엑셀로 다운로드
-                            </MenuItem>
-                        </MenuList>
-                    </Menu>
-                </HStack>
+                </Box>
             </Flex>
 
             {/* 히스토리 드로어 */}
