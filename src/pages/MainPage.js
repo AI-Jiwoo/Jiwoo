@@ -68,6 +68,8 @@ function MainPage() {
             }
         }
     };
+
+
     const alternativeContent = [
         {
             title: "창업 성공의 비결",
@@ -241,9 +243,6 @@ function MainPage() {
         accountingRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const navigateToChatPage = () => {
-        navigate('/chatbot');
-    };
 
     return (
         <Box>
@@ -423,9 +422,7 @@ function MainPage() {
                             bottom: 0,
                             backgroundColor: 'white',
                             zIndex: 2000,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+
                         }}
                         transformOrigin={`${chatbotButtonRef.current?.getBoundingClientRect().right - 30}px ${chatbotButtonRef.current?.getBoundingClientRect().bottom - 30}px`}
                     >
