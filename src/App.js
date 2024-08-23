@@ -34,7 +34,13 @@ function App() {
                         <Route path="/main" element={<PageLayout><MainPage /></PageLayout>} /> {/* MainPage는 PageLayout을 사용하지 않음 */}
                         <Route path="/market-research" element={<PageLayout><MainPage /></PageLayout>} />
                         <Route path="/business-model" element={<PageLayout><BusinessModel /></PageLayout>} />
-                        <Route path="/chatbot" element={<Chatbot/>} />
+                        <Route path="/chatbot"
+                            element={
+                                <PageLayout>
+                                    <MainPage initialChatbotOpen={true} />
+                                </PageLayout>
+                            }
+                        />
                         <Route path="/home" element={
                             <PrivateRoute>
                                 <PageLayout>

@@ -15,7 +15,7 @@ import ViewModeToggle from "../component/ViewModeToggle";
 import ReactTypingEffect from 'react-typing-effect';
 import koreanFontUrl from '../font/NanumMyeongjo-Regular.ttf'
 
-const JiwooChatbot = () => {
+const Chatbot = () => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -365,4 +365,4 @@ const JiwooChatbot = () => {
         </Flex>
     );
 };
-export default JiwooChatbot;
+export default Chatbot;

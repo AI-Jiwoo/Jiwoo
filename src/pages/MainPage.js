@@ -51,7 +51,13 @@ function MainPage() {
 
 
     const toggleChatbot = () => {
-        setIsChatbotOpen(!isChatbotOpen);
+        if (isChatbotOpen) {
+            setIsChatbotOpen(false);
+            navigate('/main');
+        } else {
+            setIsChatbotOpen(true);
+            navigate('/chatbot');
+        }
     };
 
     const chatbotVariants = {
