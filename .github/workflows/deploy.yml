@@ -35,14 +35,18 @@ jobs:
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
             # 의존성 업데이트 및 설치
             sudo apt-get update
-            sudo apt-get install -y docker.io docker-compose
+            sudo apt-get install -y docker.io docker-compose python3-pip python3-venv
           
             # 프로젝트 디렉토리로 이동
             cd ~/Jiwoo-AI-Server
           
+            # Python 가상 환경 생성 및 활성화
+            python3 -m venv jiwoo_ai_env
+            source jiwoo_ai_env/bin/activate
+          
             # Python 의존성 설치
-            sudo apt-get install -y python3-pip
-            pip3 install -r requirements.txt
+            pip install --upgrade pip
+            pip install -r requirements.txt
           
             # 볼륨을 위한 필요한 디렉토리 생성
             mkdir -p volumes/etcd volumes/minio volumes/milvus
@@ -55,7 +59,7 @@ jobs:
             echo "MILVUS_HOST=localhost" >> .env
             echo "MILVUS_PORT=19530" >> .env
             echo "LOG_LEVEL=INFO" >> .env
-            echo "SERPAPI_KEY=${{ secrets.SERPAPI_KEY }}" >> .env
+            echo "SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}" >> .env
           
             # Docker Hub 로그인
             echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
