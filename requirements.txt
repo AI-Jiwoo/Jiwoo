@@ -32,3 +32,6 @@ requests
 pre-commit
 black
 isort
+
+# 그래프 생성 후 JSON 반환
+plotly
