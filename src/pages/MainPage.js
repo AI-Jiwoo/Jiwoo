@@ -1,5 +1,18 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Box, Text, Flex, Image, IconButton, HStack, VStack, Button, useToast, Link as ChakraLink } from '@chakra-ui/react';
+import {
+    Box,
+    Text,
+    Flex,
+    Image,
+    IconButton,
+    HStack,
+    VStack,
+    Button,
+    Container,
+    useToast,
+    Link as ChakraLink,
+    Heading, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText, Input
+} from '@chakra-ui/react';
 import { ChevronRightIcon, ChevronLeftIcon, ChatIcon, WarningIcon } from '@chakra-ui/icons';
 import MainHeader from '../component/common/MainHeader';
 import MarketResearch from "./MarketResearch";
@@ -17,6 +30,7 @@ import bannerImage3 from '../images/banner3.png';
 import bannerImage4 from '../images/banner4.png';
 import JiwooChatbot from "../component/Chatbot";
 import {Element, scroller} from "react-scroll";
+import SuccessStoriesSection from "../component/SuccessStoriesSection";
 
 function MainPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -151,118 +165,125 @@ function MainPage() {
                 scrollToAccounting={() => handleNavigation('accounting')}
             />
             <Element name="home">
-                <Box bg="#010B1A" color="white" height="100vh" position="relative" overflow="hidden">
-                    <Flex height="100%" pl="10%" pr="5%" pt="10%" position="relative">
-                        <VStack align="flex-start" width="40%" mr="10%">
-                            <Text fontSize="6xl" fontWeight="bold" mb={4}>
-                                JIWOO AI HELPER
-                            </Text>
-                            <Text fontSize="xl" mb={8}>
-                                1인 IT 창업을 위한 최고의 AI 파트너<br />
-                                혁신적인 기술로 당신의 창업 여정을 가속화합니다
-                            </Text>
-                            {user && (
-                                <Box bg="rgba(255,255,255,0.1)" p={4} borderRadius="md" border="1px solid white">
-                                    <Text fontSize="lg" fontWeight="bold">
-                                        맞춤형 지원 프로그램
-                                    </Text>
-                                    <Text fontSize="md" mt={2}>
-                                        당신의 사업에 맞는 맞춤형 지원 프로그램을 확인하세요.
-                                        AI가 분석한 최적의 프로그램을 제안해드립니다.
-                                    </Text>
-                                </Box>
-                            )}
-                        </VStack>
+                <Box bg="#010B1A" color="white" minHeight="100vh">
+                    <Flex direction="column" height="100%">
+                        <Flex height="70%" pl="10%" pr="5%" pt="10%" position="relative">
+                            <VStack align="flex-start" width="40%" mr="10%">
+                                <Text fontSize="6xl" fontWeight="bold" mb={4}>
+                                    JIWOO AI HELPER
+                                </Text>
+                                <Text fontSize="xl" mb={8}>
+                                    1인 IT 창업을 위한 최고의 AI 파트너<br />
+                                    혁신적인 기술로 당신의 창업 여정을 가속화합니다
+                                </Text>
+                                {user && (
+                                    <Box bg="rgba(255,255,255,0.1)" p={4} borderRadius="md" border="1px solid white">
+                                        <Text fontSize="lg" fontWeight="bold">
+                                            맞춤형 지원 프로그램
+                                        </Text>
+                                        <Text fontSize="md" mt={2}>
+                                            당신의 사업에 맞는 맞춤형 지원 프로그램을 확인하세요.
+                                            AI가 분석한 최적의 프로그램을 제안해드립니다.
+                                        </Text>
+                                    </Box>
+                                )}
+                            </VStack>
 
-                        <Flex position="relative" width="50%" height="400px" alignItems="flex-end">
-                            {contentToDisplay.map((item, index) => (
-                                <Box
-                                    key={index}
-                                    backgroundImage={`url(${item.icon})`}
-                                    backgroundSize="cover"
-                                    backgroundPosition="center"
-                                    backgroundRepeat="no-repeat"
-                                    p={4}
-                                    mr={index === currentSlide ? 0 : "-80%"}
-                                    width={index === currentSlide ? "100%" : "20%"}
-                                    height={index === currentSlide ? "100%" : "80%"}
-                                    borderRadius="2xl"
-                                    cursor="pointer"
-                                    onClick={() => setCurrentSlide(index)}
-                                    transition="all 0.5s"
-                                    zIndex={contentToDisplay.length - index}
-                                    position="absolute"
-                                    right="0"
-                                    bottom="0"
-                                >
-                                    <VStack align="flex-start" height="100%" justify="space-between" spacing={2}>
-                                        <Box
-                                            bg="rgba(0,0,0,0.8)"
-                                            p={4}
-                                            borderRadius="md"
-                                            width="100%"
-                                            height="100%"
-                                            overflow="auto"
-                                        >
-                                            <Text fontWeight="bold" fontSize="3xl" mb={3} color="white">
-                                                {item.name || item.title}
-                                            </Text>
-                                            <Text fontSize="xl" color="white" mb={2}>
-                                                {item.description}
-                                            </Text>
-                                            {item.target && (
-                                                <Text fontSize="xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="blue.300">지원 대상: </Text>
-                                                    {item.target}
+                            <Flex position="relative" width="50%" height="400px" alignItems="flex-end">
+                                {contentToDisplay.map((item, index) => (
+                                    <Box
+                                        key={index}
+                                        backgroundImage={`url(${item.icon})`}
+                                        backgroundSize="cover"
+                                        backgroundPosition="center"
+                                        backgroundRepeat="no-repeat"
+                                        p={4}
+                                        mr={index === currentSlide ? 0 : "-80%"}
+                                        width={index === currentSlide ? "100%" : "20%"}
+                                        height={index === currentSlide ? "100%" : "80%"}
+                                        borderRadius="2xl"
+                                        cursor="pointer"
+                                        onClick={() => setCurrentSlide(index)}
+                                        transition="all 0.5s"
+                                        zIndex={contentToDisplay.length - index}
+                                        position="absolute"
+                                        right="0"
+                                        bottom="0"
+                                    >
+                                        <VStack align="flex-start" height="100%" justify="space-between" spacing={2}>
+                                            <Box
+                                                bg="rgba(0,0,0,0.8)"
+                                                p={4}
+                                                borderRadius="md"
+                                                width="100%"
+                                                height="100%"
+                                                overflow="auto"
+                                            >
+                                                <Text fontWeight="bold" fontSize="3xl" mb={3} color="white">
+                                                    {item.name || item.title}
                                                 </Text>
-                                            )}
-                                            {item.scareOfSupport && (
                                                 <Text fontSize="xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="green.300">지원 규모: </Text>
-                                                    {item.scareOfSupport}
+                                                    {item.description}
                                                 </Text>
-                                            )}
-                                            {item.supportContent && (
-                                                <Text fontSize="xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="yellow.300">지원 내용: </Text>
-                                                    {item.supportContent}
-                                                </Text>
-                                            )}
-                                            {item.supportCharacteristics && (
-                                                <Text fontSize="xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="purple.300">지원 특징: </Text>
-                                                    {item.supportCharacteristics}
-                                                </Text>
-                                            )}
-                                            {item.originUrl && (
-                                                <VStack align="start" spacing={1}>
-                                                    <Text fontSize="xl" color="white">
-                                                        <Text as="span" fontWeight="bold" color="orange.300">링크: </Text>
-                                                        <ChakraLink
-                                                            href={item.originUrl}
-                                                            isExternal
-                                                            color="blue.300"
-                                                            textDecoration="underline"
-                                                            maxWidth="100%"
-                                                            isTruncated
-                                                            _hover={{ color: "blue.100" }}
-                                                        >
-                                                            {item.originUrl}
-                                                        </ChakraLink>
+                                                {item.target && (
+                                                    <Text fontSize="xl" color="white" mb={2}>
+                                                        <Text as="span" fontWeight="bold" color="blue.300">지원 대상: </Text>
+                                                        {item.target}
                                                     </Text>
-                                                    {!isValidUrl(item.originUrl) && (
-                                                        <Text fontSize="xl" color="red.300">
-                                                            <WarningIcon mr={1} />
-                                                            URL이 유효하지 않을 수 있습니다.
+                                                )}
+                                                {item.scareOfSupport && (
+                                                    <Text fontSize="xl" color="white" mb={2}>
+                                                        <Text as="span" fontWeight="bold" color="green.300">지원 규모: </Text>
+                                                        {item.scareOfSupport}
+                                                    </Text>
+                                                )}
+                                                {item.supportContent && (
+                                                    <Text fontSize="xl" color="white" mb={2}>
+                                                        <Text as="span" fontWeight="bold" color="yellow.300">지원 내용: </Text>
+                                                        {item.supportContent}
+                                                    </Text>
+                                                )}
+                                                {item.supportCharacteristics && (
+                                                    <Text fontSize="xl" color="white" mb={2}>
+                                                        <Text as="span" fontWeight="bold" color="purple.300">지원 특징: </Text>
+                                                        {item.supportCharacteristics}
+                                                    </Text>
+                                                )}
+                                                {item.originUrl && (
+                                                    <VStack align="start" spacing={1}>
+                                                        <Text fontSize="xl" color="white">
+                                                            <Text as="span" fontWeight="bold" color="orange.300">링크: </Text>
+                                                            <ChakraLink
+                                                                href={item.originUrl}
+                                                                isExternal
+                                                                color="blue.300"
+                                                                textDecoration="underline"
+                                                                maxWidth="100%"
+                                                                isTruncated
+                                                                _hover={{ color: "blue.100" }}
+                                                            >
+                                                                {item.originUrl}
+                                                            </ChakraLink>
                                                         </Text>
-                                                    )}
-                                                </VStack>
-                                            )}
-                                        </Box>
-                                    </VStack>
-                                </Box>
-                            ))}
+                                                        {!isValidUrl(item.originUrl) && (
+                                                            <Text fontSize="xl" color="red.300">
+                                                                <WarningIcon mr={1} />
+                                                                URL이 유효하지 않을 수 있습니다.
+                                                            </Text>
+                                                        )}
+                                                    </VStack>
+                                                )}
+                                            </Box>
+                                        </VStack>
+                                    </Box>
+                                ))}
+                            </Flex>
                         </Flex>
+
+                        {/* 성공 사례 섹션 추가 */}
+                        <Box height="30%" bg="rgba(255,255,255,0.1)" overflowY="auto">
+                            <SuccessStoriesSection />
+                        </Box>
                     </Flex>
 
                     <HStack position="absolute" right="5%" top="5%" color="white">
