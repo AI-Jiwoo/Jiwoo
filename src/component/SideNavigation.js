@@ -1,12 +1,9 @@
 import React from 'react';
 import { VStack, Button, Icon, Tooltip } from '@chakra-ui/react';
 import { FaHome, FaChartLine, FaUsers, FaFileInvoiceDollar } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const SideNavigation = ({ activeSection, scrollToSection }) => {
-    const scrollToTop = () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
     return (
         <VStack
             position="fixed"
@@ -18,7 +15,9 @@ const SideNavigation = ({ activeSection, scrollToSection }) => {
         >
             <Tooltip label="메인으로" placement="left">
                 <Button
-                    onClick={scrollToTop}
+                    as={Link}
+                    to="/main"
+                    onClick={() => scrollToSection('home')}
                     colorScheme={activeSection === 'home' ? 'blue' : 'gray'}
                     size="lg"
                     borderRadius="full"
@@ -28,8 +27,10 @@ const SideNavigation = ({ activeSection, scrollToSection }) => {
             </Tooltip>
             <Tooltip label="시장 조사" placement="left">
                 <Button
-                    onClick={() => scrollToSection('marketSize')}
-                    colorScheme={activeSection === 'marketSize' ? 'blue' : 'gray'}
+                    as={Link}
+                    to="/main/market-research"
+                    onClick={() => scrollToSection('market-research')}
+                    colorScheme={activeSection === 'market-research' ? 'blue' : 'gray'}
                     size="lg"
                     borderRadius="full"
                 >
@@ -38,8 +39,10 @@ const SideNavigation = ({ activeSection, scrollToSection }) => {
             </Tooltip>
             <Tooltip label="비즈니스 모델" placement="left">
                 <Button
-                    onClick={() => scrollToSection('similarServices')}
-                    colorScheme={activeSection === 'similarServices' ? 'blue' : 'gray'}
+                    as={Link}
+                    to="/main/business-model"
+                    onClick={() => scrollToSection('business-model')}
+                    colorScheme={activeSection === 'business-model' ? 'blue' : 'gray'}
                     size="lg"
                     borderRadius="full"
                 >
@@ -48,6 +51,8 @@ const SideNavigation = ({ activeSection, scrollToSection }) => {
             </Tooltip>
             <Tooltip label="세무 처리" placement="left">
                 <Button
+                    as={Link}
+                    to="/main/accounting"
                     onClick={() => scrollToSection('accounting')}
                     colorScheme={activeSection === 'accounting' ? 'blue' : 'gray'}
                     size="lg"

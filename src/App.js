@@ -31,16 +31,14 @@ function App() {
                 <Router>
                     <Routes>
                         <Route path="/" element={<LandingPage />} />
-                        <Route path="/main" element={<PageLayout><MainPage /></PageLayout>} /> {/* MainPage는 PageLayout을 사용하지 않음 */}
-                        <Route path="/market-research" element={<PageLayout><MainPage /></PageLayout>} />
-                        <Route path="/business-model" element={<PageLayout><BusinessModel /></PageLayout>} />
-                        <Route path="/chatbot"
-                            element={
-                                <PageLayout>
-                                    <MainPage initialChatbotOpen={true} />
-                                </PageLayout>
-                            }
-                        />
+                        <Route path="/main/*" element={<PageLayout><MainPage /></PageLayout>}>
+                            <Route path="" element={<Navigate to="home" replace />} />
+                            <Route path="home" element={<MainPage />} />
+                            <Route path="market-research" element={<MainPage />} />
+                            <Route path="business-model" element={<MainPage />} />
+                            <Route path="accounting" element={<MainPage />} />
+                        </Route>
+                        <Route path="/chatbot" element={<PageLayout><MainPage initialChatbotOpen={true} /></PageLayout>} />
                         <Route path="/home" element={
                             <PrivateRoute>
                                 <PageLayout>

@@ -19,7 +19,7 @@ const Chatbot = () => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen, onOpen } = useDisclosure();
     const messagesEndRef = useRef(null);
     const [researchHistory, setResearchHistory] = useState([]);
     const [selectedResearch, setSelectedResearch] = useState(null);
@@ -36,6 +36,27 @@ const Chatbot = () => {
                 .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         return fontBase64;
+    };
+
+    const navigateAndRefresh = (path) => {
+        navigate(path);
+        window.location.href = path;
+    }
+
+    const onClose = () => {
+        navigateAndRefresh('/main/home');
+    };
+
+    const navigateMarketResearch = () => {
+        navigateAndRefresh('/main/market-research');
+    };
+
+    const navigateBusinessModel = () => {
+        navigateAndRefresh('/main/business-model');
+    };
+
+    const accounting = () => {
+        navigateAndRefresh('/main/accounting');
     };
 
     useEffect(() => {
@@ -259,16 +280,16 @@ const Chatbot = () => {
                     <Text fontSize="2xl" fontWeight="bold" color="white">Jiwoo AI</Text>
                 </VStack>
                 <VStack spacing={4} align="stretch">
-                    <Button leftIcon={<FaHome />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={() => navigate('/')}>
+                    <Button leftIcon={<FaHome />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={onClose}>
                         홈
                     </Button>
-                    <Button leftIcon={<FaChartLine />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={() => navigate('/market-research')}>
+                    <Button leftIcon={<FaChartLine />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={navigateMarketResearch}>
                         시장조사
                     </Button>
-                    <Button leftIcon={<FaBusinessTime />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={() => navigate('/business-model')}>
+                    <Button leftIcon={<FaBusinessTime />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={navigateBusinessModel}>
                         비즈니스모델
                     </Button>
-                    <Button leftIcon={<FaCalculator />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={() => navigate('/accounting')}>
+                    <Button leftIcon={<FaCalculator />} justifyContent="flex-start" variant="ghost" color="white" fontSize="lg" onClick={accounting}>
                         세무처리
                     </Button>
                 </VStack>

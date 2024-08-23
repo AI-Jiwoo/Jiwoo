@@ -4,7 +4,7 @@ import logo from '../../logo/headerLogo.png';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
+function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAccounting }) {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
 
@@ -41,6 +41,15 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
             scrollToBusinessModel();
         } else {
            navigate('/business-model');
+        }
+    };
+
+    const handelAccountingClick = (e) => {
+        e.preventDefault();
+        if (scrollToAccounting) {
+            scrollToAccounting();
+        }else {
+            navigate('/accounting')
         }
     };
 
@@ -89,8 +98,8 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                             비즈니스모델
                         </Link>
                         <Link
-                            as={RouterLink}
-                            to="/tax-handling"
+                            href='#'
+                            onClick={handelAccountingClick}
                             fontWeight="bold"
                             p={2}
                             borderRadius="md"
