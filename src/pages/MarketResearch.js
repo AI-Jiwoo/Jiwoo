@@ -75,8 +75,12 @@ const MarketResearch = () => {
     const [selectedHistory, setSelectedHistory] = useState(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const toast = useToast();
+    const [selectedCompany, setSelectedCompany] = useState(null);
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
 
-
+    useEffect(() => {
+        console.log('isLoading:', isLoading);
+    }, [isLoading]);
 
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text).then(() => {
@@ -105,115 +109,6 @@ const MarketResearch = () => {
     };
 
     useEffect(() => {
-        console.log('isLoading:', isLoading);
-    }, [isLoading]);
-
-    const renderHistoryModal = () => {
-        if (!selectedHistory) return null;
-
-        return (
-            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} size="6xl">
-                <ModalOverlay />
-                <ModalContent maxWidth="90vw" maxHeight="90vh">
-                    <ModalHeader>분석 결과 상세</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody overflowY="auto" p={6}>
-                        <Tabs>
-                            <TabList>
-                                <Tab>전체 보기</Tab>
-                                <Tab>시장 규모</Tab>
-                                <Tab>유사 서비스</Tab>
-                                <Tab>트렌드/고객/기술</Tab>
-                            </TabList>
-                            <TabPanels>
-                                <TabPanel>
-                                    <VStack align="stretch" spacing={4}>
-                                        <Box>
-                                            <Heading size="md">시장 규모 및 성장률</Heading>
-                                            {selectedHistory.marketInformation && (
-                                                <>
-                                                    {renderMarketSizeGrowth(selectedHistory.marketInformation)}
-                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketInformation)} mt={2}>
-                                                        복사
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </Box>
-                                        <Box>
-                                            <Heading size="md">유사 서비스 분석</Heading>
-                                            {selectedHistory.competitorAnalysis && (
-                                                <>
-                                                    {renderSimilarServices(selectedHistory.competitorAnalysis)}
-                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.competitorAnalysis)} mt={2}>
-                                                        복사
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </Box>
-                                        <Box>
-                                            <Heading size="md">트렌드, 고객 분포, 기술 동향</Heading>
-                                            {selectedHistory.marketTrends && (
-                                                <>
-                                                    {renderTrendCustomerTechnology(selectedHistory.marketTrends)}
-                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketTrends)} mt={2}>
-                                                        복사
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </Box>
-                                    </VStack>
-                                </TabPanel>
-                                <TabPanel>
-                                    <VStack align="stretch" spacing={4}>
-                                        <Heading size="md">시장 규모 및 성장률</Heading>
-                                        {selectedHistory.marketInformation ?
-                                            <>
-                                                {renderMarketSizeGrowth(selectedHistory.marketInformation)}
-                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketInformation)} mt={2}>
-                                                    복사
-                                                </Button>
-                                            </> :
-                                            <Text>시장 규모 정보가 없습니다.</Text>
-                                        }
-                                    </VStack>
-                                </TabPanel>
-                                <TabPanel>
-                                    <VStack align="stretch" spacing={4}>
-                                        <Heading size="md">유사 서비스 분석</Heading>
-                                        {selectedHistory.competitorAnalysis ?
-                                            <>
-                                                {renderSimilarServices(selectedHistory.competitorAnalysis)}
-                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.competitorAnalysis)} mt={2}>
-                                                    복사
-                                                </Button>
-                                            </> :
-                                            <Text>유사 서비스 분석 정보가 없습니다.</Text>
-                                        }
-                                    </VStack>
-                                </TabPanel>
-                                <TabPanel>
-                                    <VStack align="stretch" spacing={4}>
-                                        <Heading size="md">트렌드, 고객 분포, 기술 동향</Heading>
-                                        {selectedHistory.marketTrends ?
-                                            <>
-                                                {renderTrendCustomerTechnology(selectedHistory.marketTrends)}
-                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketTrends)} mt={2}>
-                                                    복사
-                                                </Button>
-                                            </> :
-                                            <Text>트렌드/고객/기술 정보가 없습니다.</Text>
-                                        }
-                                    </VStack>
-                                </TabPanel>
-                            </TabPanels>
-                        </Tabs>
-                    </ModalBody>
-                </ModalContent>
-            </Modal>
-        );
-    };
-
-    useEffect(() => {
         const marketResearchElement = document.getElementById('market-research');
         if (marketResearchElement) {
             marketResearchElement.scrollIntoView({ behavior: 'smooth' });
@@ -235,7 +130,7 @@ const MarketResearch = () => {
     };
 
     const saveResearchHistoryToCookie = (newHistory) => {
-        Cookies.set('marketResearchHistory', JSON.stringify(newHistory), { expires: 7 }); // 7일간 유효
+        Cookies.set('marketResearchHistory', JSON.stringify(newHistory), { expires: 7 });
     };
 
     const fetchBusinesses = async () => {
@@ -257,7 +152,7 @@ const MarketResearch = () => {
             const response = await api.get(`/market-research/history?page=${currentPage}&size=10`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            console.log('Research history response:', response.data);  // 디버깅용
+            console.log('Research history response:', response.data);
             if (response.data.data && Array.isArray(response.data.data)) {
                 setResearchHistory(response.data.data);
                 setTotalPages(response.data.totalPages || 1);
@@ -321,7 +216,7 @@ const MarketResearch = () => {
             setError('사업을 선택하거나 카테고리를 입력해주세요.');
             return;
         }
-        setLoading(true);
+        setIsLoading(true);
         setError(null);
         const headers = {
             'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
@@ -380,7 +275,6 @@ const MarketResearch = () => {
                     marketTrends = JSON.stringify(trendCustomerTechnologyRes.data.data);
                     break;
             }
-            // 조회 이력 저장
             const historyData = {
                 createAt: new Date().toISOString(),
                 marketInformation,
@@ -404,7 +298,7 @@ const MarketResearch = () => {
             console.error('Error response:', error.response?.data);
             setError(`시장 분석에 실패했습니다: ${error.response?.data?.message || error.message}`);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -502,7 +396,6 @@ const MarketResearch = () => {
         </Card>
     );
 
-
     const renderAnalysisTypeSelection = () => (
         <Card>
             <CardHeader>
@@ -572,8 +465,6 @@ const MarketResearch = () => {
             </Box>
         );
     };
-    const [selectedCompany, setSelectedCompany] = useState(null);
-    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
 
     const renderSimilarServices = (data) => {
         console.log('Similar Services data:', data);
@@ -663,6 +554,7 @@ const MarketResearch = () => {
             </ModalContent>
         </Modal>
     );
+
     const renderTrendCustomerTechnology = (data) => {
         console.log('Trend Customer Technology data:', data);
         let parsedData;
@@ -861,6 +753,111 @@ const MarketResearch = () => {
             </ModalContent>
         </Modal>
     );
+
+    const renderHistoryModal = () => {
+        if (!selectedHistory) return null;
+
+        return (
+            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} size="6xl">
+                <ModalOverlay />
+                <ModalContent maxWidth="90vw" maxHeight="90vh">
+                    <ModalHeader>분석 결과 상세</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody overflowY="auto" p={6}>
+                        <Tabs>
+                            <TabList>
+                                <Tab>전체 보기</Tab>
+                                <Tab>시장 규모</Tab>
+                                <Tab>유사 서비스</Tab>
+                                <Tab>트렌드/고객/기술</Tab>
+                            </TabList>
+                            <TabPanels>
+                                <TabPanel>
+                                    <VStack align="stretch" spacing={4}>
+                                        <Box>
+                                            <Heading size="md">시장 규모 및 성장률</Heading>
+                                            {selectedHistory.marketInformation && (
+                                                <>
+                                                    {renderMarketSizeGrowth(selectedHistory.marketInformation)}
+                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketInformation)} mt={2}>
+                                                        복사
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </Box>
+                                        <Box>
+                                            <Heading size="md">유사 서비스 분석</Heading>
+                                            {selectedHistory.competitorAnalysis && (
+                                                <>
+                                                    {renderSimilarServices(selectedHistory.competitorAnalysis)}
+                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.competitorAnalysis)} mt={2}>
+                                                        복사
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </Box>
+                                        <Box>
+                                            <Heading size="md">트렌드, 고객 분포, 기술 동향</Heading>
+                                            {selectedHistory.marketTrends && (
+                                                <>
+                                                    {renderTrendCustomerTechnology(selectedHistory.marketTrends)}
+                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketTrends)} mt={2}>
+                                                        복사
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </Box>
+                                    </VStack>
+                                </TabPanel>
+                                <TabPanel>
+                                    <VStack align="stretch" spacing={4}>
+                                        <Heading size="md">시장 규모 및 성장률</Heading>
+                                        {selectedHistory.marketInformation ?
+                                            <>
+                                                {renderMarketSizeGrowth(selectedHistory.marketInformation)}
+                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketInformation)} mt={2}>
+                                                    복사
+                                                </Button>
+                                            </> :
+                                            <Text>시장 규모 정보가 없습니다.</Text>
+                                        }
+                                    </VStack>
+                                </TabPanel>
+                                <TabPanel>
+                                    <VStack align="stretch" spacing={4}>
+                                        <Heading size="md">유사 서비스 분석</Heading>
+                                        {selectedHistory.competitorAnalysis ?
+                                            <>
+                                                {renderSimilarServices(selectedHistory.competitorAnalysis)}
+                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.competitorAnalysis)} mt={2}>
+                                                    복사
+                                                </Button>
+                                            </> :
+                                            <Text>유사 서비스 분석 정보가 없습니다.</Text>
+                                        }
+                                    </VStack>
+                                </TabPanel>
+                                <TabPanel>
+                                    <VStack align="stretch" spacing={4}>
+                                        <Heading size="md">트렌드, 고객 분포, 기술 동향</Heading>
+                                        {selectedHistory.marketTrends ?
+                                            <>
+                                                {renderTrendCustomerTechnology(selectedHistory.marketTrends)}
+                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketTrends)} mt={2}>
+                                                    복사
+                                                </Button>
+                                            </> :
+                                            <Text>트렌드/고객/기술 정보가 없습니다.</Text>
+                                        }
+                                    </VStack>
+                                </TabPanel>
+                            </TabPanels>
+                        </Tabs>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+        );
+    };
 
     return (
         <motion.div
