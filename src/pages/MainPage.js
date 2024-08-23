@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Box, Text, Flex, Image, IconButton, HStack, VStack, Button, Select, useToast } from '@chakra-ui/react';
+import { Box, Text, Flex, Image, IconButton, HStack, VStack, Button, Select, useToast, Link as ChakraLink } from '@chakra-ui/react';
 import { ChevronRightIcon, ChevronLeftIcon, ChatIcon } from '@chakra-ui/icons';
 import MainHeader from '../component/common/MainHeader';
 import MarketResearch from "./MarketResearch";
@@ -43,6 +43,11 @@ function MainPage() {
         { title: "세무 처리", description: "간편한 세무 관리 솔루션", icon: bannerImage3 },
         { title: "시장 조사", description: "AI 기반 시장 트렌드 분석", icon: bannerImage4 },
     ];
+
+    const handleExternalLink = (e, url) => {
+        e.preventDefault();
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
 
 
     const toggleChatbot = () => {
@@ -302,7 +307,7 @@ function MainPage() {
                                 backgroundSize="cover"
                                 backgroundPosition="center"
                                 backgroundRepeat="no-repeat"
-                                p={8}
+                                p={4}
                                 mr={index === currentSlide ? 0 : "-80%"}
                                 width={index === currentSlide ? "100%" : "20%"}
                                 height={index === currentSlide ? "100%" : "80%"}
@@ -315,37 +320,55 @@ function MainPage() {
                                 right="0"
                                 bottom="0"
                             >
-                                <VStack align="flex-start" height="100%" justify="space-between">
+                                <VStack align="flex-start" height="100%" justify="space-between" spacing={2}>
                                     <Box
-                                        bg="rgba(0,0,0,0.6)"
+                                        bg="rgba(0,0,0,0.8)"
                                         p={4}
                                         borderRadius="md"
                                         width="100%"
+                                        height="100%"
+                                        overflow="hidden"
                                     >
-                                        <Text fontWeight="bold" fontSize="2xl" mb={4} color="white">
+                                        <Text fontWeight="bold" fontSize="3xl" mb={3} color="white">
                                             {item.name || item.title}
                                         </Text>
-                                        <Text fontSize="md" color="white">
-                                            {item.description || item.supportContent || item.target}
-                                        </Text>
+                                        {item.target && (
+                                            <Text fontSize="2xl" color="white" mb={2}>                                                <Text as="span" fontWeight="bold" color="blue.300" fontSize="2xl">지원 대상: </Text>
+                                                {item.target}
+                                            </Text>
+                                        )}
                                         {item.scareOfSupport && (
-                                            <Text mb={2} color="white">지원 규모: {item.scareOfSupport}</Text>
+                                            <Text fontSize="2xl" color="white" mb={2}>                                                <Text as="span" fontWeight="bold" color="green.300" fontSize="2xl">지원 규모: </Text>
+                                                {item.scareOfSupport}
+                                            </Text>
+                                        )}
+                                        {item.supportContent && (
+                                            <Text fontSize="2xl" color="white" mb={2}>                                                <Text as="span" fontWeight="bold" color="yellow.300" fontSize="2xl">지원 내용: </Text>
+                                                {item.supportContent}
+                                            </Text>
                                         )}
                                         {item.supportCharacteristics && (
-                                            <Text mb={2} color="white">지원 특징: {item.supportCharacteristics}</Text>
+                                            <Text fontSize="2xl" color="white" mb={2}>                                                <Text as="span" fontWeight="bold" color="purple.300" fontSize="2xl">지원 특징: </Text>
+                                                {item.supportCharacteristics}
+                                            </Text>
+                                        )}
+                                        {item.originUrl && (
+                                            <Text fontSize="xl" color="white" mt={2}>
+                                                <Text as="span" fontWeight="bold" color="orange.300">링크: </Text>
+                                                <ChakraLink
+                                                    href={item.originUrl}
+                                                    isExternal
+                                                    color="blue.300"
+                                                    textDecoration="underline"
+                                                    maxWidth="100%"
+                                                    isTruncated
+                                                    _hover={{ color: "blue.100" }}
+                                                >
+                                                    {item.originUrl}
+                                                </ChakraLink>
+                                            </Text>
                                         )}
                                     </Box>
-                                    <Flex justify="space-between" align="center" width="100%">
-                                        <Button
-                                            as={Link}
-                                            to={item.link || "#"}
-                                            colorScheme="blue"
-                                            size="sm"
-                                        >
-                                            {item.action || "자세히 보기"}
-                                        </Button>
-                                        <ChevronRightIcon boxSize={8} color="white" />
-                                    </Flex>
                                 </VStack>
                             </Box>
                         ))}

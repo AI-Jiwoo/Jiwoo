@@ -15,9 +15,14 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
         navigate('/');
     };
 
-    const handleMyPageClick = (e) => {
+    const handleMainPageClick = (e) => {
         e.preventDefault();
         navigate('/main');
+    };
+
+    const handleMyPageClick = (e) => {
+        e.preventDefault();
+        navigate('/mypage');
     };
 
     const handleMarketResearchClick = (e) => {
@@ -59,7 +64,7 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                 transition="all 0.3s"
             >
                 <Flex justifyContent="space-between" alignItems="center" p={4}>
-                    <Link as={RouterLink} to="/main">
+                    <Link as={RouterLink} to="/">
                         <Image src={logo} alt="JIWOO WISE HELPER" height="60px" cursor="pointer" />
                     </Link>
 
@@ -97,8 +102,12 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                     <Flex alignItems="center">
                         {user ? (
                             <>
-                                <Link as={RouterLink} to="/main" mx={3} onClick={handleMyPageClick}>
+                                <Link as={RouterLink} to="/main" mx={3} onClick={handleMainPageClick}>
                                     <Text fontWeight="bold">메인페이지</Text>
+                                </Link>
+                                <Text fontWeight="bold" mx={2}>|</Text>
+                                <Link as={RouterLink} to="/mypage" mx={3} onClick={handleMyPageClick}>
+                                    <Text fontWeight="bold">마이페이지</Text>
                                 </Link>
                                 <Text fontWeight="bold" mx={2}>|</Text>
                                 <Link onClick={handleLogout} ml={3}>
