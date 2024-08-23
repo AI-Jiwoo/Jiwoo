@@ -160,6 +160,7 @@ function MainPage() {
     return (
         <Box>
             <MainHeader
+                scrollToMain={ () => handleNavigation('home')}
                 scrollToMarketResearch={() => handleNavigation('market-research')}
                 scrollToBusinessModel={() => handleNavigation('business-model')}
                 scrollToAccounting={() => handleNavigation('accounting')}

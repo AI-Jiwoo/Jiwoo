@@ -4,7 +4,7 @@ import logo from '../../logo/headerLogo.png';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAccounting }) {
+function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAccounting, scrollToMain }) {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
 
@@ -24,6 +24,15 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAcc
         e.preventDefault();
         navigate('/mypage');
     };
+
+    const handleMainClick = (e) => {
+        e.preventDefault();
+        if (scrollToMain) {
+            scrollToMain();
+        }else  {
+            navigate('')
+        }
+    }
 
     const handleMarketResearchClick = (e) => {
         e.preventDefault();
@@ -54,8 +63,7 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAcc
     };
 
 
-
-        return (
+    return (
             <Box
                 as="header"
                 position="sticky"
@@ -78,6 +86,16 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAcc
                     </Link>
 
                     <HStack spacing={8}>
+
+                        <Link
+                            href="#"
+                            onClick={handleMainClick}
+                            fontWeight="bold"
+                            p={2}
+                            borderRadius="md"
+                        >
+                            홈
+                        </Link>
 
                         <Link
                             href="#"
