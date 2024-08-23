@@ -30,7 +30,7 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAcc
         if (scrollToMarketResearch) {
             scrollToMarketResearch();
         } else {
-           navigate('/market-research');
+           navigate('/main/market-research');
         }
     };
 
@@ -40,7 +40,7 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAcc
         if (scrollToBusinessModel) {
             scrollToBusinessModel();
         } else {
-           navigate('/business-model');
+           navigate('/main/business-model');
         }
     };
 
@@ -49,7 +49,7 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAcc
         if (scrollToAccounting) {
             scrollToAccounting();
         }else {
-            navigate('/accounting')
+            navigate('/main/accounting')
         }
     };
 
