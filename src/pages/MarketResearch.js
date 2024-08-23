@@ -37,11 +37,11 @@ import {
     ModalHeader,
     ModalBody,
     ModalCloseButton,
-    TabPanel, TabList, Tabs, Tab, TabPanels, Heading
+    TabPanel, TabList, Tabs, Tab, TabPanels, Heading, useToast
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import MarketGrowthChart from "../component/MarketGrowthChart";
-import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaQuestionCircle, FaRedo} from 'react-icons/fa';
+import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaQuestionCircle, FaRedo, FaCopy} from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import api from "../apis/api";
 import LoadingScreen from "../component/common/LoadingMotion";
@@ -74,7 +74,30 @@ const MarketResearch = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedHistory, setSelectedHistory] = useState(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const toast = useToast();
 
+
+
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            toast({
+                title: "복사 완료",
+                description: "내용이 클립보드에 복사되었습니다.",
+                status: "success",
+                duration: 2000,
+                isClosable: true,
+            });
+        }).catch(err => {
+            console.error('복사 실패:', err);
+            toast({
+                title: "복사 실패",
+                description: "내용을 복사하는데 실패했습니다.",
+                status: "error",
+                duration: 2000,
+                isClosable: true,
+            });
+        });
+    };
 
     const handleHistoryClick = (history) => {
         setSelectedHistory(history);
@@ -97,6 +120,7 @@ const MarketResearch = () => {
                     <ModalBody overflowY="auto" p={6}>
                         <Tabs>
                             <TabList>
+                                <Tab>전체 보기</Tab>
                                 <Tab>시장 규모</Tab>
                                 <Tab>유사 서비스</Tab>
                                 <Tab>트렌드/고객/기술</Tab>
@@ -104,9 +128,51 @@ const MarketResearch = () => {
                             <TabPanels>
                                 <TabPanel>
                                     <VStack align="stretch" spacing={4}>
+                                        <Box>
+                                            <Heading size="md">시장 규모 및 성장률</Heading>
+                                            {selectedHistory.marketInformation && (
+                                                <>
+                                                    {renderMarketSizeGrowth(selectedHistory.marketInformation)}
+                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketInformation)} mt={2}>
+                                                        복사
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </Box>
+                                        <Box>
+                                            <Heading size="md">유사 서비스 분석</Heading>
+                                            {selectedHistory.competitorAnalysis && (
+                                                <>
+                                                    {renderSimilarServices(selectedHistory.competitorAnalysis)}
+                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.competitorAnalysis)} mt={2}>
+                                                        복사
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </Box>
+                                        <Box>
+                                            <Heading size="md">트렌드, 고객 분포, 기술 동향</Heading>
+                                            {selectedHistory.marketTrends && (
+                                                <>
+                                                    {renderTrendCustomerTechnology(selectedHistory.marketTrends)}
+                                                    <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketTrends)} mt={2}>
+                                                        복사
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </Box>
+                                    </VStack>
+                                </TabPanel>
+                                <TabPanel>
+                                    <VStack align="stretch" spacing={4}>
                                         <Heading size="md">시장 규모 및 성장률</Heading>
                                         {selectedHistory.marketInformation ?
-                                            renderMarketSizeGrowth(selectedHistory.marketInformation) :
+                                            <>
+                                                {renderMarketSizeGrowth(selectedHistory.marketInformation)}
+                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketInformation)} mt={2}>
+                                                    복사
+                                                </Button>
+                                            </> :
                                             <Text>시장 규모 정보가 없습니다.</Text>
                                         }
                                     </VStack>
@@ -115,7 +181,12 @@ const MarketResearch = () => {
                                     <VStack align="stretch" spacing={4}>
                                         <Heading size="md">유사 서비스 분석</Heading>
                                         {selectedHistory.competitorAnalysis ?
-                                            renderSimilarServices(selectedHistory.competitorAnalysis) :
+                                            <>
+                                                {renderSimilarServices(selectedHistory.competitorAnalysis)}
+                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.competitorAnalysis)} mt={2}>
+                                                    복사
+                                                </Button>
+                                            </> :
                                             <Text>유사 서비스 분석 정보가 없습니다.</Text>
                                         }
                                     </VStack>
@@ -124,7 +195,12 @@ const MarketResearch = () => {
                                     <VStack align="stretch" spacing={4}>
                                         <Heading size="md">트렌드, 고객 분포, 기술 동향</Heading>
                                         {selectedHistory.marketTrends ?
-                                            renderTrendCustomerTechnology(selectedHistory.marketTrends) :
+                                            <>
+                                                {renderTrendCustomerTechnology(selectedHistory.marketTrends)}
+                                                <Button leftIcon={<FaCopy />} onClick={() => handleCopy(selectedHistory.marketTrends)} mt={2}>
+                                                    복사
+                                                </Button>
+                                            </> :
                                             <Text>트렌드/고객/기술 정보가 없습니다.</Text>
                                         }
                                     </VStack>
@@ -706,7 +782,6 @@ const MarketResearch = () => {
             return isNaN(date.getTime()) ? dateString : date.toLocaleString();
         };
 
-
         return (
             <Card>
                 <CardHeader>
@@ -726,20 +801,21 @@ const MarketResearch = () => {
                                         <Th>시장 정보</Th>
                                         <Th>경쟁사 분석</Th>
                                         <Th>시장 동향</Th>
+                                        <Th>액션</Th>
                                     </Tr>
                                 </Thead>
                                 <Tbody>
                                     {researchHistory.map((history, index) => (
-                                        <Tr
-                                            key={index}
-                                            onClick={() => handleHistoryClick(history)}
-                                            cursor="pointer"
-                                            _hover={{ bg: "gray.100" }}
-                                        >
+                                        <Tr key={index}>
                                             <Td>{formatDate(history.createAt)}</Td>
                                             <Td>{history.marketInformation ? '있음' : '없음'}</Td>
                                             <Td>{history.competitorAnalysis ? '있음' : '없음'}</Td>
                                             <Td>{history.marketTrends ? '있음' : '없음'}</Td>
+                                            <Td>
+                                                <Button size="sm" onClick={() => handleHistoryClick(history)}>
+                                                    전체보기
+                                                </Button>
+                                            </Td>
                                         </Tr>
                                     ))}
                                 </Tbody>
