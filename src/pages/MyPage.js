@@ -196,18 +196,9 @@ const MyPage = () => {
 
     const handleSubmitBusinessInfo = async (newBusinessInfo) => {
         try {
-            // 사업자 등록번호 형식 변환 (예: 12323-12345 -> 123-23-12345)
-            const formattedBusinessNumber = newBusinessInfo.businessNumber.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
+            console.log('Submitting business info:', newBusinessInfo);
 
-            const processedInfo = {
-                ...newBusinessInfo,
-                businessNumber: formattedBusinessNumber,
-                categoryIds: [newBusinessInfo.categoryId], // 단일 ID를 배열로 변환
-            };
-
-            console.log('Submitting business info:', processedInfo);
-
-            const response = await api.post('/business/regist', processedInfo, {
+            const response = await api.post('/business/regist', newBusinessInfo, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
                     'Content-Type': 'application/json'
