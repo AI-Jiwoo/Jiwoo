@@ -13,7 +13,7 @@ import {
     LinkIcon,
     SearchIcon,
     ChevronRightIcon,
-    AttachmentIcon
+    AttachmentIcon, AddIcon
 } from '@chakra-ui/icons';
 import * as FaIcons from 'react-icons/fa';
 import {
@@ -438,14 +438,23 @@ const Chatbot = () => {
                 {/* 입력 영역 */}
                 <Box p={6} bg="white" borderTopWidth={1} borderColor="gray.200">
                     <Flex
-                        maxWidth="1200px"
+                        maxWidth="1300px"
                         position="relative"
                         alignItems="center"
                         boxShadow="0 0 10px rgba(0,0,0,0.1)"
                         borderRadius="full"
                         overflow="hidden"
-                        mr="400px" // 사이드바 너비만큼 왼쪽 여백 추가
+                        mr="400px"
                     >
+                        <IconButton
+                            icon={<AddIcon />}
+                            size="md"
+                            colorScheme="blue"
+                            variant="ghost"
+                            aria-label="Attach file"
+                            onClick={() => document.getElementById('file-upload').click()}
+                            ml={2}
+                        />
                         <Input
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
@@ -456,26 +465,19 @@ const Chatbot = () => {
                             fontSize="xl"
                             border="none"
                             _focus={{ boxShadow: "none" }}
-                            pr="100px"
+                            pl="60px"
+                            pr="60px"
                         />
-                        <HStack position="absolute" right={2} spacing={2}>
-                            <IconButton
-                                icon={<AttachmentIcon />}
-                                size="md"
-                                colorScheme="blue"
-                                variant="ghost"
-                                aria-label="Attach file"
-                                onClick={() => document.getElementById('file-upload').click()}
-                            />
-                            <IconButton
-                                icon={<ChevronRightIcon />}
-                                size="md"
-                                colorScheme="blue"
-                                aria-label="Send message"
-                                onClick={sendMessage}
-                                isLoading={isLoading}
-                            />
-                        </HStack>
+                        <IconButton
+                            icon={<ChevronRightIcon />}
+                            size="md"
+                            colorScheme="blue"
+                            aria-label="Send message"
+                            onClick={sendMessage}
+                            isLoading={isLoading}
+                            position="absolute"
+                            right={2}
+                        />
                         <input
                             id="file-upload"
                             type="file"
