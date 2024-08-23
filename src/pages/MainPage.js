@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Box, Text, Flex, Image, IconButton, HStack, VStack, Button, Select, useToast, Link as ChakraLink } from '@chakra-ui/react';
-import { ChevronRightIcon, ChevronLeftIcon, ChatIcon } from '@chakra-ui/icons';
+import { Box, Text, Flex, Image, IconButton, HStack, VStack, Button, useToast, Link as ChakraLink } from '@chakra-ui/react';
+import { ChevronRightIcon, ChevronLeftIcon, ChatIcon, WarningIcon } from '@chakra-ui/icons';
 import MainHeader from '../component/common/MainHeader';
 import MarketResearch from "./MarketResearch";
 import BusinessModel from "./BusinessModel";
@@ -8,8 +8,6 @@ import SideNavigation from "../component/SideNavigation";
 import Footer from "../component/common/Footer";
 import Accounting from "./Accounting";
 import {motion , AnimatePresence} from "framer-motion";
-
-
 import {Link, useLocation, useNavigate} from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
 import api from "../apis/api";
@@ -19,7 +17,6 @@ import bannerImage3 from '../images/banner3.png';
 import bannerImage4 from '../images/banner4.png';
 import JiwooChatbot from "../component/Chatbot";
 import {Element, scroller} from "react-scroll";
-
 
 function MainPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -32,12 +29,9 @@ function MainPage() {
 
     const { user } = useAuth();
     const [allRecommendedPrograms, setAllRecommendedPrograms] = useState([]);
-    const [businessInfos, setBusinessInfos] = useState([]);
-    const [selectedBusinessId, setSelectedBusinessId] = useState(null);
-    const [isChatbotOpen, setIsChatbotOpen] = useState();
+    const [isChatbotOpen, setIsChatbotOpen] = useState(false);
     const chatbotButtonRef = useRef(null);
     const toast = useToast();
-
 
     const features = [
         { title: "창업 가이드", description: "AI 기반 맞춤형 창업 전략", icon: bannerImage },
@@ -46,81 +40,12 @@ function MainPage() {
         { title: "시장 조사", description: "AI 기반 시장 트렌드 분석", icon: bannerImage4 },
     ];
 
-    const handleExternalLink = (e, url) => {
-        e.preventDefault();
-        window.open(url, '_blank', 'noopener,noreferrer');
-    };
-
-    useEffect(() => {
-        const section = location.pathname.split('/')[2];
-        if (section) {
-            scrollToSection(section)
-        }
-    }, [location]);
-
-
-    const toggleChatbot = () => {
-        if (isChatbotOpen) {
-            setIsChatbotOpen(false);
-            navigate('/main');
-        } else {
-            setIsChatbotOpen(true);
-            navigate('/chatbot');
-        }
-    };
-
-    const chatbotVariants = {
-        hidden: { opacity: 0, scale: 0 },
-        visible: {
-            opacity: 1,
-            scale: 1,
-            transition: {
-                type: 'spring',
-                stiffness: 260,
-                damping: 20,
-            }
-        },
-        exit: {
-            opacity: 0,
-            scale: 0,
-            transition: {
-                duration: 0.2
-            }
-        }
-    };
-
-
     const alternativeContent = [
-        {
-            title: "창업 성공의 비결",
-            description: "성공한 스타트업 CEO들의 조언과 팁을 만나보세요.",
-            icon: bannerImage,
-            action: "자세히 보기",
-            link: "/success-stories"
-        },
-        {
-            title: "네트워킹 이벤트",
-            description: "다가오는 스타트업 네트워킹 이벤트에 참여하세요.",
-            icon: bannerImage2,
-            action: "이벤트 보기",
-            link: "/upcoming-events"
-        },
-        {
-            title: "리소스 라이브러리",
-            description: "창업에 필요한 모든 자료를 한 곳에서 찾아보세요.",
-            icon: bannerImage3,
-            action: "라이브러리 가기",
-            link: "/resource-library"
-        },
-        {
-            title: "AI 기능 둘러보기",
-            description: "JIWOO AI HELPER의 다양한 기능을 살펴보세요.",
-            icon: bannerImage4,
-            action: "기능 알아보기",
-            link: "/ai-features"
-        }
+        { title: "창업 성공의 비결", description: "성공한 스타트업 CEO들의 조언과 팁을 만나보세요.", icon: bannerImage, action: "자세히 보기", link: "/success-stories" },
+        { title: "네트워킹 이벤트", description: "다가오는 스타트업 네트워킹 이벤트에 참여하세요.", icon: bannerImage2, action: "이벤트 보기", link: "/upcoming-events" },
+        { title: "리소스 라이브러리", description: "창업에 필요한 모든 자료를 한 곳에서 찾아보세요.", icon: bannerImage3, action: "라이브러리 가기", link: "/resource-library" },
+        { title: "AI 기능 둘러보기", description: "JIWOO AI HELPER의 다양한 기능을 살펴보세요.", icon: bannerImage4, action: "기능 알아보기", link: "/ai-features" },
     ];
-
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -128,50 +53,16 @@ function MainPage() {
 
     useEffect(() => {
         if (user) {
-            fetchBusinessInfos();
             fetchAllRecommendedPrograms();
         }
     }, [user]);
 
     useEffect(() => {
-        if (marketResearchRef.current && businessModelRef.current && accountingRef.current) {
-            const handleScroll = () => {
-                const scrollPosition = window.scrollY;
-                if (scrollPosition < businessModelRef.current.offsetTop) {
-                    setActiveSection('marketResearchRef');
-                } else if (scrollPosition < accountingRef.current.offsetTop) {
-                    setActiveSection('businessModelRef');
-                } else {
-                    setActiveSection('accountingRef');
-                }
-            };
-
-            window.addEventListener('scroll', handleScroll);
-            return () => window.removeEventListener('scroll', handleScroll);
+        const section = location.pathname.split('/')[2];
+        if (section) {
+            scrollToSection(section);
         }
-    }, [marketResearchRef, businessModelRef, accountingRef]);
-
-    const fetchBusinessInfos = async () => {
-        try {
-            const response = await api.get('/business/user', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
-            });
-            const businessData = response.data.business || [];
-            setBusinessInfos(businessData);
-            if (businessData.length > 0) {
-                setSelectedBusinessId(businessData[0].id);
-            }
-        } catch (error) {
-            console.error('Failed to fetch business infos:', error);
-            toast({
-                title: "사업 정보 로딩 실패",
-                description: "사업 정보를 불러오는데 실패했습니다.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
+    }, [location]);
 
     const fetchAllRecommendedPrograms = async () => {
         try {
@@ -179,6 +70,16 @@ function MainPage() {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
             setAllRecommendedPrograms(response.data);
+            if (response.data.length === 0) {
+                toast({
+                    title: "추천 프로그램 없음",
+                    description: "지금은 추천할 지원사업이 없습니다.",
+                    status: "info",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "top",
+                });
+            }
         } catch (error) {
             console.error('Error fetching recommended programs:', error);
             toast({
@@ -187,42 +88,25 @@ function MainPage() {
                 status: "error",
                 duration: 5000,
                 isClosable: true,
+                position: "top",
             });
         }
     };
 
-    const handleBusinessChange = (event) => {
-        setSelectedBusinessId(parseInt(event.target.value));
-    };
-
-    const filteredRecommendedPrograms = useMemo(() => {
-        if (!selectedBusinessId) return [];
-        // 여기서 실제로 비즈니스 ID에 따라 프로그램을 필터링하는 로직을 구현해야함
-        // 현재는 모든 프로그램을 반환하지만, 실제로는 비즈니스 특성에 맞는 프로그램만 반환해야함
-        return allRecommendedPrograms;
-    }, [selectedBusinessId, allRecommendedPrograms]);
-
     const contentToDisplay = useMemo(() => {
-        if (user && filteredRecommendedPrograms.length > 0) {
-            return filteredRecommendedPrograms;
+        if (user && allRecommendedPrograms.length > 0) {
+            return allRecommendedPrograms;
         } else if (user) {
             return alternativeContent;
         } else {
             return features;
         }
-    }, [user, filteredRecommendedPrograms, features]);
+    }, [user, allRecommendedPrograms, features]);
 
-    useEffect(() => {
-        if (user && selectedBusinessId && filteredRecommendedPrograms.length === 0) {
-            toast({
-                title: "추천 프로그램 없음",
-                description: "현재 선택한 사업에 대한 추천 지원 프로그램이 없습니다.",
-                status: "info",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    }, [user, selectedBusinessId, filteredRecommendedPrograms, toast]);
+    const toggleChatbot = () => {
+        setIsChatbotOpen(!isChatbotOpen);
+        navigate(isChatbotOpen ? '/main' : '/chatbot');
+    };
 
     const scrollToSection = (section) => {
         scroller.scrollTo(section, {
@@ -235,7 +119,7 @@ function MainPage() {
     const handleNavigation = (section) => {
         navigate(`/main/${section}`);
         scrollToSection(section);
-    }
+    };
 
     const nextSlide = () => {
         setCurrentSlide((prev) => (prev + 1) % contentToDisplay.length);
@@ -246,25 +130,18 @@ function MainPage() {
     };
 
     useEffect(() => {
-        const timer = setInterval(() => {
-            nextSlide();
-        }, 5000);
-
+        const timer = setInterval(nextSlide, 5000);
         return () => clearInterval(timer);
     }, [contentToDisplay]);
 
-    const scrollToMarketResearch = () => {
-        marketResearchRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const isValidUrl = (url) => {
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            return false;
+        }
     };
-
-    const scrollToBusinessModel = () => {
-        businessModelRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    const scrollToAccounting = () => {
-        accountingRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
 
     return (
         <Box>
@@ -274,13 +151,7 @@ function MainPage() {
                 scrollToAccounting={() => handleNavigation('accounting')}
             />
             <Element name="home">
-                <Box
-                    bg="#010B1A"
-                    color="white"
-                    height="100vh"
-                    position="relative"
-                    overflow="hidden"
-                >
+                <Box bg="#010B1A" color="white" height="100vh" position="relative" overflow="hidden">
                     <Flex height="100%" pl="10%" pr="5%" pt="10%" position="relative">
                         <VStack align="flex-start" width="40%" mr="10%">
                             <Text fontSize="6xl" fontWeight="bold" mb={4}>
@@ -290,29 +161,15 @@ function MainPage() {
                                 1인 IT 창업을 위한 최고의 AI 파트너<br />
                                 혁신적인 기술로 당신의 창업 여정을 가속화합니다
                             </Text>
-                            {user && businessInfos.length > 0 && (
-                                <Box
-                                    bg="rgba(255,255,255,0.1)"
-                                    p={4}
-                                    borderRadius="md"
-                                    border="1px solid white"
-                                >
-                                    <Text mb={2} fontWeight="bold">당신의 사업을 선택하세요</Text>
-                                    <Select
-                                        placeholder="사업 선택"
-                                        onChange={handleBusinessChange}
-                                        bg="white"
-                                        color="black"
-                                        mb={2}
-                                        value={selectedBusinessId}
-                                    >
-                                        {businessInfos.map((business) => (
-                                            <option key={business.id} value={business.id}>
-                                                {business.businessName}
-                                            </option>
-                                        ))}
-                                    </Select>
-                                    <Text fontSize="sm">선택한 사업에 맞는 맞춤형 지원 프로그램을 확인하세요.</Text>
+                            {user && (
+                                <Box bg="rgba(255,255,255,0.1)" p={4} borderRadius="md" border="1px solid white">
+                                    <Text fontSize="lg" fontWeight="bold">
+                                        맞춤형 지원 프로그램
+                                    </Text>
+                                    <Text fontSize="md" mt={2}>
+                                        당신의 사업에 맞는 맞춤형 지원 프로그램을 확인하세요.
+                                        AI가 분석한 최적의 프로그램을 제안해드립니다.
+                                    </Text>
                                 </Box>
                             )}
                         </VStack>
@@ -345,50 +202,61 @@ function MainPage() {
                                             borderRadius="md"
                                             width="100%"
                                             height="100%"
-                                            overflow="hidden"
+                                            overflow="auto"
                                         >
                                             <Text fontWeight="bold" fontSize="3xl" mb={3} color="white">
                                                 {item.name || item.title}
                                             </Text>
+                                            <Text fontSize="xl" color="white" mb={2}>
+                                                {item.description}
+                                            </Text>
                                             {item.target && (
-                                                <Text fontSize="2xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="blue.300" fontSize="2xl">지원 대상: </Text>
+                                                <Text fontSize="xl" color="white" mb={2}>
+                                                    <Text as="span" fontWeight="bold" color="blue.300">지원 대상: </Text>
                                                     {item.target}
                                                 </Text>
                                             )}
                                             {item.scareOfSupport && (
-                                                <Text fontSize="2xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="green.300" fontSize="2xl">지원 규모: </Text>
+                                                <Text fontSize="xl" color="white" mb={2}>
+                                                    <Text as="span" fontWeight="bold" color="green.300">지원 규모: </Text>
                                                     {item.scareOfSupport}
                                                 </Text>
                                             )}
                                             {item.supportContent && (
-                                                <Text fontSize="2xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="yellow.300" fontSize="2xl">지원 내용: </Text>
+                                                <Text fontSize="xl" color="white" mb={2}>
+                                                    <Text as="span" fontWeight="bold" color="yellow.300">지원 내용: </Text>
                                                     {item.supportContent}
                                                 </Text>
                                             )}
                                             {item.supportCharacteristics && (
-                                                <Text fontSize="2xl" color="white" mb={2}>
-                                                    <Text as="span" fontWeight="bold" color="purple.300" fontSize="2xl">지원 특징: </Text>
+                                                <Text fontSize="xl" color="white" mb={2}>
+                                                    <Text as="span" fontWeight="bold" color="purple.300">지원 특징: </Text>
                                                     {item.supportCharacteristics}
                                                 </Text>
                                             )}
                                             {item.originUrl && (
-                                                <Text fontSize="xl" color="white" mt={2}>
-                                                    <Text as="span" fontWeight="bold" color="orange.300">링크: </Text>
-                                                    <ChakraLink
-                                                        href={item.originUrl}
-                                                        isExternal
-                                                        color="blue.300"
-                                                        textDecoration="underline"
-                                                        maxWidth="100%"
-                                                        isTruncated
-                                                        _hover={{ color: "blue.100" }}
-                                                    >
-                                                        {item.originUrl}
-                                                    </ChakraLink>
-                                                </Text>
+                                                <VStack align="start" spacing={1}>
+                                                    <Text fontSize="xl" color="white">
+                                                        <Text as="span" fontWeight="bold" color="orange.300">링크: </Text>
+                                                        <ChakraLink
+                                                            href={item.originUrl}
+                                                            isExternal
+                                                            color="blue.300"
+                                                            textDecoration="underline"
+                                                            maxWidth="100%"
+                                                            isTruncated
+                                                            _hover={{ color: "blue.100" }}
+                                                        >
+                                                            {item.originUrl}
+                                                        </ChakraLink>
+                                                    </Text>
+                                                    {!isValidUrl(item.originUrl) && (
+                                                        <Text fontSize="xl" color="red.300">
+                                                            <WarningIcon mr={1} />
+                                                            URL이 유효하지 않을 수 있습니다.
+                                                        </Text>
+                                                    )}
+                                                </VStack>
                                             )}
                                         </Box>
                                     </VStack>
@@ -465,7 +333,15 @@ function MainPage() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        variants={chatbotVariants}
+                        variants={{
+                            hidden: { opacity: 0, scale: 0 },
+                            visible: {
+                                opacity: 1,
+                                scale: 1,
+                                transition: { type: 'spring', stiffness: 260, damping: 20 }
+                            },
+                            exit: { opacity: 0, scale: 0, transition: { duration: 0.2 } }
+                        }}
                         style={{
                             position: 'fixed',
                             top: 0,
