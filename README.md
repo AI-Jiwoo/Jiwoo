@@ -8,7 +8,19 @@
 [![Jiwoo-AI-Server](https://img.shields.io/badge/Jiwoo--AI--Server-Python-3776AB?style=for-the-badge&logo=python)](https://github.com/AI-Jiwoo/Jiwoo-AI-Server)
 
 Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입니다. 시장 분석부터 세무 처리까지, 당신의 비즈니스를 360도 지원합니다.
+
+
+
+
+## 🗓️ 프로젝트 수행기간
+
+**2024.07.14 ~ 2024.08.15**
+
+<sub><sup>총 1개월</sup></sub>
+
 </div>
+
+<br/>
 
 ## 🌟 주요 기능
 
@@ -58,18 +70,17 @@ Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입�
    - 절세 포인트 자동 분석 및 적용 가능한 공제 항목 안내
    - 미래 세금 추정 및 세금 준비 가이드 제공
 
-## 🛠️ 기술 스택
+<br/>
 
-<div align="center">
+## 🛠️ 기술 스택
 
 | 개발 환경 | 배포 환경 |
 |:---------:|:---------:|
 | ![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white) ![React.js](https://img.shields.io/badge/React.js-61DAFB?style=for-the-badge&logo=react&logoColor=black) ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) | ![AWS EC2](https://img.shields.io/badge/AWS_EC2-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white) ![Github Actions](https://img.shields.io/badge/Github_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white) |
 
-</div>
+<br/>
 
 ## 👥 팀원 소개
-<div align="center">
 
 <table>
   <tr>
@@ -104,7 +115,6 @@ Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입�
   </tr>
 </table>
 
-</div>
 
 <div align="center">
 
