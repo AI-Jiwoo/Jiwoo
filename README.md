@@ -68,6 +68,7 @@ Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입�
 </div>
 
 ## 👥 팀원 소개
+<div align="center">
 
 <table>
   <tr>
@@ -101,6 +102,8 @@ Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입�
     </td>
   </tr>
 </table>
+
+</div>
 
 <div align="center">
 
