@@ -1,4 +1,5 @@
 <div align="center">
+![jiwoologo](./images/jiwoologo.png)
 
 # Jiwoo AI - 당신의 창업 여정을 함께하는 AI 파트너 🚀
 
