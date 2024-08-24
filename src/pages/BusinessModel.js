@@ -37,7 +37,7 @@ import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye, FaCopy
 import api from "../apis/api";
 import LoadingScreen from "../component/common/LoadingMotion";
 
-const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
+const BusinessModel = () => {
     const [selectedBusiness, setSelectedBusiness] = useState(null);
     const [businesses, setBusinesses] = useState([]);
     const [similarServices, setSimilarServices] = useState([]);
@@ -52,6 +52,14 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     const businessModelRef = useRef(null);
     const [isLoading, setIsLoading] = useState(true);
     const toast = useToast();
+    const [customData, setCustomData] = useState({
+        category: '',
+        scale: '',
+        nation: '',
+        customerType: '',
+        businessType: '',
+        businessContent: ''
+    });
 
 
     const businessModelMessages = [
@@ -248,11 +256,36 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         console.log("Business selected:", selected);
         if (selected) {
             setSelectedBusiness(selected);
-            if (typeof onBusinessSelect === 'function') {
-                onBusinessSelect(selected);
-            }
+            setCustomData({
+                category: selected.category || '',
+                scale: selected.businessScale || '',
+                nation: selected.businessLocation || '',
+                customerType: selected.customerType || '',
+                businessType: selected.businessType || '',
+                businessContent: selected.businessContent || ''
+            });
+        } else {
+            setSelectedBusiness(null);
+            setCustomData({
+                category: '',
+                scale: '',
+                nation: '',
+                customerType: '',
+                businessType: '',
+                businessContent: ''
+            });
         }
-    }, [businesses, onBusinessSelect]);
+    }, [businesses]);
+
+    const handleCustomDataChange = (event) => {
+        const { name, value } = event.target;
+        setCustomData(prevData => ({
+            ...prevData,
+            [name]: value
+        }));
+    };
+
+
 
     const renderBusinessSelection = () => (
         <Card>
@@ -281,8 +314,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업 분야 (카테고리)</FormLabel>
                             <Select
                                 name="category"
-                                value={customData?.category || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.category}
+                                onChange={handleCustomDataChange}
                                 placeholder="카테고리 선택"
                             >
                                 {categories.map((category, index) => (
@@ -296,8 +329,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업 규모</FormLabel>
                             <Input
                                 name="scale"
-                                value={customData?.scale || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.scale}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: 중소기업"
                             />
                         </FormControl>
@@ -305,8 +338,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>국가</FormLabel>
                             <Input
                                 name="nation"
-                                value={customData?.nation || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.nation}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: 대한민국"
                             />
                         </FormControl>
@@ -314,8 +347,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>고객유형</FormLabel>
                             <Input
                                 name="customerType"
-                                value={customData?.customerType || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.customerType}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: B2B"
                             />
                         </FormControl>
@@ -323,8 +356,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업유형</FormLabel>
                             <Input
                                 name="businessType"
-                                value={customData?.businessType || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.businessType}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: 소프트웨어 개발"
                             />
                         </FormControl>
@@ -332,8 +365,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업내용</FormLabel>
                             <Input
                                 name="businessContent"
-                                value={customData?.businessContent || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.businessContent}
+                                onChange={handleCustomDataChange}
                                 placeholder="사업 내용을 간략히 설명해주세요"
                             />
                         </FormControl>
