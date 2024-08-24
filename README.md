@@ -1,6 +1,6 @@
 <div align="center">
-![jiwoologo](./images/jiwoologo.png)
-
+<img src="https://raw.githubusercontent.com/AI-Jiwoo/Jiwoo/main/images/jiwoologo.png" alt="Jiwoo AI Logo" width="300">  
+   
 # Jiwoo AI - 당신의 창업 여정을 함께하는 AI 파트너 🚀
 
 [![Jiwoo-Front](https://img.shields.io/badge/Jiwoo--Front-React-61DAFB?style=for-the-badge&logo=react)](https://github.com/AI-Jiwoo/Jiwoo-Front)
