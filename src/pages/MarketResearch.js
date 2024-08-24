@@ -238,70 +238,100 @@ const MarketResearch = () => {
             ...customData,
             timestamp: new Date().getTime()
         };
+
+        let marketInformation = null;
+        let competitorAnalysis = null;
+        let marketTrends = null;
+        const timestamp = new Date().getTime();
+
         try {
-            let marketInformation = '';
-            let competitorAnalysis = '';
-            let marketTrends = '';
-            let regulationInformation = '';
-            let marketEntryStrategy = '';
-            const timestamp = new Date().getTime();
-            switch (type) {
-                case 'marketSize':
+            if (type === 'all' || type === 'marketSize') {
+                try {
                     const marketSizeResponse = await api.post(`/market-research/market-size-growth?t=${timestamp}`, data, { headers });
                     setMarketSizeGrowth(marketSizeResponse.data.data);
                     marketInformation = JSON.stringify(marketSizeResponse.data.data);
-                    break;
-                case 'similarServices':
+                } catch (error) {
+                    console.error('Market size analysis failed:', error);
+                    toast({
+                        title: "시장 규모 분석 실패",
+                        description: "시장 규모 분석 중 오류가 발생했습니다.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
+            }
+
+            if (type === 'all' || type === 'similarServices') {
+                try {
                     const similarServicesResponse = await api.post(`/market-research/similar-services-analysis?t=${timestamp}`, data, { headers });
                     setSimilarServices(similarServicesResponse.data.data);
                     competitorAnalysis = JSON.stringify(similarServicesResponse.data.data);
-                    break;
-                case 'trendCustomerTechnology':
+                } catch (error) {
+                    console.error('Similar services analysis failed:', error);
+                    toast({
+                        title: "유사 서비스 분석 실패",
+                        description: "관련 유사서비스가 없습니다.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
+            }
+
+            if (type === 'all' || type === 'trendCustomerTechnology') {
+                try {
                     const trendResponse = await api.post(`/market-research/trend-customer-technology?t=${timestamp}`, data, { headers });
                     setTrendCustomerTechnology(trendResponse.data.data);
                     marketTrends = JSON.stringify(trendResponse.data.data);
-                    break;
-                case 'all':
-                    const [marketSizeGrowthRes, similarServicesRes, trendCustomerTechnologyRes] = await Promise.all([
-                        api.post(`/market-research/market-size-growth?t=${timestamp}`, data, { headers }),
-                        api.post(`/market-research/similar-services-analysis?t=${timestamp}`, data, { headers }),
-                        api.post(`/market-research/trend-customer-technology?t=${timestamp}`, data, { headers })
-                    ]);
-                    setMarketSizeGrowth(marketSizeGrowthRes.data.data);
-                    setSimilarServices(similarServicesRes.data.data);
-                    setTrendCustomerTechnology(trendCustomerTechnologyRes.data.data);
-                    marketInformation = JSON.stringify(marketSizeGrowthRes.data.data);
-                    competitorAnalysis = JSON.stringify(similarServicesRes.data.data);
-                    marketTrends = JSON.stringify(trendCustomerTechnologyRes.data.data);
-                    break;
+                } catch (error) {
+                    console.error('Trend analysis failed:', error);
+                    toast({
+                        title: "트렌드 분석 실패",
+                        description: "트렌드, 고객, 기술 분석 중 오류가 발생했습니다.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
             }
+
+            // 이력 저장
             const historyData = {
                 createAt: new Date().toISOString(),
                 marketInformation,
                 competitorAnalysis,
                 marketTrends,
-                regulationInformation,
-                marketEntryStrategy,
-                businessId: selectedBusiness?.id || -1
+                businessId: selectedBusiness?.id || null
             };
-            await api.post('/market-research/save-history', historyData, { headers });
-            setCurrentStep(3);
 
+            try {
+                await api.post('/market-research/save-history', historyData, { headers });
+                console.log('이력 저장 성공');
+            } catch (saveError) {
+                console.error('이력 저장 실패:', saveError);
+                toast({
+                    title: "이력 저장 알림",
+                    description: "등록되지않은 사업의 분석은 잠시동안만 저장됩니다.",
+                    status: "warning",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+
+            setCurrentStep(3);
+            // 로컬 상태 업데이트
             const newHistory = [...researchHistory, historyData];
             setResearchHistory(newHistory);
             saveResearchHistoryToCookie(newHistory);
 
-            setCurrentStep(3);
-
         } catch (error) {
             console.error('Market analysis failed:', error);
-            console.error('Error response:', error.response?.data);
-            setError(`시장 분석에 실패했습니다: ${error.response?.data?.message || error.message}`);
+            setError(`시장 분석 중 일부 오류가 발생했습니다. 일부 결과만 표시될 수 있습니다.`);
         } finally {
             setIsLoading(false);
         }
     };
-
     const renderStepIndicator = () => (
         <Box mb={8}>
             <Progress value={(currentStep / 3) * 100} size="sm" colorScheme="blue" />
