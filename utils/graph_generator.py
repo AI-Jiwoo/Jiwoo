@@ -5,7 +5,6 @@ import aiohttp
 from bs4 import BeautifulSoup
 from typing import Dict, Any, List, Tuple
 import logging
-from utils.multimodal_model import MultiModalModel
 from langchain.tools import Tool
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
@@ -16,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 class GraphGenerator:
     def __init__(self):
-        self.multimodal_model = MultiModalModel()
         self.llm = ChatOpenAI(temperature=0.7)
         self.search_tool = Tool(
             name="Search",
