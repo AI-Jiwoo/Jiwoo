@@ -110,7 +110,6 @@ async def chat(request: ChatInput):
             text_response=response.get("text_response", "응답을 생성하는 데 문제가 발생했습니다."),
             web_results=web_results,
             graph_data=graph_data,
-            multimodal_result=response.get("multimodal_result"),
             image_url=response.get("image_url")
         )
 
@@ -123,7 +122,6 @@ async def chat(request: ChatInput):
             text_response="내부 서버 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
             web_results=[],
             graph_data=None,
-            multimodal_result=None,
             image_url=None
         )
 
