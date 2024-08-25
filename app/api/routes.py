@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import List
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -12,7 +13,8 @@ from services.models import (
     CompanyInfo, 
     CompanyInput, 
     CompanySearchResult, 
-    SupportProgramInfoSearchRequest
+    SupportProgramInfoSearchRequest,
+    WebSearchResult
 )
 from utils.database import get_collection
 from utils.embedding_utils import get_company_embedding, get_support_program_embedding
@@ -30,7 +32,8 @@ async def insert_company(input: CompanyInput):
         embedding = get_company_embedding(input.info)
         company_info = json.dumps({"businessName": input.businessName, "info": input.info.dict()})
         url = str(input.url) if input.url else ""
-        data = [[company_info], [url], [embedding]]
+        created_at = int(datetime.now().timestamp())
+        data = [[company_info], [url], [embedding], [created_at]]
         result = collection.insert(data)
         logger.info(f"회사 정보 삽입 성공: {input.businessName}")
         return {
@@ -77,15 +80,53 @@ async def search_similar_companies(input: CompanyInfo):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(chat_input: ChatInput):
-    """챗봇과 대화하는 엔드포인트"""
+async def chat(request: ChatInput):
     try:
-        response = chatbot.get_response(chat_input.message)
-        logger.info("챗봇 응답이 성공적으로 생성되었습니다")
-        return ChatResponse(message=response)
+        response = await chatbot.get_response(request.message)
+        
+        logger.info(f"Raw chatbot response: {response}")
+        
+        # WebSearchResult 객체 리스트로 변환
+        web_results = []
+        for result in response.get("relevant_info", []):
+            try:
+                web_result = WebSearchResult(
+                    title=result.get('title') or "제목 없음",
+                    snippet=result.get('snippet') or "",
+                    url=result.get('url') or "https://example.com",
+                    image_url=result.get('image_url') or None
+                )
+                web_results.append(web_result)
+            except ValueError as ve:
+                logger.error(f"WebSearchResult 생성 중 오류: {ve}")
+
+        # graph_data 타입 확인 및 처리
+        graph_data = response.get("graph_data")
+        if not isinstance(graph_data, dict):
+            logger.warning(f"Unexpected graph_data type: {type(graph_data)}. Setting to None.")
+            graph_data = None
+
+        chat_response = ChatResponse(
+            text_response=response.get("text_response", "응답을 생성하는 데 문제가 발생했습니다."),
+            web_results=web_results,
+            graph_data=graph_data,
+            multimodal_result=response.get("multimodal_result"),
+            image_url=response.get("image_url")
+        )
+
+        logger.info(f"챗봇 응답이 성공적으로 생성되었습니다. 응답: {chat_response}")
+        return chat_response
+
     except Exception as e:
-        logger.error(f"챗봇 응답 생성 중 오류 발생: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"챗봇 응답 생성 중 오류 발생: {str(e)}", exc_info=True)
+        return ChatResponse(
+            text_response="내부 서버 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+            web_results=[],
+            graph_data=None,
+            multimodal_result=None,
+            image_url=None
+        )
+
 
 @router.post("/viability_search", response_model=List[dict])
 async def business_viability_assessment_search(input: SupportProgramInfoSearchRequest):
