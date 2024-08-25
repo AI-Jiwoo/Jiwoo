@@ -84,7 +84,7 @@ class VectorStore:
         text = f"Support Program: {program.name}\n{program.json()}"
         self.add_texts([text], [f"program:{program.name}"])
 
-    def search_with_similarity_threshold(self, query: str, k: int = 5, threshold: float = 0.4) -> List[Dict[str, Any]]:
+    def search_with_similarity_threshold(self, query: str, k: int = 5, threshold: float = 0.7) -> List[Dict[str, Any]]:
         # 유사도 임계값을 적용한 검색 수행
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
