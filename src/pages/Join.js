@@ -24,7 +24,7 @@ import {
     FormLabel,
     InputGroup,
     InputRightElement,
-    useToast,
+    useToast, Alert, AlertIcon, AlertTitle, AlertDescription, FormHelperText,
 } from '@chakra-ui/react';
 import termsText from '../component/TextTerms';
 import privacyText from '../component/PrivacyText';
@@ -309,8 +309,23 @@ function Join() {
                                 placeholder="이름을 입력해주세요"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
+                                isDisabled={!!name} // 이름이 있으면 입력 필드 비활성화
                             />
+                            <FormHelperText color="red.500">
+                                주의: 이름은 한 번 입력 후 수정이 불가능합니다. 신중히 입력해 주세요.
+                            </FormHelperText>
                         </FormControl>
+
+                        {!name && (
+                            <Alert status="warning">
+                                <AlertIcon />
+                                <AlertTitle mr={2}>이름 입력 주의사항</AlertTitle>
+                                <AlertDescription>
+                                    이름은 한 번 입력하면 수정할 수 없습니다. 정확하게 입력해 주세요.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
                         <FormControl isRequired>
                             <FormLabel>이메일</FormLabel>
                             <Flex>
