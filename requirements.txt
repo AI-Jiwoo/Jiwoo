@@ -30,6 +30,9 @@ beautifulsoup4
 # 로깅
 loguru
 
+# 캐싱
+cachetools
+
 # 개발 도구
 pre-commit
 black
