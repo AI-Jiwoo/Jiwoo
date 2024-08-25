@@ -32,7 +32,7 @@ class Chatbot:
         self.intent_analyzer = IntentAnalyzer()
         self.query_generator = QueryGenerator()
         self.graph_generator = GraphGenerator()
-        self.short_term_memory = deque(maxlen=20)  # 최근 20개의 대화 기록 유지
+        self.short_term_memory = deque(maxlen=5)  # 최근 20개의 대화 기록 유지
         
     async def get_response(self, user_input: str) -> Dict[str, Any]:
         """
