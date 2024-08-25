@@ -104,7 +104,14 @@ class Chatbot:
 
     async def _handle_graph_request(self, user_input: str) -> Dict[str, Any]:
         try:
-            search_results = await self.web_search.search([user_input], num_results=10)  # 수정된 부분
+            # 쿼리 생성
+            intent = self.intent_analyzer.analyze_intent(user_input)
+            queries = self.query_generator.generate_queries(user_input, intent)
+            
+            # 웹 검색 수행
+            search_results = await self.web_search.search(queries)
+            
+            # 그래프 생성
             graph_data = self.graph_generator.generate_graph(search_results)
             text_response = self._generate_graph_explanation(search_results)
             
@@ -126,8 +133,8 @@ class Chatbot:
 
         explanation = "검색 결과에 대한 그래프입니다. "
         top_result = organic_results[0]
-        explanation += f"가장 관련성 높은 결과는 '{top_result.get('title', '제목 없음')}'입니다."
-
+        explanation += f"가장 관련성 높은 결과는 '{top_result.get('title', '제목 없음')}'입니다. "
+        explanation += "그래프는 상위 5개 검색 결과의 관련도를 보여줍니다. 관련도는 각 결과의 스니펫 길이를 기준으로 측정되었습니다."
         return explanation
 
     def clear_conversation_history(self):
