@@ -64,8 +64,10 @@ class VectorStore:
         collection = get_collection(self.collection_name)
         embeddings = [self.embedding_function(text) for text in texts]
         
-        if urls is None:
+        if urls is None or len(urls) == 0:
             urls = [""] * len(texts)
+        elif len(urls) < len(texts):
+            urls = urls + [""] * (len(texts) - len(urls))
         
         created_at = int(datetime.now().timestamp())
         entities = [texts, urls, embeddings, [created_at] * len(texts)]
