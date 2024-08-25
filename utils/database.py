@@ -1,12 +1,9 @@
 import logging
 import os
-
 from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, connections, utility
-
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
-
 
 def connect_to_milvus():
     """
@@ -20,7 +17,6 @@ def connect_to_milvus():
     except Exception as e:
         logger.error(f"Failed to connect to Milvus: {str(e)}")
         raise
-
 
 def create_collection(collection_name: str, dim: int) -> Collection:
     """
@@ -46,7 +42,6 @@ def create_collection(collection_name: str, dim: int) -> Collection:
     logger.info(f"Collection {collection_name} created successfully")
     return collection
 
-
 def get_collection(collection_name: str = settings.COLLECTION_NAME) -> Collection:
     """
     지정된 이름의 컬렉션을 가져오는 함수
@@ -66,7 +61,6 @@ def get_collection(collection_name: str = settings.COLLECTION_NAME) -> Collectio
         logger.error(f"Error while getting collection {collection_name}: {str(e)}")
         raise
 
-
 def close_milvus_connection() -> None:
     """
     Milvus 연결을 종료하는 함수
@@ -77,7 +71,6 @@ def close_milvus_connection() -> None:
     except Exception as e:
         logger.error(f"Error while disconnecting from Milvus: {str(e)}")
         raise
-
 
 # 데이터베이스 연결을 위한 컨텍스트 매니저
 class MilvusConnectionManager:

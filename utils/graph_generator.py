@@ -10,7 +10,6 @@ from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.schema import AIMessage
 
-
 logger = logging.getLogger(__name__)
 
 class GraphGenerator:
