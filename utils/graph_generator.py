@@ -48,22 +48,26 @@ class GraphGenerator:
             logger.error(f"그래프 요청 처리 중 예기치 않은 오류 발생: {str(e)}", exc_info=True)
             return {"error": str(e)}
 
-    def generate_graph(self, graph_info: Dict[str, str], data: List[Dict[str, Any]]) -> go.Figure:
+    def generate_graph(self, data: List[Dict[str, Any]]) -> go.Figure:
         """주어진 데이터로 그래프를 생성합니다."""
         try:
+            # 데이터 항목이 올바른지 확인
+            if not all(isinstance(item, dict) and 'name' in item and 'value' in item for item in data):
+                raise ValueError("그래프 데이터를 구성하는 항목이 올바르지 않습니다.")
+
             fig = go.Figure(go.Bar(
                 x=[item['name'] for item in data],
                 y=[item['value'] for item in data],
                 text=[item['value'] for item in data],
                 textposition='auto'
             ))
-            
+
             fig.update_layout(
-                title=f"{graph_info.get('query', '검색 결과')} 그래프",
+                title="검색 결과 그래프",
                 xaxis_title="항목",
                 yaxis_title="값"
             )
-            
+
             return fig
         except Exception as e:
             logger.error(f"그래프 생성 중 오류 발생: {str(e)}", exc_info=True)
@@ -97,7 +101,7 @@ class GraphGenerator:
     async def _web_search(self, query: str) -> List[Dict[str, Any]]:
         """웹 검색을 수행하고 결과를 처리합니다."""
         search_url = f"https://www.google.com/search?q={query}"
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.get(search_url) as response:
                 html = await response.text()
@@ -109,7 +113,7 @@ class GraphGenerator:
         for result in search_results[:5]:  # 상위 5개 결과만 처리
             title_elem = result.find('h3', class_='r')
             snippet_elem = result.find('div', class_='s')
-            
+
             if title_elem and snippet_elem:
                 title = title_elem.text
                 snippet = snippet_elem.text
@@ -119,7 +123,7 @@ class GraphGenerator:
                 })
 
         if not processed_results:
-            return [{"name": "No results", "value": 0}]
+            logger.warning(f"검색 결과가 없습니다: {search_results}")
 
         return processed_results
 
