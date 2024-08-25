@@ -44,7 +44,6 @@ class ChatResponse(BaseModel):
     text_response: str = Field(..., description="AI 응답 메시지")
     web_results: Optional[List[WebSearchResult]] = Field(None, description="웹 검색 결과 목록")
     graph_data: Optional[Dict[str, Any]] = Field(None, description="그래프 데이터 (Plotly 형식)")
-    multimodal_result: Optional[Any] = Field(None, description="멀티모달 모델의 결과")
     image_url: Optional[str] = Field(None, description="응답과 관련된 이미지 URL")
 
 class SupportProgramInfo(BaseModel):
