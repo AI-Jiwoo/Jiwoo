@@ -6,29 +6,31 @@ uvicorn[standard]
 pymilvus
 sentence-transformers
 
-# 환경 변수 관리
+# 환경 변수 및 설정 관리
 python-dotenv
+pydantic
+pydantic-settings
 
-# LangChain 및 관련 의존성
+# OpenAI API 및 LangChain
+openai
 langchain
 langchain-core
 langchain-openai
 langchain_community
 
-# OpenAI API (챗봇용)
-openai
+# HTTP 요청 및 비동기 처리
+aiohttp
 
-# 데이터 검증 및 설정 관리
-pydantic
-pydantic-settings
+# 데이터 시각화
+plotly
 
-# 일반적인 과학 계산 라이브러리
-numpy
+# HTML 파싱
+beautifulsoup4
 
-# HTTP 요청
-requests
+# 로깅
+loguru
 
-# formatter
+# 개발 도구
 pre-commit
 black
 isort

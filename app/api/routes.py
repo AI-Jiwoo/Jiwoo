@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import List
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -12,35 +13,27 @@ from services.models import (
     CompanyInfo, 
     CompanyInput, 
     CompanySearchResult, 
-    SupportProgramInfo,
-    SimilaritySearchRequest,
-    SimilaritySearchResponse,
     SupportProgramInfoSearchRequest,
-    ContentInfo
+    WebSearchResult
 )
 from utils.database import get_collection
 from utils.embedding_utils import get_company_embedding, get_support_program_embedding
-from utils.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 chatbot = Chatbot()
-vector_store = VectorStore()
 
 @router.post("/insert_company", response_model=dict)
 async def insert_company(input: CompanyInput):
-    """
-    사업 정보를 데이터베이스에 저장하는 엔드포인트
-    :param input: 저장할 회사 정보
-    :return: 저장 성공 메시지와 생성된 ID
-    """
+    """회사 정보를 데이터베이스에 저장하는 엔드포인트"""
     try:
         collection = get_collection()
         embedding = get_company_embedding(input.info)
         company_info = json.dumps({"businessName": input.businessName, "info": input.info.dict()})
         url = str(input.url) if input.url else ""
-        data = [[company_info], [url], [embedding]]
+        created_at = int(datetime.now().timestamp())
+        data = [[company_info], [url], [embedding], [created_at]]
         result = collection.insert(data)
         logger.info(f"회사 정보 삽입 성공: {input.businessName}")
         return {
@@ -53,11 +46,7 @@ async def insert_company(input: CompanyInput):
 
 @router.post("/search_similar_companies", response_model=List[CompanySearchResult])
 async def search_similar_companies(input: CompanyInfo):
-    """
-    입력된 회사 정보와 유사한 회사들을 검색하는 엔드포인트
-    :param input: 검색 기준이 되는 회사 정보
-    :return: 유사한 회사들의 목록
-    """
+    """입력된 회사 정보와 유사한 회사들을 검색하는 엔드포인트"""
     try:
         collection = get_collection()
         query_embedding = get_company_embedding(input)
@@ -91,42 +80,55 @@ async def search_similar_companies(input: CompanyInfo):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(chat_input: ChatInput):
-    """
-    챗봇과 대화하는 엔드포인트
-    :param chat_input: 사용자의 채팅 입력
-    :return: 챗봇의 응답
-    """
+async def chat(request: ChatInput):
     try:
-        response = chatbot.get_response(chat_input.message)
-        logger.info("챗봇 응답이 성공적으로 생성되었습니다")
-        return ChatResponse(message=response)
-    except Exception as e:
-        logger.error(f"챗봇 응답 생성 중 오류 발생: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        response = await chatbot.get_response(request.message)
+        
+        logger.info(f"Raw chatbot response: {response}")
+        
+        # WebSearchResult 객체 리스트로 변환
+        web_results = []
+        for result in response.get("relevant_info", []):
+            try:
+                web_result = WebSearchResult(
+                    title=result.get('title') or "제목 없음",
+                    snippet=result.get('snippet') or "",
+                    url=result.get('url') or "https://example.com",
+                    image_url=result.get('image_url') or None
+                )
+                web_results.append(web_result)
+            except ValueError as ve:
+                logger.error(f"WebSearchResult 생성 중 오류: {ve}")
 
-@router.post("/similarity_search", response_model=List[ContentInfo])
-async def similarity_search(request: SimilaritySearchRequest):
-    """
-    벡터 저장소에서 유사한 문서를 검색하는 엔드포인트
-    :param request: 검색 쿼리와 반환할 결과 수를 포함한 요청 객체
-    :return: 유사한 문서 리스트
-    """
-    try:
-        results = vector_store.similarity_search(request.query, request.k)
-        logger.info(f"유사도 검색 완료. {len(results)}개의 결과를 찾았습니다")
-        return [ContentInfo(content=result['content']) for result in results]
-    except Exception as e:
-        logger.error(f"유사도 검색 중 오류 발생: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # graph_data 타입 확인 및 처리
+        graph_data = response.get("graph_data")
+        if not isinstance(graph_data, dict):
+            logger.warning(f"Unexpected graph_data type: {type(graph_data)}. Setting to None.")
+            graph_data = None
 
-@router.post("/viability_search", response_model=List[ContentInfo])
+        chat_response = ChatResponse(
+            text_response=response.get("text_response", "응답을 생성하는 데 문제가 발생했습니다."),
+            web_results=web_results,
+            graph_data=graph_data,
+            image_url=response.get("image_url")
+        )
+
+        logger.info(f"챗봇 응답이 성공적으로 생성되었습니다. 응답: {chat_response}")
+        return chat_response
+
+    except Exception as e:
+        logger.error(f"챗봇 응답 생성 중 오류 발생: {str(e)}", exc_info=True)
+        return ChatResponse(
+            text_response="내부 서버 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+            web_results=[],
+            graph_data=None,
+            image_url=None
+        )
+
+
+@router.post("/viability_search", response_model=List[dict])
 async def business_viability_assessment_search(input: SupportProgramInfoSearchRequest):
-    """
-    입력된 지원 목록 중 회사의 지원 가능성을 평가하여 결과를 반환
-    :param input: 검색 기준이 되는 회사 정보
-    :return: 유사한 회사들의 목록
-    """
+    """입력된 지원 프로그램 정보를 바탕으로 유사한 회사들을 검색하는 엔드포인트"""
     try:
         collection = get_collection()
         query_embedding = get_support_program_embedding(input.query)
@@ -139,17 +141,43 @@ async def business_viability_assessment_search(input: SupportProgramInfoSearchRe
             output_fields=["content"],
         )
 
-        # 검색 결과 처리
+        logger.info(f"Raw search results: {results}")
+
         search_results = []
         for hits in results:
             for hit in hits:
-                distance = hit.distance
-                similarity = 1 - (distance / max(results[0][0].distance, 1))  # 거리 기반 유사도 계산
-                if similarity >= input.threshold:
-                    search_results.append({"content": json.loads(hit.entity.get("content")), "metadata": {}})
+                try:
+                    content_str = hit.entity.get("content")
+                    
+                    # JSON 파싱 시도
+                    try:
+                        content = json.loads(content_str)
+                    except json.JSONDecodeError:
+                        # JSON 파싱 실패 시 텍스트를 그대로 사용
+                        content = {"businessName": "Unknown", "info": {"description": content_str}}
 
-        logger.info(f"사업 가능성 검색 완료. {len(search_results)}개의 결과를 찾았습니다")
-        return [ContentInfo(**result) for result in search_results]
+                    # 'businessName'과 'info'가 없는 경우 처리
+                    if 'businessName' not in content:
+                        content['businessName'] = 'Unknown'
+                    if 'info' not in content:
+                        content['info'] = {'description': str(content)}
+
+                    # 유사도 계산: 0에 가까울수록 유사, 1에 가까울수록 상이
+                    similarity = 1 - (hit.distance / (max(hit.distance, 1) * 2))
+                    logger.info(f"Calculated similarity: {similarity}")
+                    if similarity >= input.threshold:
+                        search_results.append({
+                            "content": {
+                                "businessName": content.get("businessName"),
+                                "info": content.get("info")
+                            },
+                            "metadata": {}
+                        })
+                except Exception as e:
+                    logger.error(f"처리 중 오류 발생: {str(e)}, 원본 데이터: {hit.entity}")
+
+        logger.info(f"Processed search results: {search_results}")
+        return search_results
     except Exception as e:
         logger.error(f"사업 가능성 검색 중 오류 발생: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
