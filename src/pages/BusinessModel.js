@@ -1,15 +1,43 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import {
-    VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
-    List, ListItem, FormControl, FormLabel, Box, Spinner, Icon, SimpleGrid, Progress, Flex,
-    useBreakpointValue, Heading, UnorderedList, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton
+    VStack,
+    HStack,
+    Text,
+    Button,
+    Select,
+    Input,
+    Card,
+    CardBody,
+    CardHeader,
+    Alert,
+    AlertIcon,
+    List,
+    ListItem,
+    FormControl,
+    FormLabel,
+    Box,
+    Spinner,
+    Icon,
+    SimpleGrid,
+    Progress,
+    Flex,
+    useBreakpointValue,
+    Heading,
+    UnorderedList,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalCloseButton,
+    useToast
 } from '@chakra-ui/react';
-import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye } from "react-icons/fa";
+import {FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye, FaCopy} from "react-icons/fa";
 import api from "../apis/api";
 import LoadingScreen from "../component/common/LoadingMotion";
 
-const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
+const BusinessModel = () => {
     const [selectedBusiness, setSelectedBusiness] = useState(null);
     const [businesses, setBusinesses] = useState([]);
     const [similarServices, setSimilarServices] = useState([]);
@@ -23,6 +51,16 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     const columnCount = useBreakpointValue({ base: 1, md: 2 });
     const businessModelRef = useRef(null);
     const [isLoading, setIsLoading] = useState(true);
+    const toast = useToast();
+    const [customData, setCustomData] = useState({
+        category: '',
+        scale: '',
+        nation: '',
+        customerType: '',
+        businessType: '',
+        businessContent: ''
+    });
+
 
     const businessModelMessages = [
         "비즈니스 모델을 분석 중입니다...",
@@ -32,6 +70,27 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         "핵심 자원과 활동을 파악 중입니다.",
         "JIWOO AI가 당신의 비즈니스 모델을 혁신하고 있어요!",
     ];
+
+    const handleCopy = (text, section) => {
+        navigator.clipboard.writeText(text).then(() => {
+            toast({
+                title: "복사 완료",
+                description: `${section} 내용이 클립보드에 복사되었습니다.`,
+                status: "success",
+                duration: 2000,
+                isClosable: true,
+            });
+        }).catch(err => {
+            console.error('복사 실패:', err);
+            toast({
+                title: "복사 실패",
+                description: "내용을 복사하는데 실패했습니다.",
+                status: "error",
+                duration: 2000,
+                isClosable: true,
+            });
+        });
+    };
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -197,11 +256,36 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         console.log("Business selected:", selected);
         if (selected) {
             setSelectedBusiness(selected);
-            if (typeof onBusinessSelect === 'function') {
-                onBusinessSelect(selected);
-            }
+            setCustomData({
+                category: selected.category || '',
+                scale: selected.businessScale || '',
+                nation: selected.businessLocation || '',
+                customerType: selected.customerType || '',
+                businessType: selected.businessType || '',
+                businessContent: selected.businessContent || ''
+            });
+        } else {
+            setSelectedBusiness(null);
+            setCustomData({
+                category: '',
+                scale: '',
+                nation: '',
+                customerType: '',
+                businessType: '',
+                businessContent: ''
+            });
         }
-    }, [businesses, onBusinessSelect]);
+    }, [businesses]);
+
+    const handleCustomDataChange = (event) => {
+        const { name, value } = event.target;
+        setCustomData(prevData => ({
+            ...prevData,
+            [name]: value
+        }));
+    };
+
+
 
     const renderBusinessSelection = () => (
         <Card>
@@ -230,8 +314,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업 분야 (카테고리)</FormLabel>
                             <Select
                                 name="category"
-                                value={customData?.category || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.category}
+                                onChange={handleCustomDataChange}
                                 placeholder="카테고리 선택"
                             >
                                 {categories.map((category, index) => (
@@ -245,8 +329,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업 규모</FormLabel>
                             <Input
                                 name="scale"
-                                value={customData?.scale || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.scale}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: 중소기업"
                             />
                         </FormControl>
@@ -254,8 +338,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>국가</FormLabel>
                             <Input
                                 name="nation"
-                                value={customData?.nation || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.nation}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: 대한민국"
                             />
                         </FormControl>
@@ -263,8 +347,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>고객유형</FormLabel>
                             <Input
                                 name="customerType"
-                                value={customData?.customerType || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.customerType}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: B2B"
                             />
                         </FormControl>
@@ -272,8 +356,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업유형</FormLabel>
                             <Input
                                 name="businessType"
-                                value={customData?.businessType || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.businessType}
+                                onChange={handleCustomDataChange}
                                 placeholder="예: 소프트웨어 개발"
                             />
                         </FormControl>
@@ -281,8 +365,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                             <FormLabel>사업내용</FormLabel>
                             <Input
                                 name="businessContent"
-                                value={customData?.businessContent || ''}
-                                onChange={onCustomDataChange}
+                                value={customData.businessContent}
+                                onChange={handleCustomDataChange}
                                 placeholder="사업 내용을 간략히 설명해주세요"
                             />
                         </FormControl>
@@ -373,46 +457,72 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         </Card>
     );
 
-    const renderFullResults = () => (
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="full">
-            <ModalOverlay />
-            <ModalContent maxWidth="90vw" maxHeight="90vh">
-                <ModalHeader>전체 분석 결과</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody overflowY="auto" p={6}>
-                    <VStack spacing={8} align="stretch">
-                        <Box>
-                            <Heading size="md" mb={4}>유사 서비스</Heading>
-                            <List spacing={3}>
-                                {similarServices.map((service, index) => (
-                                    <ListItem key={index}>
-                                        <Text fontWeight="bold">{service.businessName || service.name || '이름 없음'}</Text>
-                                        {service.analysis && (
-                                            <Text mt={1}>{service.analysis}</Text>
-                                        )}
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
+    const renderFullResults = () => {
+        const fullContent = `
+유사 서비스:
+${similarServices.map(service => `${service.businessName || service.name || '이름 없음'}\n${service.analysis || ''}`).join('\n\n')}
 
-                        {analyzedBusinessModel && (
-                            <Box>
-                                <Heading size="md" mb={4}>비즈니스 모델 분석 결과</Heading>
-                                <Text whiteSpace="pre-wrap">{analyzedBusinessModel.analysis}</Text>
-                            </Box>
-                        )}
+비즈니스 모델 분석 결과:
+${analyzedBusinessModel?.analysis || ''}
 
-                        {businessProposal && (
+비즈니스 모델 제안:
+${businessProposal?.proposal || ''}
+        `.trim();
+
+        return (
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="full">
+                <ModalOverlay />
+                <ModalContent maxWidth="90vw" maxHeight="90vh">
+                    <ModalHeader>전체 분석 결과</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody overflowY="auto" p={6}>
+                        <VStack spacing={8} align="stretch">
                             <Box>
-                                <Heading size="md" mb={4}>비즈니스 모델 제안</Heading>
-                                <Text whiteSpace="pre-wrap">{businessProposal.proposal}</Text>
+                                <Heading size="md" mb={4}>유사 서비스</Heading>
+                                <List spacing={3}>
+                                    {similarServices.map((service, index) => (
+                                        <ListItem key={index}>
+                                            <Text fontWeight="bold">{service.businessName || service.name || '이름 없음'}</Text>
+                                            {service.analysis && (
+                                                <Text mt={1}>{service.analysis}</Text>
+                                            )}
+                                        </ListItem>
+                                    ))}
+                                </List>
+                                <Button leftIcon={<FaCopy />} mt={2} onClick={() => handleCopy(similarServices.map(service => `${service.businessName || service.name || '이름 없음'}\n${service.analysis || ''}`).join('\n\n'), '유사 서비스')}>
+                                    유사 서비스 복사
+                                </Button>
                             </Box>
-                        )}
-                    </VStack>
-                </ModalBody>
-            </ModalContent>
-        </Modal>
-    );
+
+                            {analyzedBusinessModel && (
+                                <Box>
+                                    <Heading size="md" mb={4}>비즈니스 모델 분석 결과</Heading>
+                                    <Text whiteSpace="pre-wrap">{analyzedBusinessModel.analysis}</Text>
+                                    <Button leftIcon={<FaCopy />} mt={2} onClick={() => handleCopy(analyzedBusinessModel.analysis, '비즈니스 모델 분석')}>
+                                        분석 결과 복사
+                                    </Button>
+                                </Box>
+                            )}
+
+                            {businessProposal && (
+                                <Box>
+                                    <Heading size="md" mb={4}>비즈니스 모델 제안</Heading>
+                                    <Text whiteSpace="pre-wrap">{businessProposal.proposal}</Text>
+                                    <Button leftIcon={<FaCopy />} mt={2} onClick={() => handleCopy(businessProposal.proposal, '비즈니스 모델 제안')}>
+                                        제안 내용 복사
+                                    </Button>
+                                </Box>
+                            )}
+
+                            <Button leftIcon={<FaCopy />} colorScheme="blue" mt={4} onClick={() => handleCopy(fullContent, '전체 내용')}>
+                                전체 내용 복사
+                            </Button>
+                        </VStack>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+        );
+    };
 
     const handleNewAnalysis = () => {
         setSelectedBusiness(null);

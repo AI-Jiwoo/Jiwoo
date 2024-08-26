@@ -4,7 +4,7 @@ import logo from '../../logo/headerLogo.png';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
+function MainHeader({ scrollToMarketResearch, scrollToBusinessModel, scrollToAccounting, scrollToMain }) {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
 
@@ -25,12 +25,21 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
         navigate('/mypage');
     };
 
+    const handleMainClick = (e) => {
+        e.preventDefault();
+        if (scrollToMain) {
+            scrollToMain();
+        }else  {
+            navigate('')
+        }
+    }
+
     const handleMarketResearchClick = (e) => {
         e.preventDefault();
         if (scrollToMarketResearch) {
             scrollToMarketResearch();
         } else {
-           navigate('/market-research');
+           navigate('/main/market-research');
         }
     };
 
@@ -40,13 +49,21 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
         if (scrollToBusinessModel) {
             scrollToBusinessModel();
         } else {
-           navigate('/business-model');
+           navigate('/main/business-model');
+        }
+    };
+
+    const handelAccountingClick = (e) => {
+        e.preventDefault();
+        if (scrollToAccounting) {
+            scrollToAccounting();
+        }else {
+            navigate('/main/accounting')
         }
     };
 
 
-
-        return (
+    return (
             <Box
                 as="header"
                 position="sticky"
@@ -72,6 +89,16 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
 
                         <Link
                             href="#"
+                            onClick={handleMainClick}
+                            fontWeight="bold"
+                            p={2}
+                            borderRadius="md"
+                        >
+                            홈
+                        </Link>
+
+                        <Link
+                            href="#"
                             onClick={handleMarketResearchClick}
                             fontWeight="bold"
                             p={2}
@@ -89,8 +116,8 @@ function MainHeader({ scrollToMarketResearch, scrollToBusinessModel }) {
                             비즈니스모델
                         </Link>
                         <Link
-                            as={RouterLink}
-                            to="/tax-handling"
+                            href='#'
+                            onClick={handelAccountingClick}
                             fontWeight="bold"
                             p={2}
                             borderRadius="md"

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import {
     Modal,
+    Text,
     ModalOverlay,
     ModalContent,
     ModalHeader,
@@ -12,13 +13,25 @@ import {
     FormControl,
     FormLabel,
     Input,
-    useDisclosure, useToast,
+    useDisclosure,
+    useToast, Icon, Grid, GridItem, Box, Divider,
 } from "@chakra-ui/react";
 import BusinessInfoForm from "../component/BusinessInfoForm";
 import "react-datepicker/dist/react-datepicker.css";
 import '../style/MyPage.css';
 import DatePicker from "react-datepicker";
 import api from "../apis/api";
+import {
+    FaBuilding, FaCalendarAlt,
+    FaFileAlt,
+    FaGlobe,
+    FaIdCard,
+    FaLaptop,
+    FaMapMarkerAlt,
+    FaMoneyBillWave,
+    FaUsers,
+    FaUserTie
+} from "react-icons/fa";
 
 const MyPage = () => {
     const { user } = useAuth();
@@ -38,8 +51,11 @@ const MyPage = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isPasswordModalOpen, onOpen: onPasswordModalOpen, onClose: onPasswordModalClose } = useDisclosure();
     const [categories, setCategories] = useState([]);
-    const toast = useToast()
+    const toast = useToast();
 
+    // 새로 추가된 상태와 useDisclosure
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+    const { isOpen: isBusinessDetailOpen, onOpen: onBusinessDetailOpen, onClose: onBusinessDetailClose } = useDisclosure();
 
     useEffect(() => {
         fetchUserInfo();
@@ -56,8 +72,8 @@ const MyPage = () => {
 
             let processedCategories;
             if (Array.isArray(response.data)) {
-                processedCategories = response.data.map((category, index) => ({
-                    id: category.id ? category.id.toString() : (index + 1).toString(),
+                processedCategories = response.data.map(category => ({
+                    id: category.id ? category.id.toString() : category,
                     name: category.name || category
                 }));
             } else {
@@ -77,6 +93,13 @@ const MyPage = () => {
             });
         }
     };
+
+// 카테고리 이름을 가져오는 헬퍼 함수
+    const getCategoryName = (categoryId) => {
+        const category = categories.find(cat => cat.id === categoryId);
+        return category ? category.name : '알 수 없음';
+    };
+
     const fetchUserInfo = async () => {
         try {
             const response = await api.get('/auth/profile', {
@@ -112,11 +135,11 @@ const MyPage = () => {
     };
 
     const handleInfoChange = (e) => {
-        const {name, value} = e.target;
-        setUserInfo(prevState => {
-            return { ...prevState, [name]: value
-            }
-        })
+        const { name, value } = e.target;
+        setUserInfo(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
     };
 
     const handleDateChange = (date) => {
@@ -126,7 +149,6 @@ const MyPage = () => {
     const handlePasswordChange = (e) => {
         setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
     };
-
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
@@ -196,18 +218,9 @@ const MyPage = () => {
 
     const handleSubmitBusinessInfo = async (newBusinessInfo) => {
         try {
-            // 사업자 등록번호 형식 변환 (예: 12323-12345 -> 123-23-12345)
-            const formattedBusinessNumber = newBusinessInfo.businessNumber.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
+            console.log('Submitting business info:', newBusinessInfo);
 
-            const processedInfo = {
-                ...newBusinessInfo,
-                businessNumber: formattedBusinessNumber,
-                categoryIds: [newBusinessInfo.categoryId], // 단일 ID를 배열로 변환
-            };
-
-            console.log('Submitting business info:', processedInfo);
-
-            const response = await api.post('/business/regist', processedInfo, {
+            const response = await api.post('/business/regist', newBusinessInfo, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
                     'Content-Type': 'application/json'
@@ -241,6 +254,13 @@ const MyPage = () => {
             });
         }
     };
+
+    // 새로 추가된 함수
+    const handleBusinessClick = (business) => {
+        setSelectedBusiness(business);
+        onBusinessDetailOpen();
+    };
+
     return (
         <div className="container">
             <div className="title-container">
@@ -287,12 +307,13 @@ const MyPage = () => {
                             _hover={{backgroundColor: "#2C5282"}}>저장</Button>
                 </div>
             </section>
+
             <section className="section">
                 <h2 className="section-title">사업정보</h2>
                 <div className="business-card-container">
                     {businessInfos && businessInfos.length > 0 ? (
                         businessInfos.map((info) => (
-                            <div key={info.id} className="business-card">
+                            <div key={info.id} className="business-card" onClick={() => handleBusinessClick(info)}>
                                 <div className="business-card-header">
                                     <h3 className="business-card-title">{info.businessName}</h3>
                                     <span className="business-scale">{info.businessScale}</span>
@@ -316,6 +337,7 @@ const MyPage = () => {
                     </div>
                 </div>
             </section>
+
             <Modal isOpen={isPasswordModalOpen} onClose={onPasswordModalClose}>
                 <ModalOverlay/>
                 <ModalContent>
@@ -361,17 +383,79 @@ const MyPage = () => {
                 </ModalContent>
             </Modal>
 
-            <Modal isOpen={isOpen} onClose={onClose} size="xl">
-                <ModalOverlay/>
+            <Modal isOpen={isBusinessDetailOpen} onClose={onBusinessDetailClose} size="xl">
+                <ModalOverlay />
                 <ModalContent maxWidth="900px">
-                    <ModalHeader>사업 정보 추가</ModalHeader>
-                    <ModalCloseButton/>
-                    <ModalBody>
-                        <BusinessInfoForm
-                            onSubmit={handleSubmitBusinessInfo}
-                            onClose={onClose}
-                            categories={categories}
-                        />
+                    <ModalHeader bg="blue.500" color="white">
+                        <Icon as={FaBuilding} mr={2} />
+                        {selectedBusiness?.businessName} 상세 정보
+                    </ModalHeader>
+                    <ModalCloseButton color="white" />
+                    <ModalBody py={6}>
+                        {selectedBusiness && (
+                            <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+                                <GridItem colSpan={2}>
+                                    <Box mb={4}>
+                                        <Text fontWeight="bold" fontSize="lg" mb={2}>기본 정보</Text>
+                                        <Divider mb={2} />
+                                        <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaIdCard} mr={2} />사업자 등록번호</Text>
+                                                <Text>{selectedBusiness.businessNumber}</Text>
+                                            </Box>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaUsers} mr={2} />사업 규모</Text>
+                                                <Text>{selectedBusiness.businessScale}</Text>
+                                            </Box>
+                                        </Grid>
+                                    </Box>
+                                </GridItem>
+
+                                <GridItem colSpan={2}>
+                                    <Box mb={4}>
+                                        <Text fontWeight="bold" fontSize="lg" mb={2}>사업 상세</Text>
+                                        <Divider mb={2} />
+                                        <Text fontWeight="semibold"><Icon as={FaFileAlt} mr={2} />사업 내용</Text>
+                                        <Text mb={2}>{selectedBusiness.businessContent}</Text>
+                                        <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaMapMarkerAlt} mr={2} />사업 위치</Text>
+                                                <Text>{selectedBusiness.businessLocation}</Text>
+                                            </Box>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaCalendarAlt} mr={2} />사업 시작일</Text>
+                                                <Text>{selectedBusiness.businessStartDate}</Text>
+                                            </Box>
+                                        </Grid>
+                                    </Box>
+                                </GridItem>
+
+                                <GridItem colSpan={2}>
+                                    <Box>
+                                        <Text fontWeight="bold" fontSize="lg" mb={2}>추가 정보</Text>
+                                        <Divider mb={2} />
+                                        <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaGlobe} mr={2} />국가</Text>
+                                                <Text>{selectedBusiness.nation}</Text>
+                                            </Box>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaUserTie} mr={2} />고객 유형</Text>
+                                                <Text>{selectedBusiness.customerType}</Text>
+                                            </Box>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaLaptop} mr={2} />사업 플랫폼</Text>
+                                                <Text>{selectedBusiness.businessPlatform}</Text>
+                                            </Box>
+                                            <Box>
+                                                <Text fontWeight="semibold"><Icon as={FaMoneyBillWave} mr={2} />투자 상태</Text>
+                                                <Text>{selectedBusiness.investmentStatus}</Text>
+                                            </Box>
+                                        </Grid>
+                                    </Box>
+                                </GridItem>
+                            </Grid>
+                        )}
                     </ModalBody>
                 </ModalContent>
             </Modal>

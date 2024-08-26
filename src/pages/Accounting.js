@@ -1,127 +1,61 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import {
-    Box, VStack, HStack, Text, Button, Input, Card, CardBody, CardHeader,
-    Alert, AlertIcon, Icon, Heading, useDisclosure, Modal, ModalOverlay,
-    ModalContent, ModalHeader, ModalBody, ModalCloseButton, Progress,
-    SimpleGrid
+    Box, VStack, Text, Heading, Icon, Image, useDisclosure,
+    Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton,
+    useToast, Button
 } from '@chakra-ui/react';
-import { FaUpload, FaFileInvoiceDollar, FaInfoCircle } from "react-icons/fa";
+import { FaRobot, FaCalendarAlt } from "react-icons/fa";
+import AccountImage from '../images/Account.png';
 
 const Accounting = () => {
-    const [transactions, setTransactions] = useState([]);
-    const [taxDocument, setTaxDocument] = useState(null);
-    const [conversionResult, setConversionResult] = useState(null);
-    const [analysisResult, setAnalysisResult] = useState(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const transactionInputRef = useRef(null);
-
-    const handleTransactionUpload = (event) => {
-        setTransactions([...transactions, ...event.target.files]);
-    };
-
-    const handleTaxDocumentUpload = (event) => {
-        setTaxDocument(event.target.files[0]);
-    };
-
-    const handleConversion = () => {
-        // 여기에 변환 로직 구현
-        setConversionResult("변환된 파일 내용");
-        setAnalysisResult("분석 결과 내용");
-    };
 
     return (
-        <Box width="70%" margin="auto" pt={24} pb={12} minHeight="1000px">
-            <Heading as="h1" size="2xl" mb={8}>세무 관리📊</Heading>
+        <Box width="100%" minHeight="100vh" bg="gray.50" pt={24} pb={12}>
+            <VStack spacing={8} align="center" maxWidth="800px" margin="auto">
+                <Image
+                    src={AccountImage}  // 이미지 파일을 사용
+                    alt="Accounting Service Coming Soon"
+                    borderRadius="lg"
+                    fallbackSrc="https://via.placeholder.com/400x300?text=Accounting+Service"
+                />
 
-            <SimpleGrid columns={2} spacing={8}>
-                <Card>
-                    <CardHeader>
-                        <HStack>
-                            <Icon as={FaFileInvoiceDollar} />
-                            <Heading size="md">거래내역 업로드</Heading>
-                        </HStack>
-                    </CardHeader>
-                    <CardBody>
-                        <Input
-                            type="file"
-                            multiple
-                            onChange={handleTransactionUpload}
-                            display="none"
-                            ref={transactionInputRef}
-                        />
-                        <Button leftIcon={<FaUpload />} onClick={() => transactionInputRef.current.click()}>
-                            거래내역 선택 (다중 선택 가능)
-                        </Button>
-                        <Text mt={2}>업로드된 거래내역: {transactions.length}개</Text>
-                        <Text mt={2} fontSize="sm" color="gray.500">
-                            은행/카드사에서 거래내역을 다운로드해주세요.
-                        </Text>
-                    </CardBody>
-                </Card>
+                <Heading as="h1" size="2xl" textAlign="center" color="blue.600">
+                    세무 관리 서비스 준비 중
+                </Heading>
 
-                <Card>
-                    <CardHeader>
-                        <HStack>
-                            <Icon as={FaFileInvoiceDollar} />
-                            <Heading size="md">소득공제/세액공제 파일 업로드</Heading>
-                        </HStack>
-                    </CardHeader>
-                    <CardBody>
-                        <Input type="file" onChange={handleTaxDocumentUpload} />
-                        {taxDocument && <Text mt={2}>파일명: {taxDocument.name}</Text>}
-                        <Alert status="info" mt={4}>
-                            <AlertIcon />
-                            소득공제/세액공제 파일 유무에 따라 분석 결과가 달라질 수 있습니다.
-                        </Alert>
-                        <Button rightIcon={<FaInfoCircle />} onClick={onOpen} mt={4} variant="outline">
-                            홈택스에서 파일 다운로드 방법
-                        </Button>
-                    </CardBody>
-                </Card>
-            </SimpleGrid>
+                <Text fontSize="xl" textAlign="center" color="gray.600">
+                    더 나은 서비스를 제공하기 위해 현재 세무 관리 기능을 준비 중입니다.
+                    빠른 시일 내에 여러분을 만나뵙겠습니다!
+                </Text>
 
-            <Button
-                colorScheme="blue"
-                onClick={handleConversion}
-                isDisabled={transactions.length === 0}
-                mt={8}
-                width="100%"
-            >
-                변환 및 분석
-            </Button>
+                <VStack spacing={4} bg="white" p={8} borderRadius="lg" boxShadow="md" width="100%">
+                    <Icon as={FaRobot} boxSize={12} color="blue.500" />
+                    <Heading as="h2" size="lg" textAlign="center" color="blue.600">
+                        지우 AI 챗봇 사용해보세요
+                    </Heading>
+                    <Text textAlign="center" color="gray.600">
+                        서비스 출시 전이지만, 우리의 AI 챗봇이 세무 관련 질문에 답변해 드릴 수 있습니다.<br/>
+                        오른쪽 하단의 챗봇 아이콘을 클릭하여 질문을 시작해보세요.
+                    </Text>
+                </VStack>
 
-            {conversionResult && (
-                <Card mt={8}>
-                    <CardHeader>
-                        <Heading size="md">변환 결과</Heading>
-                    </CardHeader>
-                    <CardBody>
-                        <Text>{conversionResult}</Text>
-                    </CardBody>
-                </Card>
-            )}
+                <VStack spacing={4} align="center" mt={8}>
+                    <Icon as={FaCalendarAlt} boxSize={8} color="green.500" />
+                    <Button onClick={onOpen} variant="outline" colorScheme="green">
+                        출시 알림 받기
+                    </Button>
+                </VStack>
+            </VStack>
 
-            {analysisResult && (
-                <Card mt={8}>
-                    <CardHeader>
-                        <Heading size="md">분석 결과</Heading>
-                    </CardHeader>
-                    <CardBody>
-                        <Text>{analysisResult}</Text>
-                    </CardBody>
-                </Card>
-            )}
-
-            <Modal isOpen={isOpen} onClose={onClose}>
+            <Modal isOpen={isOpen} onClose={onClose} size="xl">
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader>홈택스에서 파일 다운로드 방법</ModalHeader>
+                    <ModalHeader>출시 알림 신청</ModalHeader>
                     <ModalCloseButton />
-                    <ModalBody>
-                        <Text>1. 홈택스 로그인</Text>
-                        <Text>2. 조회/발급 메뉴 선택</Text>
-                        <Text>3. 소득공제 자료 조회</Text>
-                        {/* 추가 설명 또는 이미지 */}
+                    <ModalBody pb={6}>
+                        <Text>여기에 출시 알림 신청 폼을 구현하세요.</Text>
+                        {/* 출시 알림 신청 폼 컴포넌트를 추가하세요 */}
                     </ModalBody>
                 </ModalContent>
             </Modal>
