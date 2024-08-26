@@ -34,7 +34,7 @@ class Settings(BaseSettings):
 
     # 챗봇 및 검색 설정
     MAX_QUERIES: int = Field(default=3, env="MAX_QUERIES")
-    SIMILARITY_THRESHOLD: float = Field(default=0.7, env="SIMILARITY_THRESHOLD")
+    SIMILARITY_THRESHOLD: float = Field(default=0.8, env="SIMILARITY_THRESHOLD")
     MAX_TOKENS: int = Field(default=4096, env="MAX_TOKENS")
     TEMPERATURE: float = Field(default=0.7, env="TEMPERATURE")
 
