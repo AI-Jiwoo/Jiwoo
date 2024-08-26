@@ -2,7 +2,7 @@ import asyncio
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
 from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferWindowMemory
 from langchain_openai import ChatOpenAI
 from config.settings import settings
 from utils.vector_store import VectorStore
@@ -14,6 +14,7 @@ import logging
 import json
 import re
 from collections import deque
+import tiktoken
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -25,14 +26,16 @@ class Chatbot:
         필요한 모든 유틸리티 객체와 설정을 초기화합니다.
         """
         self.llm = ChatOpenAI(temperature=settings.TEMPERATURE, api_key=settings.OPENAI_API_KEY)
-        self.memory = ConversationBufferMemory()
+        self.memory = ConversationBufferWindowMemory(k=5)  # 최근 5개의 대화만 유지(LLM)
+        self.short_term_memory = deque(maxlen=5)  # 최근 5개의 대화 기록 유지(요약 맟 히스토리 관리)
         self.conversation = ConversationChain(llm=self.llm, memory=self.memory, verbose=True)
         self.vector_store = VectorStore()
         self.web_search = WebSearch()
         self.intent_analyzer = IntentAnalyzer()
         self.query_generator = QueryGenerator()
         self.graph_generator = GraphGenerator()
-        self.short_term_memory = deque(maxlen=5)  # 최근 20개의 대화 기록 유지
+        self.max_tokens = 14000  # 토큰 제한을 더 낮춤
+        self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
         
     async def get_response(self, user_input: str) -> Dict[str, Any]:
         """
@@ -59,59 +62,6 @@ class Chatbot:
                 "error": str(e)
             }
 
-    async def _handle_graph_request(self, user_input: str) -> Dict[str, Any]:
-        """
-        그래프 요청을 처리합니다.
-        
-        :param user_input: 사용자 입력 문자열
-        :return: 그래프 데이터와 설명을 포함한 딕셔너리
-        """
-        queries = self.query_generator.generate_queries(user_input, {'intent': 'data_visualization'})
-        
-        vector_results = self.vector_store.search_with_similarity_threshold(queries[0], k=5, threshold=settings.SIMILARITY_THRESHOLD)
-        
-        if vector_results:
-            search_results = self._process_vector_results(vector_results)
-        else:
-            search_results = await self.web_search.search(queries)
-
-        logger.info(f"검색 결과 형식: {type(search_results)}, 내용: {search_results}")
-
-        # 검색 결과 유효성 검사 및 처리
-        if not isinstance(search_results, dict) or 'organic' not in search_results:
-            return {"text_response": "잘못된 검색 결과 형식입니다.", "graph_data": None}
-
-        organic_results = search_results['organic']
-        if not isinstance(organic_results, list):
-            return {"text_response": "그래프 데이터를 구성하는 항목이 올바르지 않습니다.", "graph_data": None}
-
-        # 검색 결과를 그래프 데이터로 변환
-        processed_results = [
-            {"name": result['title'], "value": len(result['snippet'])}
-            for result in organic_results
-            if isinstance(result, dict) and 'title' in result and 'snippet' in result
-        ]
-
-        if not processed_results:
-            return {"text_response": "유효한 그래프 데이터가 없습니다.", "graph_data": None}
-
-        # 그래프 생성
-        graph_data = self.graph_generator.generate_graph(data=processed_results)
-
-        if not graph_data:
-            return {"text_response": "그래프를 생성할 수 없습니다.", "graph_data": None}
-
-        response = {
-            "text_response": "요청하신 정보에 대한 그래프 정보입니다.",
-            "graph_data": json.loads(graph_data.to_json()) if graph_data else None
-        }
-        
-        self._save_to_short_term_memory(user_input, response["text_response"])
-        if self._should_save_response(response["text_response"]):
-            self._save_to_vector_store(user_input, response["text_response"])
-
-        return response
-
     async def _handle_text_request(self, user_input: str, intent: Dict[str, Any]) -> Dict[str, Any]:
         """
         텍스트 요청을 처리합니다.
@@ -129,11 +79,12 @@ class Chatbot:
         if is_historical_query:
             logger.info("과거 대화에 대한 질문 감지")
             relevant_info = self._get_conversation_history()
+            vector_results = None
         else:
             # 유사도 기준을 적용한 벡터 검색 수행
             vector_results = self.vector_store.search_with_similarity_threshold(
                 queries[0], 
-                k=5, 
+                k=3,  # 검색 결과 수를 줄임
                 threshold=0.8
             )
         
@@ -151,26 +102,90 @@ class Chatbot:
         
         context = self._prepare_context(relevant_info)
         prompt = self._create_prompt(user_input, context)
+        
+        # 토큰 수 계산 및 제한
+        total_tokens = len(self.encoding.encode(prompt))
+        if total_tokens > self.max_tokens:
+            prompt = self._reduce_context(prompt, self.max_tokens)
+        
         response = self.conversation.predict(input=prompt)
     
-        self.memory.save_context({"input": user_input}, {"output": response})
         self._save_to_short_term_memory(user_input, response)
         if self._should_save_response(response):
             self._save_to_vector_store(user_input, response)
     
-        # 벡터 검색 결과가 있는 경우 relevant_info를 포함하지 않음
-        if vector_results:
-            return {
-                "text_response": response,
-                "graph_data": None
-            }
-        else:
-            return {
-                "text_response": response,
-                "relevant_info": relevant_info,
-                "graph_data": None
-            }
+        return {
+            "text_response": response,
+            "relevant_info": relevant_info if not vector_results else None,
+            "graph_data": None
+        }
         
+    def _reduce_context(self, prompt: str, max_tokens: int) -> str:
+        """
+        프롬프트의 컨텍스트를 줄여 토큰 수를 제한합니다.
+        
+        :param prompt: 원본 프롬프트
+        :param max_tokens: 최대 토큰 수
+        :return: 축소된 프롬프트
+        """
+        tokens = self.encoding.encode(prompt)
+        if len(tokens) <= max_tokens:
+            return prompt
+
+        # 컨텍스트 부분 찾기
+        context_start = prompt.find("참고 정보:")
+        context_end = prompt.find("사용자:")
+        if context_start == -1 or context_end == -1:
+            return self.encoding.decode(tokens[:max_tokens])
+
+        # 컨텍스트 부분만 줄이기
+        context = prompt[context_start:context_end]
+        non_context = prompt[:context_start] + prompt[context_end:]
+        available_tokens = max_tokens - len(self.encoding.encode(non_context))
+
+        if available_tokens <= 0:
+            # 극단적인 경우, 컨텍스트를 완전히 제거
+            return prompt[:context_start] + prompt[context_end:]
+
+        context_lines = context.split('\n')
+        reduced_context = []
+        current_tokens = 0
+        for line in context_lines:
+            line_tokens = len(self.encoding.encode(line))
+            if current_tokens + line_tokens > available_tokens:
+                break
+            reduced_context.append(line)
+            current_tokens += line_tokens
+
+        return prompt[:context_start] + '\n'.join(reduced_context) + prompt[context_end:]
+
+    def _update_conversation_summary(self):
+        """
+        대화 요약을 업데이트합니다.
+        """
+        summary = self._summarize_conversation(list(self.short_term_memory))
+        self.memory.chat_memory.add_user_message("대화 요약")
+        self.memory.chat_memory.add_ai_message(summary)
+
+    def _summarize_conversation(self, messages: List[Dict[str, str]], max_tokens: int = 500) -> str:
+        """
+        대화 내용을 요약합니다.
+        
+        :param messages: 대화 메시지 리스트
+        :param max_tokens: 최대 토큰 수
+        :return: 요약된 대화 내용
+        """
+        summary = "최근 대화 요약:\n\n"
+        total_tokens = len(self.encoding.encode(summary))
+        for message in reversed(messages):
+            message_text = f"User: {message['user_input']}\nAI: {message['response']}\n\n"
+            message_tokens = len(self.encoding.encode(message_text))
+            if total_tokens + message_tokens > max_tokens:
+                break
+            summary += message_text
+            total_tokens += message_tokens
+        return summary
+
     def _check_historical_query(self, user_input: str) -> bool:
         """
         사용자 입력이 과거 대화에 대한 질문인지 확인합니다.
@@ -304,6 +319,11 @@ class Chatbot:
         """
         if response is None:
             self.short_term_memory.append({"user_input": user_input, "response": ""})
+        else:
+            self.short_term_memory.append({"user_input": user_input, "response": response})
+        
+        # 대화 요약 업데이트
+        self._update_conversation_summary()
     
     def _should_save_response(self, response: str) -> bool:
         """
