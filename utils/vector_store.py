@@ -10,6 +10,7 @@ from services.models import CompanyInfo, SupportProgramInfo
 
 logger = logging.getLogger(__name__)
 
+
 class VectorStore:
     """Milvus를 사용한 벡터 저장소 클래스"""
 
@@ -34,7 +35,7 @@ class VectorStore:
             FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
             FieldSchema(name="url", dtype=DataType.VARCHAR, max_length=1024),
             FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=settings.EMBEDDING_DIMENSION),
-            FieldSchema(name="created_at", dtype=DataType.INT64), 
+            FieldSchema(name="created_at", dtype=DataType.INT64),
         ]
         schema = CollectionSchema(fields, "비즈니스 정보 유사도 검색을 위한 스키마")
         collection = Collection(name=self.collection_name, schema=schema)
@@ -63,24 +64,24 @@ class VectorStore:
         # 텍스트를 벡터 저장소에 추가
         collection = get_collection(self.collection_name)
         embeddings = [self.embedding_function(text) for text in texts]
-        
+
         if urls is None or len(urls) == 0:
             urls = [""] * len(texts)
         elif len(urls) < len(texts):
             urls = urls + [""] * (len(texts) - len(urls))
-        
+
         created_at = int(datetime.now().timestamp())
         entities = [texts, urls, embeddings, [created_at] * len(texts)]
         collection.insert(entities)
         collection.flush()
         logger.info(f"{len(texts)}개의 텍스트를 컬렉션에 추가함")
-        
+
     def add_company_info(self, company_name: str, info: CompanyInfo):
         # 회사 정보를 벡터 저장소에 추가
         text = f"Company: {company_name}\n{info.json()}"
         url = f"company:{business_name}"
         self.add_texts([text], [f"company:{company_name}"])
-    
+
     def add_support_program_info(self, program: SupportProgramInfo):
         # 지원 프로그램 정보를 벡터 저장소에 추가
         text = f"Support Program: {program.name}\n{program.json()}"
@@ -108,12 +109,9 @@ class VectorStore:
             distance = hit.distance
             similarity = 1 - (distance / max(results[0][0].distance, 1))
             if similarity >= threshold:
-                hits.append({
-                    "content": hit.entity.get("content"),
-                    "url": hit.entity.get("url"),
-                    "created_at": hit.entity.get("created_at"),
-                    "metadata": {"similarity": similarity}
-                })
+                hits.append(
+                    {"content": hit.entity.get("content"), "url": hit.entity.get("url"), "created_at": hit.entity.get("created_at"), "metadata": {"similarity": similarity}}
+                )
 
         if not hits:
             logger.info(f"유사도 임계값 {threshold}를 충족하는 결과가 없음")
@@ -131,7 +129,7 @@ class VectorStore:
             param=search_params,
             limit=k,
             output_fields=["content", "url", "created_at"],
-            expr=f"created_at >= {int(start_date.timestamp())} && created_at <= {int(end_date.timestamp())}"
+            expr=f"created_at >= {int(start_date.timestamp())} && created_at <= {int(end_date.timestamp())}",
         )
 
         if not results or len(results[0]) == 0:
@@ -140,11 +138,13 @@ class VectorStore:
 
         hits = []
         for hit in results[0]:
-            hits.append({
-                "content": hit.entity.get("content"),
-                "url": hit.entity.get("url"),
-                "created_at": datetime.fromtimestamp(hit.entity.get("created_at")),
-                "metadata": {"distance": hit.distance}
-            })
+            hits.append(
+                {
+                    "content": hit.entity.get("content"),
+                    "url": hit.entity.get("url"),
+                    "created_at": datetime.fromtimestamp(hit.entity.get("created_at")),
+                    "metadata": {"distance": hit.distance},
+                }
+            )
 
         return hits

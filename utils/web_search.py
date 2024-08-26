@@ -9,6 +9,7 @@ import asyncio
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class WebSearch:
     def __init__(self):
         self.api_key = settings.SERPER_API_KEY
@@ -21,18 +22,12 @@ class WebSearch:
         :param num_results: 각 쿼리당 반환할 결과 수
         :return: 검색 결과를 포함하는 딕셔너리
         """
-        headers = {
-            "X-API-KEY": self.api_key,
-            "Content-Type": "application/json"
-        }
+        headers = {"X-API-KEY": self.api_key, "Content-Type": "application/json"}
         all_results = []
 
         async with aiohttp.ClientSession() as session:
             for query in queries:
-                payload = {
-                    "q": query,
-                    "num": num_results
-                }
+                payload = {"q": query, "num": num_results}
                 try:
                     async with session.post(self.endpoint, json=payload, headers=headers) as response:
                         if response.status == 200:
@@ -52,20 +47,16 @@ class WebSearch:
                 "gl": search_results.get("searchParameters", {}).get("gl", "kr"),
                 "hl": search_results.get("searchParameters", {}).get("hl", "ko"),
                 "type": "search",
-                "engine": "google"
+                "engine": "google",
             },
             "organic": [],
-            "relatedSearches": []
+            "relatedSearches": [],
         }
 
         for i, item in enumerate(search_results.get("organic", []), 1):
-            processed["organic"].append({
-                "title": item.get("title", ""),
-                "link": item.get("link", ""),
-                "snippet": item.get("snippet", ""),
-                "date": item.get("date", ""),
-                "position": i
-            })
+            processed["organic"].append(
+                {"title": item.get("title", ""), "link": item.get("link", ""), "snippet": item.get("snippet", ""), "date": item.get("date", ""), "position": i}
+            )
 
         for item in search_results.get("relatedSearches", []):
             processed["relatedSearches"].append({"query": item})
@@ -74,33 +65,18 @@ class WebSearch:
 
     def _get_fallback_results(self, query: str) -> Dict[str, Any]:
         return {
-            "searchParameters": {
-                "q": query,
-                "gl": "kr",
-                "hl": "ko",
-                "type": "search",
-                "engine": "google"
-            },
-            "organic": [{
-                "title": "검색 결과 없음",
-                "link": "https://example.com",
-                "snippet": "요청하신 정보에 대한 검색 결과를 찾지 못했습니다.",
-                "date": "",
-                "position": 1
-            }],
-            "relatedSearches": []
+            "searchParameters": {"q": query, "gl": "kr", "hl": "ko", "type": "search", "engine": "google"},
+            "organic": [{"title": "검색 결과 없음", "link": "https://example.com", "snippet": "요청하신 정보에 대한 검색 결과를 찾지 못했습니다.", "date": "", "position": 1}],
+            "relatedSearches": [],
         }
-        
+
     def _merge_results(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         여러 쿼리의 결과를 하나의 결과 셋으로 병합합니다.
         :param results: 각 쿼리의 검색 결과 리스트
         :return: 병합된 검색 결과
         """
-        merged = {
-            "organic": [],
-            "relatedSearches": []
-        }
+        merged = {"organic": [], "relatedSearches": []}
         seen_links = set()
         seen_related_searches = set()
 
@@ -109,7 +85,7 @@ class WebSearch:
                 if item["link"] not in seen_links:
                     merged["organic"].append(item)
                     seen_links.add(item["link"])
-            
+
             for related in result.get("relatedSearches", []):
                 if isinstance(related, dict):
                     query = related.get("query", "")
@@ -117,7 +93,7 @@ class WebSearch:
                     query = related
                 else:
                     continue
-                
+
                 if query and query not in seen_related_searches:
                     merged["relatedSearches"].append({"query": query})
                     seen_related_searches.add(query)
