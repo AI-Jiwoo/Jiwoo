@@ -1,26 +1,38 @@
 <div align="center">
-<img src="https://raw.githubusercontent.com/AI-Jiwoo/Jiwoo/main/images/jiwoologo.png" alt="Jiwoo AI Logo" width="300">  
-   
-# Jiwoo AI - 당신의 창업 여정을 함께하는 AI 파트너 🚀
+<div style="background-color: #232f3e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; max-width: 800px; margin: 0 auto;">
+  <img src="https://raw.githubusercontent.com/AI-Jiwoo/Jiwoo/main/images/jiwoologo.png" alt="Jiwoo AI Logo" width="250" style="margin-bottom: 15px;">
 
-[![Jiwoo-Front](https://img.shields.io/badge/Jiwoo--Front-React-61DAFB?style=for-the-badge&logo=react)](https://github.com/AI-Jiwoo/Jiwoo-Front)
-[![Jiwoo-Back](https://img.shields.io/badge/Jiwoo--Back-Spring-6DB33F?style=for-the-badge&logo=spring)](https://github.com/AI-Jiwoo/Jiwoo-Back)
-[![Jiwoo-AI-Server](https://img.shields.io/badge/Jiwoo--AI--Server-Python-3776AB?style=for-the-badge&logo=python)](https://github.com/AI-Jiwoo/Jiwoo-AI-Server)
+  <h1 style="font-family: 'Arial', sans-serif; color: #ffffff; font-weight: bold; margin-bottom: 10px; font-size: 28px;">
+    Jiwoo AI - 당신의 창업 여정을 함께하는 AI 파트너 🚀
+  </h1>
 
-Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입니다. 시장 분석부터 세무 처리까지, 당신의 비즈니스를 360도 지원합니다.
-
-
-
+  <p style="font-family: 'Helvetica Neue', sans-serif; color: #f0f0f0; font-size: 18px;">
+    당신의 비즈니스를 360도 지원하는 맞춤형 AI 비서 서비스
+  </p>
+</div>
 
 ## 🗓️ 프로젝트 수행기간
 
 **2024.07.14 ~ 2024.08.15**
 
-<sub><sup>총 1개월</sup></sub>
+
+
+[![Jiwoo-Front](https://img.shields.io/badge/Jiwoo--Front-React-61DAFB?style=for-the-badge&logo=react)](https://github.com/AI-Jiwoo/Jiwoo-Front)
+[![Jiwoo-Back](https://img.shields.io/badge/Jiwoo--Back-Spring-6DB33F?style=for-the-badge&logo=spring)](https://github.com/AI-Jiwoo/Jiwoo-Back)
+[![Jiwoo-AI-Server](https://img.shields.io/badge/Jiwoo--AI--Server-Python-3776AB?style=for-the-badge&logo=python)](https://github.com/AI-Jiwoo/Jiwoo-AI-Server)
+[![Jiwoo-Front-App](https://img.shields.io/badge/Jiwoo--Front--App-Flutter-02569B?style=for-the-badge&logo=flutter)](https://github.com/AI-Jiwoo/Jiwoo-Front-App)
+
+
+
 
 </div>
 
+
 <br/>
+
+<br/>
+
+
 
 ## 🌟 주요 기능
 
@@ -33,7 +45,7 @@ Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입�
 ### 2. 엑셀러레이팅
 
 #### 2.1 시장조사
-> 📊 빅데이터 기반 시장 분석으로 당신의 아이디어의 가치를 확인하세요.
+> 📊 시장 분석으로 당신의 아이디어의 가치를 확인하세요.
 - 사용자의 사업 아이디어에 대한 시장 규모 및 성장률 분석
 - 주요 경쟁사 및 유사 서비스 자동 탐색 및 비교 분석 제공
 - 시장 트렌드 및 소비자 니즈 분석을 통한 사업 기회 포착 지원
@@ -84,8 +96,8 @@ Jiwoo AI는 1인 창업가의 성공을 위한 맞춤형 AI 비서 서비스입�
 
 <table>
   <tr>
-    <th>백엔드 개발자</th>
-    <th>프론트엔드 개발자</th>
+    <th>백엔드</th>
+    <th>프론트엔드</th>
   </tr>
   <tr>
     <td>
