@@ -14,6 +14,7 @@ import logging
 import json
 from collections import deque
 import tiktoken
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class Chatbot:
         self.graph_generator = GraphGenerator()
         self.max_tokens = 14000
         self.encoding = tiktoken.encoding_for_model(settings.OPENAI_MODEL)
+        self.forbidden_words = ["씨발", "개새끼", "좆", "병신", "지랄", "애미", "찌질"]  # 금지어 목록
         
     async def get_response(self, user_input: str) -> Dict[str, Any]:
         """
@@ -43,6 +45,11 @@ class Chatbot:
         :return: 응답 데이터를 포함한 딕셔너리
         """
         try:
+            # 입력 검증
+            validation_result = self._validate_input(user_input)
+            if validation_result:
+                return {"text_response": validation_result, "error": "Input validation failed"}
+
             intent = self.intent_analyzer.analyze_intent(user_input)
             logger.info(f"분석된 의도: {intent}")
 
@@ -59,6 +66,36 @@ class Chatbot:
                 "text_response": "요청을 처리하는 동안 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
                 "error": str(e)
             }
+
+    def _validate_input(self, user_input: str) -> Optional[str]:
+        """
+        사용자 입력을 검증합니다.
+        
+        :param user_input: 사용자 입력 문자열
+        :return: 검증 실패 시 오류 메시지, 성공 시 None
+        """
+        # 기억 지우기 시도 감지
+        memory_wipe_patterns = [
+            r"기억.*지워",
+            r"메모리.*삭제",
+            r"대화.*초기화",
+            r"forget.*conversation",
+            r"clear.*memory"
+        ]
+        for pattern in memory_wipe_patterns:
+            if re.search(pattern, user_input, re.IGNORECASE):
+                return "대화 기록을 임의로 지우거나 수정할 수 없습니다."
+
+        # 금지어 감지
+        for word in self.forbidden_words:
+            if word in user_input:
+                return "불쾌감을 줄 수 있는 언어는 사용하지 말아주세요."
+
+        # 입력 길이 제한
+        if len(user_input) > 500:  # 예: 500자로 제한
+            return "입력이 너무 깁니다. 500자 이내로 작성해주세요."
+
+        return None
 
     async def _handle_graph_request(self, user_input: str) -> Dict[str, Any]:
         """
@@ -214,16 +251,16 @@ class Chatbot:
         """
         웹 검색 결과를 처리하여 필요한 정보를 추출합니다.
         """
-        return [
-            {
+        processed_results = []
+        for item in search_results.get("organic", [])[:5]:  # 상위 5개 결과만 사용
+            processed_results.append({
                 "title": item.get("title", ""),
-                "url": item.get("link", ""),
                 "snippet": item.get("snippet", ""),
+                "url": item.get("link", ""),
                 "date": item.get("date", ""),
                 "image_url": item.get("imageUrl", "")
-            }
-            for item in search_results.get("organic", [])
-        ]
+            })
+        return processed_results
 
     def _prepare_context(self, relevant_info: List[Dict[str, str]]) -> str:
         """
@@ -254,6 +291,7 @@ class Chatbot:
         4. 관련 이미지 URL이 있다면 별도의 bullet point로 언급해주세요.
         5. 마지막으로, 사용자가 답변에 대해 궁금해 할만한 사항이나 더 자세히 알고 싶어할 내용에 대하여 1-2개의 추천 질문을 작성해주세요.
         6. 만약 사용자가 이전 대화 내용 중 특정 항목에 대해 질문한다면, 해당 항목에 대해 더 자세히 설명해주세요.
+        7. "죄송합니다"라는 표현은 사용하지 마세요. 대신 긍정적이고 도움이 되는 방식으로 응답해주세요.
 
         참고 정보:
         {context}
