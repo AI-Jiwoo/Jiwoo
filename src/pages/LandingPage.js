@@ -35,7 +35,6 @@ const sentences = [
     { color: "#ECC94B", text: "On your side, every step of the way," },
     { color: "#9F7AEA", text: "Offering support, it's JIWOO!" }
 ];
-
 function CameraController() {
     const { camera } = useThree();
     useEffect(() => {
@@ -49,8 +48,8 @@ function Scene() {
 
     useFrame((state) => {
         const time = state.clock.getElapsedTime();
-        groupRef.current.rotation.y = Math.sin(time / 10) / 4;
-        groupRef.current.position.y = Math.sin(time / 4) / 2;
+        groupRef.current.rotation.y = Math.sin(time / 5) / 4;  // 움직임 속도를 빠르게 조정
+        groupRef.current.position.y = Math.sin(time / 2) / 2;
     });
 
     return (
@@ -60,7 +59,7 @@ function Scene() {
                 <Text
                     key={index}
                     color={sentence.color}
-                    fontSize={1.5}
+                    fontSize={2}  // 글씨 크기 증가
                     maxWidth={200}
                     lineHeight={1.5}
                     letterSpacing={0.02}
@@ -75,6 +74,7 @@ function Scene() {
         </group>
     );
 }
+
 const LandingPage = () => {
     const { user, logout } = useAuth();
     const bg = useColorModeValue('white', 'gray.800');
