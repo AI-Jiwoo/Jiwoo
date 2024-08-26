@@ -107,17 +107,33 @@ class Chatbot:
                 logger.warning("검색 결과가 없습니다.")
                 return {"text_response": "요청하신 정보를 찾지 못했습니다. 다른 검색어로 시도해 보시겠습니까?", "graph_data": None}
 
-            # GraphGenerator를 사용하여 그래프 요청 처리
-            response = await self.graph_generator.process_graph_request(user_input, search_results)
+            # 웹 검색 결과 처리
+            relevant_info = self._process_web_results(search_results)
 
-            if "error" in response:
-                return {"text_response": "그래프를 생성하는 동안 오류가 발생했습니다. 다시 시도해 주세요.", "error": response["error"]}
+            # GraphGenerator를 사용하여 그래프 데이터 생성
+            graph_response = await self.graph_generator.process_graph_request(user_input, search_results)
 
-            self._save_to_short_term_memory(user_input, response["text_response"])
-            if self._should_save_response(response["text_response"]):
-                self._save_to_vector_store(user_input, response["text_response"])
+            if "error" in graph_response:
+                return {"text_response": "그래프를 생성하는 동안 오류가 발생했습니다. 다시 시도해 주세요.", "error": graph_response["error"]}
 
-            return response
+            # LLM을 사용하여 그래프에 대한 설명 생성
+            context = self._prepare_context(relevant_info)
+            graph_data_str = json.dumps(graph_response["graph_data"])
+            llm_prompt = self._create_graph_prompt(user_input, context, graph_data_str)
+
+            llm_response = self.conversation.predict(input=llm_prompt)
+
+            # 최종 응답 구성
+            final_response = {
+                "text_response": llm_response,
+                "graph_data": graph_response["graph_data"]
+            }
+
+            self._save_to_short_term_memory(user_input, llm_response)
+            if self._should_save_response(llm_response):
+                self._save_to_vector_store(user_input, llm_response)
+
+            return final_response
         except Exception as e:
             logger.error(f"그래프 요청 처리 중 예기치 않은 오류 발생: {str(e)}", exc_info=True)
             return {"text_response": "요청을 처리하는 동안 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", "error": str(e)}
@@ -256,7 +272,7 @@ class Chatbot:
         """
         사용자 입력과 문맥을 바탕으로 프롬프트를 생성합니다.
         """
-        return f"""다음은 사용자의 요청사항에 관련된 정보입니다. 이 정보를 바탕으로 다음과 같이 응답해주세요:
+        return f"""당신은 창업 컨설턴트 입니다. 사용자의 요청과 참고 정보를 바탕으로 관련 정보에 대해 설명해주세요.
 
         1. 관련 정보를 간결한 bullet point 리스트로 정리해주고 간단한 설명을 해주세요.
         2. 각 bullet point에는 구체적인 예시, 수치, 날짜 등을 포함해주세요.
@@ -271,6 +287,27 @@ class Chatbot:
 
         사용자: {user_input}
         AI 조수:"""
+
+    def _create_graph_prompt(self, user_input: str, context: str, graph_data: str) -> str:
+        """
+        그래프 데이터와 웹 검색 결과를 바탕으로 LLM 프롬프트를 생성합니다.
+        """
+        return f"""당신은 데이터 분석 전문가입니다. 사용자의 그래프 요청, 관련 정보, 그리고 생성된 그래프 데이터를 바탕으로 분석 결과를 설명해주세요.
+
+        1. 그래프의 주요 특징과 트렌드를 설명해주세요.
+        2. 데이터에서 발견된 중요한 패턴이나 이상점을 언급해주세요.
+        3. 그래프가 보여주는 정보의 의미와 시사점을 해석해주세요.
+        4. 가능하다면, 데이터와 관련된 산업 동향이나 경제적 맥락을 제공해주세요.
+        5. 사용자가 데이터를 더 잘 이해하는 데 도움이 될 만한 1-2개의 추가 질문을 제안해주세요.
+
+        참고 정보:
+        {context}
+
+        그래프 데이터:
+        {graph_data}
+
+        사용자 요청: {user_input}
+        분석가:"""
 
     def _reduce_context(self, prompt: str, max_tokens: int) -> str:
         """
@@ -315,7 +352,7 @@ class Chatbot:
         """
         응답을 저장해야 하는지 결정합니다.
         """
-        skip_keywords = ["죄송합니다", "찾지 못했습니다", "정보가 없습니다"]
+        skip_keywords = ["찾지 못했습니다", "정보가 없습니다"]
         return not any(keyword in response for keyword in skip_keywords)
 
     def _save_to_vector_store(self, user_input: str, response: str):
