@@ -1,6 +1,7 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     # 프로젝트 기본 설정
     PROJECT_NAME: str = "Jiwoo-AI-Server"
@@ -46,5 +47,6 @@ class Settings(BaseSettings):
 
     # 환경 변수 설정
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+
 
 settings = Settings()

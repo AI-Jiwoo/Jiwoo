@@ -14,8 +14,10 @@ import logging
 import json
 from collections import deque
 import tiktoken
+import re
 
 logger = logging.getLogger(__name__)
+
 
 class Chatbot:
     def __init__(self):
@@ -34,20 +36,26 @@ class Chatbot:
         self.graph_generator = GraphGenerator()
         self.max_tokens = 14000
         self.encoding = tiktoken.encoding_for_model(settings.OPENAI_MODEL)
-        
+        self.forbidden_words = ["씨발", "개새끼", "좆", "병신", "지랄", "애미", "찌질"]  # 금지어 목록
+
     async def get_response(self, user_input: str) -> Dict[str, Any]:
         """
         사용자의 입력을 받아 적절한 응답을 생성합니다.
-        
+
         :param user_input: 사용자 입력 문자열
         :return: 응답 데이터를 포함한 딕셔너리
         """
         try:
+            # 입력 검증
+            validation_result = self._validate_input(user_input)
+            if validation_result:
+                return {"text_response": validation_result, "error": "Input validation failed"}
+
             intent = self.intent_analyzer.analyze_intent(user_input)
             logger.info(f"분석된 의도: {intent}")
 
             self._save_to_short_term_memory(user_input)
-            
+
             if self._is_graph_request(intent, user_input):
                 return await self._handle_graph_request(user_input)
             else:
@@ -55,78 +63,86 @@ class Chatbot:
 
         except Exception as e:
             logger.error(f"응답 생성 중 오류 발생: {str(e)}", exc_info=True)
-            return {
-                "text_response": "요청을 처리하는 동안 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-                "error": str(e)
-            }
+            return {"text_response": "요청을 처리하는 동안 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", "error": str(e)}
+
+    def _validate_input(self, user_input: str) -> Optional[str]:
+        """
+        사용자 입력을 검증합니다.
+
+        :param user_input: 사용자 입력 문자열
+        :return: 검증 실패 시 오류 메시지, 성공 시 None
+        """
+        # 기억 지우기 시도 감지
+        memory_wipe_patterns = [r"기억.*지워", r"메모리.*삭제", r"대화.*초기화", r"forget.*conversation", r"clear.*memory"]
+        for pattern in memory_wipe_patterns:
+            if re.search(pattern, user_input, re.IGNORECASE):
+                return "대화 기록을 임의로 지우거나 수정할 수 없습니다."
+
+        # 금지어 감지
+        for word in self.forbidden_words:
+            if word in user_input:
+                return "불쾌감을 줄 수 있는 언어는 사용하지 말아주세요."
+
+        # 입력 길이 제한
+        if len(user_input) > 500:  # 예: 500자로 제한
+            return "입력이 너무 깁니다. 500자 이내로 작성해주세요."
+
+        return None
 
     async def _handle_graph_request(self, user_input: str) -> Dict[str, Any]:
         """
         그래프 요청을 처리합니다.
-        
+
         :param user_input: 사용자 입력 문자열
         :return: 그래프 데이터와 설명을 포함한 딕셔너리
         """
         try:
             logger.info(f"그래프 생성 요청 처리 시작: {user_input}")
-            
+
             # 웹 검색 수행
-            queries = self.query_generator.generate_queries(user_input, {'intent': 'data_visualization'})
+            queries = self.query_generator.generate_queries(user_input, {"intent": "data_visualization"})
             search_results = await self.web_search.search(queries)
-            
+
             if not search_results or not search_results.get("organic"):
                 logger.warning("검색 결과가 없습니다.")
-                return {
-                    "text_response": "요청하신 정보를 찾지 못했습니다. 다른 검색어로 시도해 보시겠습니까?",
-                    "graph_data": None
-                }
-            
+                return {"text_response": "요청하신 정보를 찾지 못했습니다. 다른 검색어로 시도해 보시겠습니까?", "graph_data": None}
+
             # GraphGenerator를 사용하여 그래프 요청 처리
             response = await self.graph_generator.process_graph_request(user_input, search_results)
-            
+
             if "error" in response:
-                return {
-                    "text_response": "그래프를 생성하는 동안 오류가 발생했습니다. 다시 시도해 주세요.",
-                    "error": response["error"]
-                }
-            
+                return {"text_response": "그래프를 생성하는 동안 오류가 발생했습니다. 다시 시도해 주세요.", "error": response["error"]}
+
             self._save_to_short_term_memory(user_input, response["text_response"])
             if self._should_save_response(response["text_response"]):
                 self._save_to_vector_store(user_input, response["text_response"])
-    
+
             return response
         except Exception as e:
             logger.error(f"그래프 요청 처리 중 예기치 않은 오류 발생: {str(e)}", exc_info=True)
-            return {
-                "text_response": "요청을 처리하는 동안 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-                "error": str(e)
-            }
+            return {"text_response": "요청을 처리하는 동안 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", "error": str(e)}
 
     async def _handle_text_request(self, user_input: str, intent: Dict[str, Any]) -> Dict[str, Any]:
         """
         텍스트 요청을 처리합니다.
-        
+
         :param user_input: 사용자 입력 문자열
         :param intent: 분석된 사용자 의도
         :return: 텍스트 응답과 관련 정보를 포함한 딕셔너리
         """
         queries = self.query_generator.generate_queries(user_input, intent)
         logger.info(f"생성된 쿼리: {queries}")
-        
+
         # 과거 대화에 대한 질문인지 확인
         is_historical_query = self._check_historical_query(user_input)
-        
+
         if is_historical_query:
             logger.info("과거 대화에 대한 질문 감지")
             relevant_info = self._get_conversation_history()
         else:
             # 유사도 기준을 적용한 벡터 검색 수행
-            vector_results = self.vector_store.search_with_similarity_threshold(
-                queries[0], 
-                k=3,
-                threshold=settings.SIMILARITY_THRESHOLD
-            )
-        
+            vector_results = self.vector_store.search_with_similarity_threshold(queries[0], k=3, threshold=settings.SIMILARITY_THRESHOLD)
+
             if vector_results:
                 logger.info("벡터 검색 결과를 찾았습니다.")
                 relevant_info = self._process_vector_results(vector_results)
@@ -138,26 +154,22 @@ class Chatbot:
                 except Exception as e:
                     logger.error(f"웹 검색 중 오류 발생: {str(e)}")
                     relevant_info = []
-        
+
         context = self._prepare_context(relevant_info)
         prompt = self._create_prompt(user_input, context)
-        
+
         # 토큰 수 계산 및 제한
         total_tokens = len(self.encoding.encode(prompt))
         if total_tokens > self.max_tokens:
             prompt = self._reduce_context(prompt, self.max_tokens)
-        
+
         response = self.conversation.predict(input=prompt)
-    
+
         self._save_to_short_term_memory(user_input, response)
         if self._should_save_response(response):
             self._save_to_vector_store(user_input, response)
-    
-        return {
-            "text_response": response,
-            "relevant_info": relevant_info,
-            "graph_data": None
-        }
+
+        return {"text_response": response, "relevant_info": relevant_info, "graph_data": None}
 
     def _check_historical_query(self, user_input: str) -> bool:
         """
@@ -165,19 +177,13 @@ class Chatbot:
         """
         historical_keywords = ["지금까지", "이전에", "과거에", "어떤 질문", "뭘 물어봤어", "대화 기록"]
         return any(keyword in user_input for keyword in historical_keywords)
-    
+
     def _get_conversation_history(self) -> List[Dict[str, str]]:
         """
         대화 기록을 가져옵니다.
         """
         return [
-            {
-                "title": f"대화 {i+1}",
-                "snippet": f"사용자: {item['user_input']}\nAI: {item['response']}",
-                "url": "",
-                "date": "",
-                "image_url": ""
-            }
+            {"title": f"대화 {i+1}", "snippet": f"사용자: {item['user_input']}\nAI: {item['response']}", "url": "", "date": "", "image_url": ""}
             for i, item in enumerate(self.short_term_memory)
         ]
 
@@ -185,8 +191,8 @@ class Chatbot:
         """
         사용자의 입력이 그래프 요청인지 확인합니다.
         """
-        graph_keywords = ['그래프', '차트', '추이', '통계', '시각화']
-        return intent.get('intent') == 'data_visualization' or any(keyword in user_input for keyword in graph_keywords)
+        graph_keywords = ["그래프", "차트", "추이", "통계", "시각화"]
+        return intent.get("intent") == "data_visualization" or any(keyword in user_input for keyword in graph_keywords)
 
     def _process_vector_results(self, vector_results: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         """
@@ -196,34 +202,38 @@ class Chatbot:
         for result in vector_results:
             created_at = result.get("created_at")
             date_str = (
-                created_at.strftime("%Y-%m-%d") if isinstance(created_at, datetime)
-                else datetime.fromtimestamp(created_at).strftime("%Y-%m-%d") if isinstance(created_at, (int, float))
-                else "Unknown Date"
+                created_at.strftime("%Y-%m-%d")
+                if isinstance(created_at, datetime)
+                else datetime.fromtimestamp(created_at).strftime("%Y-%m-%d") if isinstance(created_at, (int, float)) else "Unknown Date"
             )
 
-            processed_results.append({
-                "title": result.get("content", "").split('\n')[0],  # 첫 줄을 제목으로 사용
-                "url": result.get("url", ""),
-                "snippet": result.get("content", ""),
-                "date": date_str,
-                "image_url": ""  # VectorStore에는 이미지 URL이 저장되어 있지 않음
-            })
+            processed_results.append(
+                {
+                    "title": result.get("content", "").split("\n")[0],  # 첫 줄을 제목으로 사용
+                    "url": result.get("url", ""),
+                    "snippet": result.get("content", ""),
+                    "date": date_str,
+                    "image_url": "",  # VectorStore에는 이미지 URL이 저장되어 있지 않음
+                }
+            )
         return processed_results
 
     def _process_web_results(self, search_results: Dict[str, Any]) -> List[Dict[str, str]]:
         """
         웹 검색 결과를 처리하여 필요한 정보를 추출합니다.
         """
-        return [
-            {
-                "title": item.get("title", ""),
-                "url": item.get("link", ""),
-                "snippet": item.get("snippet", ""),
-                "date": item.get("date", ""),
-                "image_url": item.get("imageUrl", "")
-            }
-            for item in search_results.get("organic", [])
-        ]
+        processed_results = []
+        for item in search_results.get("organic", [])[:5]:  # 상위 5개 결과만 사용
+            processed_results.append(
+                {
+                    "title": item.get("title", ""),
+                    "snippet": item.get("snippet", ""),
+                    "url": item.get("link", ""),
+                    "date": item.get("date", ""),
+                    "image_url": item.get("imageUrl", ""),
+                }
+            )
+        return processed_results
 
     def _prepare_context(self, relevant_info: List[Dict[str, str]]) -> str:
         """
@@ -232,14 +242,14 @@ class Chatbot:
         context_parts = []
         for info in relevant_info:
             part = f"[제목: {info['title']}]\n{info['snippet']}"
-            if info['url']:
+            if info["url"]:
                 part += f"\n[출처: {info['url']}]"
-            if info['date']:
+            if info["date"]:
                 part += f"\n[날짜: {info['date']}]"
-            if info['image_url']:
+            if info["image_url"]:
                 part += f"\n[이미지: {info['image_url']}]"
             context_parts.append(part)
-        
+
         return "\n\n".join(context_parts) if context_parts else "관련된 구체적인 정보를 찾지 못했습니다."
 
     def _create_prompt(self, user_input: str, context: str) -> str:
@@ -254,6 +264,7 @@ class Chatbot:
         4. 관련 이미지 URL이 있다면 별도의 bullet point로 언급해주세요.
         5. 마지막으로, 사용자가 답변에 대해 궁금해 할만한 사항이나 더 자세히 알고 싶어할 내용에 대하여 1-2개의 추천 질문을 작성해주세요.
         6. 만약 사용자가 이전 대화 내용 중 특정 항목에 대해 질문한다면, 해당 항목에 대해 더 자세히 설명해주세요.
+        7. "죄송합니다"라는 표현은 사용하지 마세요. 대신 긍정적이고 도움이 되는 방식으로 응답해주세요.
 
         참고 정보:
         {context}
@@ -281,7 +292,7 @@ class Chatbot:
         if available_tokens <= 0:
             return prompt[:context_start] + prompt[context_end:]
 
-        context_lines = context.split('\n')
+        context_lines = context.split("\n")
         reduced_context = []
         current_tokens = 0
         for line in context_lines:
@@ -291,7 +302,7 @@ class Chatbot:
             reduced_context.append(line)
             current_tokens += line_tokens
 
-        return prompt[:context_start] + '\n'.join(reduced_context) + prompt[context_end:]
+        return prompt[:context_start] + "\n".join(reduced_context) + prompt[context_end:]
 
     def _save_to_short_term_memory(self, user_input: str, response: Optional[str] = None):
         """
@@ -299,7 +310,7 @@ class Chatbot:
         """
         self.short_term_memory.append({"user_input": user_input, "response": response or ""})
         self._update_conversation_summary()
-    
+
     def _should_save_response(self, response: str) -> bool:
         """
         응답을 저장해야 하는지 결정합니다.

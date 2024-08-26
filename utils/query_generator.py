@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 class QueryGenerator:
     def __init__(self):
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -18,19 +19,19 @@ class QueryGenerator:
         """
         try:
             # 의도 분석 결과에서 키워드 추출
-            keywords = intent.get('keywords', [])
-            keyword_str = ', '.join(keywords) if keywords else user_input
+            keywords = intent.get("keywords", [])
+            keyword_str = ", ".join(keywords) if keywords else user_input
 
             response = self.client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "당신은 사용자 입력과 키워드를 바탕으로 다양한 검색 쿼리를 생성하는 AI 어시스턴트입니다."},
-                    {"role": "user", "content": f"다음 키워드를 바탕으로 5개의 다양한 검색 쿼리를 생성하세요. 각 쿼리는 새로운 줄에 작성하세요: {keyword_str}"}
+                    {"role": "user", "content": f"다음 키워드를 바탕으로 5개의 다양한 검색 쿼리를 생성하세요. 각 쿼리는 새로운 줄에 작성하세요: {keyword_str}"},
                 ],
                 max_tokens=200,
-                temperature=0.7
+                temperature=0.7,
             )
-            queries = response.choices[0].message.content.split('\n')
+            queries = response.choices[0].message.content.split("\n")
             return [query.strip() for query in queries if query.strip()][:5]  # 최대 5개의 쿼리만 반환
         except Exception as e:
             logger.error(f"쿼리 생성 중 오류 발생: {str(e)}")
