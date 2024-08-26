@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
+
 class GraphGenerator:
     def __init__(self):
         self.llm = ChatOpenAI(temperature=0.2)
@@ -44,12 +45,9 @@ class GraphGenerator:
             logger.info(f"처리된 데이터: {json.dumps(processed_data, ensure_ascii=False, default=str)}")
 
             graph_data = self.generate_graph(processed_data, graph_type, query)
-            
+
             if isinstance(graph_data, go.Figure):
-                return {
-                    "graph_data": json.loads(graph_data.to_json()),
-                    "text_response": self._generate_graph_explanation(processed_data, graph_type)
-                }
+                return {"graph_data": json.loads(graph_data.to_json()), "text_response": self._generate_graph_explanation(processed_data, graph_type)}
             else:
                 logger.error(f"그래프 생성 실패: {graph_data}")
                 return {"text_response": f"그래프 생성 중 오류가 발생했습니다: {graph_data}", "graph_data": None}
@@ -90,13 +88,12 @@ class GraphGenerator:
     async def _select_most_relevant_url(self, query: str, search_results: List[Dict[str, Any]]) -> str:
         logger.info(f"URL 선택 시작: {query}")
         prompt = PromptTemplate(
-            input_variables=["query", "results"],
-            template="다음 검색 결과 중에서 '{query}'와 가장 관련성 높은 URL을 선택하세요:\n\n{results}\n\n가장 관련성 높은 URL:"
+            input_variables=["query", "results"], template="다음 검색 결과 중에서 '{query}'와 가장 관련성 높은 URL을 선택하세요:\n\n{results}\n\n가장 관련성 높은 URL:"
         )
-        
+
         results_text = "\n".join([f"제목: {result.get('title', '')}\nURL: {result.get('link', '')}\n" for result in search_results])
         response = self.llm(prompt.format(query=query, results=results_text))
-        
+
         selected_url = response.content.strip()
         logger.info(f"선택된 URL: {selected_url}")
         return selected_url if selected_url.startswith("http") else None
@@ -106,7 +103,7 @@ class GraphGenerator:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
+                soup = BeautifulSoup(html, "html.parser")
                 content = soup.get_text()
                 logger.info(f"웹 페이지 내용 가져오기 완료: {url}")
                 return content
@@ -123,10 +120,10 @@ class GraphGenerator:
             {content}
 
             추출된 데이터:
-            """
+            """,
         )
         response = self.llm(prompt.format(content=content, fields=", ".join(data_fields)))
-        
+
         extracted_data = []
         for line in response.content.split("\n"):
             if line.strip():
@@ -135,15 +132,10 @@ class GraphGenerator:
                     year = parts[0].split(": ")[1]
                     value = parts[1].split(": ")[1]
                     try:
-                        extracted_data.append({
-                            "date": f"{year}-01-01",
-                            "value": float(value),
-                            "name": "대한민국",
-                            "field": data_fields[0] if data_fields else "경제성장률"
-                        })
+                        extracted_data.append({"date": f"{year}-01-01", "value": float(value), "name": "대한민국", "field": data_fields[0] if data_fields else "경제성장률"})
                     except ValueError:
                         logger.warning(f"Invalid data point: {line}")
-        
+
         logger.info(f"추출된 데이터: {extracted_data}")
         return extracted_data
 

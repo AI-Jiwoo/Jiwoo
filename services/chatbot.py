@@ -124,10 +124,7 @@ class Chatbot:
             llm_response = self.conversation.predict(input=llm_prompt)
 
             # 최종 응답 구성
-            final_response = {
-                "text_response": llm_response,
-                "graph_data": graph_response["graph_data"]
-            }
+            final_response = {"text_response": llm_response, "graph_data": graph_response["graph_data"]}
 
             self._save_to_short_term_memory(user_input, llm_response)
             if self._should_save_response(llm_response):
