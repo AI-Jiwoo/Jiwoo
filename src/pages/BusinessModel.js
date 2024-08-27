@@ -15,14 +15,14 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     const [similarServices, setSimilarServices] = useState([]);
     const [analyzedBusinessModel, setAnalyzedBusinessModel] = useState(null);
     const [businessProposal, setBusinessProposal] = useState(null);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [categories, setCategories] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const columnCount = useBreakpointValue({ base: 1, md: 2 });
     const businessModelRef = useRef(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [loadingMessage, setLoadingMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
 
     const businessModelMessages = [
         "비즈니스 모델을 분석 중입니다...",
@@ -36,13 +36,11 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     useEffect(() => {
         const fetchInitialData = async () => {
             setIsLoading(true);
-            setLoadingMessage('초기 데이터를 불러오는 중...');
             try {
                 await fetchBusinesses();
                 await fetchCategories();
             } catch (error) {
                 console.error("초기 데이터 로딩 실패:", error);
-                setError("초기 데이터를 불러오는데 실패했습니다. 다시 시도해 주세요.");
             } finally {
                 setIsLoading(false);
             }
@@ -89,8 +87,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             return;
         }
 
+        setLoading(true);
         setIsLoading(true);
-        setLoadingMessage('유사 서비스를 찾는 중...');
         setError(null);
 
         const headers = {
@@ -121,19 +119,19 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
 
         try {
             const response = await api.post('/business-model/similar-services', data, { headers });
-            console.log("Received similar services:", response.data);
             setSimilarServices(response.data);
             setCurrentStep(2);
         } catch (error) {
             handleError('유사 서비스 조회에 실패했습니다', error);
         } finally {
+            setLoading(false);
             setIsLoading(false);
         }
     };
 
     const analyzeBusinessModels = async () => {
+        setLoading(true);
         setIsLoading(true);
-        setLoadingMessage('비즈니스 모델 분석 중...');
         setError(null);
 
         const headers = {
@@ -148,13 +146,14 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         } catch (error) {
             handleError('비즈니스 모델 분석에 실패했습니다', error);
         } finally {
+            setLoading(false);
             setIsLoading(false);
         }
     };
 
     const proposeBusinessModel = async () => {
+        setLoading(true);
         setIsLoading(true);
-        setLoadingMessage('비즈니스 모델 제안 생성 중...');
         setError(null);
 
         const headers = {
@@ -169,6 +168,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         } catch (error) {
             handleError('비즈니스 모델 제안에 실패했습니다', error);
         } finally {
+            setLoading(false);
             setIsLoading(false);
         }
     };
@@ -292,7 +292,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                     mt={4}
                     colorScheme="blue"
                     onClick={getSimilarServices}
-                    isLoading={isLoading}
+                    isLoading={loading}
                 >
                     다음 단계
                 </Button>
@@ -329,7 +329,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                     mt={4}
                     colorScheme="blue"
                     onClick={analyzeBusinessModels}
-                    isLoading={isLoading}
+                    isLoading={loading}
                 >
                     비즈니스 모델 분석
                 </Button>
@@ -351,7 +351,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                     mt={4}
                     colorScheme="blue"
                     onClick={proposeBusinessModel}
-                    isLoading={isLoading}
+                    isLoading={loading}
                 >
                     비즈니스 모델 제안
                 </Button>
@@ -426,46 +426,45 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     return (
         <Box ref={businessModelRef} width="70%" margin="auto" pt={24} mb={12} minHeight="1000px">
             <Box mt={8}/>
-            <Flex justifyContent="space-between" alignItems="center" mb={8}>
-                <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
-            </Flex>
-            {isLoading && (
-                <Alert status="info" mb={4}>
-                    <AlertIcon />
-                    {loadingMessage || '로딩 중...'}
-                </Alert>
+            <LoadingScreen isLoading={isLoading} messages={businessModelMessages} />
+            {!isLoading && (
+                <>
+                    <Flex justifyContent="space-between" alignItems="center" mb={8}>
+                        <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
+                    </Flex>
+                    {renderStepIndicator()}
+                    <VStack spacing={8} align="stretch">
+                        {error && (
+                            <Alert status="error">
+                                <AlertIcon />
+                                {error}
+                            </Alert>
+                        )}
+                        {currentStep === 1 && renderBusinessSelection()}
+                        {currentStep === 2 && renderSimilarServices()}
+                        {currentStep === 3 && renderAnalyzedBusinessModel()}
+                        {currentStep === 4 && renderBusinessProposal()}
+                        {currentStep > 1 && (
+                            <HStack justifyContent="space-between">
+                                <Button
+                                    leftIcon={<Icon as={FaRedo} />}
+                                    onClick={handleNewAnalysis}
+                                >
+                                    새로운 분석 시작
+                                </Button>
+                                <Button
+                                    rightIcon={<Icon as={FaEye} />}
+                                    onClick={() => setIsModalOpen(true)}
+                                    isDisabled={!analyzedBusinessModel || !businessProposal}
+                                >
+                                    전체 결과 보기
+                                </Button>
+                            </HStack>
+                        )}
+                    </VStack>
+                    {renderFullResults()}
+                </>
             )}
-            {renderStepIndicator()}
-            <VStack spacing={8} align="stretch">
-                {error && (
-                    <Alert status="error">
-                        <AlertIcon />
-                        {error}
-                    </Alert>
-                )}
-                {currentStep === 1 && renderBusinessSelection()}
-                {currentStep === 2 && renderSimilarServices()}
-                {currentStep === 3 && renderAnalyzedBusinessModel()}
-                {currentStep === 4 && renderBusinessProposal()}
-                {currentStep > 1 && (
-                    <HStack justifyContent="space-between">
-                        <Button
-                            leftIcon={<Icon as={FaRedo} />}
-                            onClick={handleNewAnalysis}
-                        >
-                            새로운 분석 시작
-                        </Button>
-                        <Button
-                            rightIcon={<Icon as={FaEye} />}
-                            onClick={() => setIsModalOpen(true)}
-                            isDisabled={!analyzedBusinessModel || !businessProposal}
-                        >
-                            전체 결과 보기
-                        </Button>
-                    </HStack>
-                )}
-            </VStack>
-            {renderFullResults()}
         </Box>
     );
 };
