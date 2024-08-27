@@ -309,19 +309,18 @@ function Join() {
                                 placeholder="이름을 입력해주세요"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                isDisabled={!!name} // 이름이 있으면 입력 필드 비활성화
                             />
                             <FormHelperText color="red.500">
-                                주의: 이름은 한 번 입력 후 수정이 불가능합니다. 신중히 입력해 주세요.
+                                주의: 이름은 회원가입 후 수정이 어려울 수 있습니다. 정확하게 입력해 주세요.
                             </FormHelperText>
                         </FormControl>
 
-                        {!name && (
-                            <Alert status="warning">
+                        {name && (
+                            <Alert status="warning" mt={2}>
                                 <AlertIcon />
                                 <AlertTitle mr={2}>이름 입력 주의사항</AlertTitle>
                                 <AlertDescription>
-                                    이름은 한 번 입력하면 수정할 수 없습니다. 정확하게 입력해 주세요.
+                                    이름을 정확히 입력했는지 다시 한 번 확인해 주세요. 회원가입 후에는 수정이 어려울 수 있습니다.
                                 </AlertDescription>
                             </Alert>
                         )}
