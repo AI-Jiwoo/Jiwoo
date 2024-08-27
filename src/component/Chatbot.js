@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Flex, VStack, useToast, Box } from '@chakra-ui/react';
+import {Flex, VStack, useToast, Box, Button} from '@chakra-ui/react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api, {aiApi} from "../apis/api";
+import api, { aiApi } from "../apis/api";
 import Sidebar from '../component/chatbot/ChSideBar';
 import Header from '../component/chatbot/Chheader';
 import ChatMessage from '../component/chatbot/ChatMessage';
 import ImageGallery from '../component/chatbot/ImageGallery';
 import InputArea from '../component/chatbot/InputArea';
-import TaxationChatbot from '../component/TaxationProcess';
 import jsPDF from 'jspdf';
 import koreanFontUrl from '../font/NanumMyeongjo-Regular.ttf';
 import axios from "axios";
@@ -20,12 +19,37 @@ const Chatbot = () => {
     const [selectedResearch, setSelectedResearch] = useState(null);
     const [imageResults, setImageResults] = useState([]);
     const [isTaxationMode, setIsTaxationMode] = useState(false);
+    const [taxationStep, setTaxationStep] = useState(0);
+    const [taxationAnswers, setTaxationAnswers] = useState({});
+    const [selectedBusinessId, setSelectedBusinessId] = useState('');
+    const [selectedBusinessContent, setSelectedBusinessContent] = useState('');
+    const [businessType, setBusinessType] = useState('');
+    const [transactionFile, setTransactionFile] = useState(null);
+    const [incomeTaxProofFile, setIncomeTaxProofFile] = useState(null);
+    const [businesses, setBusinesses] = useState([]);
+    const [isTaxationChatMode, setIsTaxationChatMode] = useState(false);
+    const [isTaxationDataSubmitted, setIsTaxationDataSubmitted] = useState(false);
+
+
     const toast = useToast();
     const navigate = useNavigate();
     const location = useLocation();
 
+    const taxationQuestions = useMemo(() => [
+        "사업을 선택해주세요.",
+        "사업자 유형을 입력해주세요. (예: 부가가치세 간이과세자)",
+        "현재 부양하고 있는 가족(배우자, 자녀, 부모 등)은 총 몇 명입니까?",
+        "그 중 연간 소득이 100만 원을 초과하지 않는 가족은 몇 명입니까?",
+        "부양하는 각 자녀의 나이는 어떻게 되나요? (예: 6세 이하, 초등학생, 중고등학생, 대학생. 없다면 없음이라고 적어주세요.)",
+        "배우자의 연간소득이 100만원을 초과합니까? (없다면 없음이라고 적어주세요)",
+        "부양가족 중 장애인으로 등록된 분이 몇 명 있습니까? (없다면 없음이라고 적어주세요)",
+        "거래내역서 파일을 첨부해주세요.",
+        "소득금액증명원 파일을 첨부해주세요."
+    ], []);
+
     useEffect(() => {
         fetchResearchHistory();
+        fetchBusinesses();
     }, []);
 
     useEffect(() => {
@@ -35,6 +59,27 @@ const Chatbot = () => {
             sendMessage(query);
         }
     }, [location, messages.length]);
+
+    const handleBusinessSelect = (businessId, businessName, businessContent) => {
+        setSelectedBusinessId(businessId);
+        setSelectedBusinessContent(businessContent);
+        setTaxationAnswers(prev => ({ ...prev, 0: businessName }));
+        setMessages(prev => [...prev,
+            { sender: 'user', text: businessName },
+            { sender: 'bot', text: `${businessName}이(가) 선택되었습니다. ${taxationQuestions[1]}` }
+        ]);
+        setTaxationStep(1);
+    };
+
+    const addMessage = (sender, text, additionalProps = {}) => {
+        setMessages(prev => {
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage && lastMessage.sender === sender && lastMessage.text === text) {
+                return prev; // 중복된 메시지는 추가하지 않음
+            }
+            return [...prev, { sender, text, ...additionalProps }];
+        });
+    };
 
     const fetchResearchHistory = async () => {
         try {
@@ -49,6 +94,22 @@ const Chatbot = () => {
             console.error('Failed to fetch research history:', error);
             toast({
                 title: "조회 이력을 불러오는데 실패했습니다.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const fetchBusinesses = async () => {
+        try {
+            const response = await api.get('/business/user');
+            setBusinesses(response.data.business || []);
+        } catch (error) {
+            console.error('Failed to fetch businesses:', error);
+            toast({
+                title: "사업 정보 로딩 실패",
+                description: "사업 정보를 불러오는데 실패했습니다.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -90,31 +151,94 @@ const Chatbot = () => {
         return categories;
     };
 
+    const handleTaxationStart = () => {
+        setIsTaxationMode(true);
+        setTaxationStep(0);
+        setMessages(prev => [...prev, {
+            sender: 'bot',
+            text: "세무 처리를 시작합니다. 사업을 선택해주세요.",
+            businessCards: businesses
+        }]);
+    };
+
+
+
+    const handleTaxationAnswer = async (answer) => {
+        setTaxationAnswers(prev => ({ ...prev, [taxationStep]: answer }));
+
+        addMessage('user', answer);
+
+        if (taxationStep === 1) {
+            setBusinessType(answer);
+        }
+
+        if (taxationStep < taxationQuestions.length - 1) {
+            setTaxationStep(prev => prev + 1);
+            addMessage('bot', taxationQuestions[taxationStep + 1]);
+        } else {
+            await handleDataSubmit();
+        }
+    };
+
+
+    const handleFileUpload = (file, type) => {
+        if (type === 'transaction') {
+            setTransactionFile(file);
+        } else if (type === 'incomeTaxProof') {
+            setIncomeTaxProofFile(file);
+        }
+
+        setMessages(prev => [...prev, { sender: 'user', text: `${type === 'transaction' ? '거래내역서' : '소득금액증명원'} 파일이 첨부되었습니다.` }]);
+
+        // 다른 파일이 이미 첨부되어 있는지 확인
+        if ((type === 'transaction' && incomeTaxProofFile) || (type === 'incomeTaxProof' && transactionFile)) {
+            handleDataSubmit(type === 'transaction' ? file : transactionFile, type === 'incomeTaxProof' ? file : incomeTaxProofFile);
+        }
+    };
+
+
     const sendMessage = useCallback(async () => {
         if (!inputMessage.trim() || isLoading) return;
 
         setIsLoading(true);
         const message = inputMessage;
         setInputMessage('');
-        setMessages(prev => [...prev, { sender: 'user', text: message }]);
+
+        if (isTaxationMode && !isTaxationDataSubmitted) {
+            addMessage('user', message);
+            await handleTaxationAnswer(message);
+            setIsLoading(false);
+            return;
+        }
+
+        addMessage('user', message);
 
         try {
-            const response = await axios.post('http://localhost:8000/chat', { message });
+            let response;
+            if (isTaxationChatMode) {
+                console.log("Calling /taxation/chat");
+                const formData = new FormData();
+                formData.append('businessId', selectedBusinessId);
+                formData.append('user_input', message);
+                response = await axios.post('http://localhost:8000/taxation/chat', formData);
+            } else {
+                console.log("Calling /chat");
+                response = await axios.post('http://localhost:8000/chat', { message });
+            }
+
             const parsedResponse = parseResponse(response.data.text_response);
-            setMessages(prev => [...prev, {
-                sender: 'bot',
-                text: response.data.text_response,
-                parsedResponse: parsedResponse,
+            addMessage('bot', response.data.text_response, {
+                parsedResponse,
                 web_results: response.data.web_results,
                 imageUrl: response.data.image_url
-            }]);
+            });
 
             if (response.data.image_url) {
                 setImageResults(prev => [...prev, response.data.image_url]);
             }
         } catch (error) {
             console.error('Error sending message:', error);
-            setMessages(prev => [...prev, { sender: 'bot', text: '죄송합니다. 오류가 발생했습니다.' }]);
+            addMessage('bot', '죄송합니다. 오류가 발생했습니다.');
             toast({
                 title: "메시지 전송 실패",
                 description: "죄송합니다. 오류가 발생했습니다.",
@@ -122,16 +246,11 @@ const Chatbot = () => {
                 duration: 3000,
                 isClosable: true,
             });
-        } finally {
-            setIsLoading(false);
         }
 
+        setIsLoading(false);
         navigate(`?q=${encodeURIComponent(message)}`, { replace: true });
-    }, [inputMessage, isLoading, navigate, toast]);
-
-    const handleInputChange = useCallback((e) => {
-        setInputMessage(e.target.value);
-    }, []);
+    }, [inputMessage, isLoading, isTaxationMode, isTaxationChatMode, isTaxationDataSubmitted, selectedBusinessId, navigate, toast, parseResponse, handleTaxationAnswer]);
 
     const handleKeyPress = (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -140,16 +259,74 @@ const Chatbot = () => {
         }
     };
 
-    const handleTaxationStart = () => {
-        setIsTaxationMode(true);
-    };
 
-    const handleTaxationComplete = () => {
+
+    const handleEndTaxation = () => {
         setIsTaxationMode(false);
+        setIsTaxationChatMode(false);
+        setIsTaxationDataSubmitted(false);
+        setMessages(prev => [...prev, { sender: 'bot', text: "세무처리가 종료되었습니다. 일반 채팅 모드로 돌아갑니다." }]);
+        console.log("Taxation mode ended"); // 디버깅용 로그
     };
 
-    const handleTaxationMessage = (sender, text) => {
-        setMessages(prev => [...prev, { sender, text }]);
+    const handleInputChange = useCallback((e) => {
+        setInputMessage(e.target.value);
+    }, []);
+
+    const inputAreaProps = {
+        inputMessage,
+        handleInputChange,
+        handleKeyPress,
+        sendMessage,
+        isLoading,
+        handleTaxationStart,
+        handleFileUpload: (e, type) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file, type);
+            }
+        },
+    };
+
+    const handleDataSubmit = async (transactionFile, incomeTaxProofFile) => {
+        if (!selectedBusinessId || !transactionFile || !incomeTaxProofFile || !businessType) {
+            setMessages(prev => [...prev, { sender: 'bot', text: "모든 정보와 파일을 입력/첨부해 주세요." }]);
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('transaction_files', transactionFile);
+            formData.append('income_tax_proof_file', incomeTaxProofFile);
+
+            const answersJson = JSON.stringify(taxationAnswers);
+            formData.append('answers', answersJson);
+
+            formData.append('businessId', selectedBusinessId);
+            formData.append('businessContent', selectedBusinessContent);
+            formData.append('businessType', businessType);
+
+            const response = await axios.post('http://localhost:8000/taxation', formData);
+
+            console.log('Server response:', response.data);
+
+            let successMessage = "데이터가 성공적으로 저장되었습니다. 이제 세무 처리 관련 질문을 해주세요.";
+
+            if (response.data && typeof response.data === 'object' && response.data.message) {
+                successMessage = response.data.message + " " + successMessage;
+            }
+
+            setMessages(prev => [...prev, { sender: 'bot', text: successMessage }]);
+            setIsTaxationDataSubmitted(true);
+            setIsTaxationChatMode(true);
+            console.log("Taxation chat mode activated"); // 디버깅용 로그
+        } catch (error) {
+            console.error('Error in saving taxation data:', error);
+            if (error.response && error.response.data) {
+                console.error('Response data:', error.response.data);
+            }
+            setMessages(prev => [...prev, { sender: 'bot', text: "데이터 저장 중 오류가 발생했습니다: " + (error.message || '알 수 없는 오류') }]);
+        }
     };
 
     const navigateAndRefresh = (path) => {
@@ -171,6 +348,8 @@ const Chatbot = () => {
             isClosable: true,
         });
     };
+
+
 
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text).then(() => {
@@ -274,30 +453,23 @@ const Chatbot = () => {
                                     handleCopy={handleCopy}
                                     handleDownload={handleDownload}
                                     handleQuestionSelect={handleQuestionSelect}
+                                    handleBusinessSelect={handleBusinessSelect}
                                 />
                             ))}
                         </VStack>
                     </Flex>
                     <ImageGallery imageResults={imageResults} />
                 </Flex>
-                {isTaxationMode ? (
-                    <TaxationChatbot
-                        onComplete={handleTaxationComplete}
-                        onMessage={handleTaxationMessage}
-                    />
-                ) : (
-                    <InputArea
-                        inputMessage={inputMessage}
-                        handleInputChange={handleInputChange}
-                        handleKeyPress={handleKeyPress}
-                        sendMessage={sendMessage}
-                        isLoading={isLoading}
-                        handleTaxationStart={handleTaxationStart}
-                    />
-                )}
+                <Flex direction="column">
+                    <InputArea {...inputAreaProps} />
+                    {isTaxationChatMode && (
+                        <Button onClick={handleEndTaxation} colorScheme="red" mt={2}>
+                            세무처리 끝내기
+                        </Button>
+                    )}
+                </Flex>
             </Flex>
         </Flex>
     );
 };
-
 export default Chatbot;

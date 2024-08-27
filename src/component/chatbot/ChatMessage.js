@@ -3,7 +3,7 @@ import { Box, HStack, VStack, Avatar, Text, Button, Heading, UnorderedList, List
 import { FaRobot, FaShareAlt } from "react-icons/fa";
 import { CopyIcon, DownloadIcon } from '@chakra-ui/icons';
 
-const ChatMessage = ({ message, handleShare, handleCopy, handleDownload, handleQuestionSelect }) => {
+const ChatMessage = ({ message, handleShare, handleCopy, handleDownload, handleQuestionSelect, handleBusinessSelect }) => {
     const isUserMessage = message.sender === 'user';
     const categories = message.parsedResponse || [];
 
@@ -26,7 +26,23 @@ const ChatMessage = ({ message, handleShare, handleCopy, handleDownload, handleQ
                 </VStack>
             </HStack>
 
-            {message.text && (
+            {message.businessCards && (
+                <VStack spacing={4} align="stretch" mt={6}>
+                    <Heading size="md" mb={2}>사업 선택:</Heading>
+                    {message.businessCards.map((business) => (
+                        <Button
+                            key={business.id}
+                            onClick={() => handleBusinessSelect(business.id, business.businessName, business.businessContent)}
+                            colorScheme="blue"
+                            variant="outline"
+                        >
+                            {business.businessName}
+                        </Button>
+                    ))}
+                </VStack>
+            )}
+
+            {message.text && !message.businessCards && (
                 <>
                     {categories.map((category, idx) => (
                         <Box key={idx} mb={6}>

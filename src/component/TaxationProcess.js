@@ -1,19 +1,19 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Box, Button, VStack, Text, Input, Select, useToast } from '@chakra-ui/react';
+import { Box, Button, VStack, Text, Input, Select, useToast, Textarea, Progress, Flex } from '@chakra-ui/react';
 import axios from "axios";
 import api from "../apis/api";
+import { useDropzone } from 'react-dropzone';
 
 const TaxationChatbot = ({ onMessage, onComplete }) => {
     const [taxationStep, setTaxationStep] = useState(0);
     const [taxationAnswers, setTaxationAnswers] = useState({});
     const [currentAnswer, setCurrentAnswer] = useState('');
-    const [transactionFiles, setTransactionFiles] = useState([]);
-    const [incomeTaxProofFile, setIncomeTaxProofFile] = useState(null);
     const [businesses, setBusinesses] = useState([]);
     const [selectedBusinessId, setSelectedBusinessId] = useState('');
-    const [isDataSaved, setIsDataSaved] = useState(false); // 데이터 저장 여부 상태
+    const [isDataSaved, setIsDataSaved] = useState(false);
     const [selectedBusinessContent, setSelectedBusinessContent] = useState('');
     const [businessType, setBusinessType] = useState('');
+    const [files, setFiles] = useState([]);
     const toast = useToast();
 
     const taxationQuestions = useMemo(() => [
@@ -46,7 +46,6 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
 
     const handleBusinessSelect = (businessId) => {
         const selectedBusiness = businesses.find(b => b.id === parseInt(businessId, 10));
-
         if (!selectedBusiness) {
             toast({
                 title: "사업 선택 오류",
@@ -57,59 +56,46 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
             });
             return;
         }
-
         setSelectedBusinessId(businessId);
-        setSelectedBusinessContent(selectedBusiness.businessContent || "");  // 선택된 사업의 content 저장
-        onMessage('user', `사업 ID ${businessId}가 선택되었습니다.`);
+        setSelectedBusinessContent(selectedBusiness.businessContent || "");
         setTaxationStep(1);
-        onMessage('bot', "사업자 유형을 입력해주세요. (예: 부가가치세 간이과세자)");
+        onMessage('user', `사업 선택: ${selectedBusiness.businessName}`);
+        onMessage('bot', taxationQuestions[1]);
     };
 
     const handleBusinessTypeInput = () => {
         if (!businessType.trim()) return;
         setTaxationStep(2);
-        onMessage('user', `사업자 유형: ${businessType}`);
-        onMessage('bot', taxationQuestions[0]);
     };
 
     const handleAnswer = () => {
         if (!currentAnswer.trim()) return;
-
         setTaxationAnswers(prev => ({ ...prev, [taxationStep - 2]: currentAnswer }));
-        onMessage('user', currentAnswer);
-
         if (taxationStep < taxationQuestions.length + 1) {
             setTaxationStep(prev => prev + 1);
-            onMessage('bot', taxationQuestions[taxationStep - 1]);
         } else {
-            onMessage('bot', "모든 질문에 답변해 주셔서 감사합니다. 이제 거래내역서와 소득금액증명원 파일을 첨부해 주세요.");
-            setTaxationStep(prev => prev + 1);
+            setTaxationStep(taxationQuestions.length + 2);
         }
-
         setCurrentAnswer('');
     };
 
-    const handleFileUpload = (files, fileType) => {
-        if (fileType === 'transaction') {
-            setTransactionFiles(prevFiles => [...prevFiles, ...files]);
-        } else if (fileType === 'incomeTaxProof') {
-            setIncomeTaxProofFile(files[0]);
-        }
-        onMessage('user', `${fileType === 'transaction' ? '거래내역서' : '소득금액증명원'} 파일이 첨부되었습니다.`);
-    };
+    const onDrop = useCallback(acceptedFiles => {
+        setFiles(acceptedFiles);
+    }, []);
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
     const handleDataSubmit = async () => {
-        if (!selectedBusinessId || Object.keys(taxationAnswers).length !== taxationQuestions.length || !incomeTaxProofFile || transactionFiles.length === 0) {
+        if (!selectedBusinessId || Object.keys(taxationAnswers).length !== taxationQuestions.length || files.length === 0) {
             onMessage('bot', "모든 정보와 파일을 입력/첨부해 주세요.");
             return;
         }
 
         try {
             const formData = new FormData();
-            transactionFiles.forEach((file, index) => {
-                formData.append(`transaction_files`, file);
+            files.forEach((file) => {
+                formData.append('files', file);
             });
-            formData.append('income_tax_proof_file', incomeTaxProofFile);
             Object.keys(taxationAnswers).forEach(key => {
                 formData.append(`answers`, taxationAnswers[key]);
             });
@@ -125,16 +111,10 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
                 onMessage('bot', "데이터가 성공적으로 저장되었습니다. 이제 세무 처리 관련 질문을 해주세요.");
             }
 
-            setIsDataSaved(true); // 데이터가 저장되었음을 상태로 업데이트
+            setIsDataSaved(true);
         } catch (error) {
             console.error('Error in saving taxation data:', error);
-            let errorMessage = "데이터 저장 중 오류가 발생했습니다: ";
-            if (error.response && error.response.data && error.response.data.detail) {
-                errorMessage += error.response.data.detail.map(err => `${err.loc[1]} - ${err.msg}`).join(', ');
-            } else {
-                errorMessage += error.message || '알 수 없는 오류';
-            }
-            onMessage('bot', errorMessage);
+            onMessage('bot', "데이터 저장 중 오류가 발생했습니다: " + (error.message || '알 수 없는 오류'));
         }
     };
 
@@ -154,11 +134,7 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
             formData.append('businessId', selectedBusinessId);
             formData.append('user_input', currentAnswer);
 
-            const response = await axios.post('http://localhost:8000/taxation/chat', formData, {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            });
+            const response = await axios.post('http://localhost:8000/taxation/chat', formData);
 
             if (response.data && response.data.message) {
                 onMessage('bot', response.data.message);
@@ -167,90 +143,94 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
             }
         } catch (error) {
             console.error('Error in taxation chat:', error);
-            if (error.response && error.response.data) {
-                console.error('Response data:', error.response.data);
-                onMessage('bot', `세무 처리 관련 질의 중 오류가 발생했습니다: ${error.response.data.detail || "알 수 없는 오류"}`);
-            } else {
-                onMessage('bot', "세무 처리 관련 질의 중 오류가 발생했습니다. 다시 시도해 주세요.");
-            }
+            onMessage('bot', "세무 처리 관련 질의 중 오류가 발생했습니다. 다시 시도해 주세요.");
         }
 
         setCurrentAnswer('');
     };
-
 
     const renderTaxationContent = () => {
         if (isDataSaved) {
             return (
                 <VStack spacing={4}>
                     <Text>세무 처리 관련 질문을 입력해 주세요.</Text>
-                    <Input
+                    <Textarea
                         value={currentAnswer}
                         onChange={(e) => setCurrentAnswer(e.target.value)}
                         placeholder="질문을 입력하세요"
+                        rows={3}
                     />
                     <Button onClick={handleTaxationQuery} colorScheme="blue">질문하기</Button>
                 </VStack>
             );
         }
 
-        if (taxationStep === 0) {
-            return (
-                <VStack spacing={4}>
-                    <Text>세무 처리를 시작하기 전에 사업을 선택해주세요.</Text>
-                    <Select
-                        placeholder="사업 선택"
-                        onChange={(e) => handleBusinessSelect(e.target.value)}
-                    >
-                        {businesses.map((business) => (
-                            <option key={business.id} value={business.id}>
-                                {business.businessName}
-                            </option>
-                        ))}
-                    </Select>
-                </VStack>
-            );
-        } else if (taxationStep === 1) {
-            return (
-                <VStack spacing={4}>
-                    <Text>사업자 유형을 입력해주세요. (예: 부가가치세 간이과세자)</Text>
-                    <Input
-                        value={businessType}
-                        onChange={(e) => setBusinessType(e.target.value)}
-                        placeholder="사업자 유형 입력"
-                    />
-                    <Button onClick={handleBusinessTypeInput} colorScheme="blue">다음</Button>
-                </VStack>
-            );
-        } else if (taxationStep <= taxationQuestions.length + 1) {
-            return (
-                <VStack spacing={4}>
-                    <Text>{taxationQuestions[taxationStep - 2]}</Text>
-                    <Input
-                        value={currentAnswer}
-                        onChange={(e) => setCurrentAnswer(e.target.value)}
-                        placeholder="답변을 입력하세요"
-                    />
-                    <Button onClick={handleAnswer} colorScheme="blue">다음</Button>
-                </VStack>
-            );
-        } else if (taxationStep === taxationQuestions.length + 2) {
-            return (
-                <VStack spacing={4}>
-                    <Text>거래내역서와 소득금액증명원 파일을 첨부해 주세요.</Text>
-                    <input
-                        type="file"
-                        multiple
-                        onChange={(e) => handleFileUpload(e.target.files, 'transaction')}
-                    />
-                    <input
-                        type="file"
-                        onChange={(e) => handleFileUpload(e.target.files, 'incomeTaxProof')}
-                    />
-                    <Button onClick={handleDataSubmit} colorScheme="blue">정보 저장</Button>
-                </VStack>
-            );
-        }
+        return (
+            <VStack spacing={4} align="stretch">
+                <Progress value={(taxationStep / (taxationQuestions.length + 1)) * 100} size="sm" colorScheme="blue" />
+                {taxationStep === 0 && (
+                    <>
+                        <Text>{taxationQuestions[0]}</Text>
+                        <Select
+                            placeholder="사업 선택"
+                            onChange={(e) => handleBusinessSelect(e.target.value)}
+                        >
+                            {businesses.map((business) => (
+                                <option key={business.id} value={business.id}>
+                                    {business.businessName}
+                                </option>
+                            ))}
+                        </Select>
+                    </>
+                )}
+                {taxationStep === 1 && (
+                    <>
+                        <Text>사업자 유형을 입력해주세요. (예: 부가가치세 간이과세자)</Text>
+                        <Input
+                            value={businessType}
+                            onChange={(e) => setBusinessType(e.target.value)}
+                            placeholder="사업자 유형 입력"
+                        />
+                    </>
+                )}
+                {taxationStep >= 2 && taxationStep <= taxationQuestions.length + 1 && (
+                    <>
+                        <Text>{taxationQuestions[taxationStep - 2]}</Text>
+                        <Input
+                            value={currentAnswer}
+                            onChange={(e) => setCurrentAnswer(e.target.value)}
+                            placeholder="답변을 입력하세요"
+                        />
+                    </>
+                )}
+                {taxationStep === taxationQuestions.length + 2 && (
+                    <>
+                        <Text>거래내역서와 소득금액증명원 파일을 첨부해 주세요.</Text>
+                        <Box {...getRootProps()} p={10} border="2px dashed" borderColor={isDragActive ? "blue.500" : "gray.300"} borderRadius="md">
+                            <input {...getInputProps()} />
+                            {isDragActive ? (
+                                <Text>파일을 여기에 놓아주세요...</Text>
+                            ) : (
+                                <Text>파일을 이 영역으로 드래그하거나 클릭하여 선택하세요</Text>
+                            )}
+                        </Box>
+                        {files.length > 0 && (
+                            <Text>선택된 파일: {files.map(file => file.name).join(', ')}</Text>
+                        )}
+                    </>
+                )}
+                <Flex justify="space-between">
+                    {taxationStep > 0 && (
+                        <Button onClick={() => setTaxationStep(prev => prev - 1)} colorScheme="gray">이전</Button>
+                    )}
+                    {taxationStep < taxationQuestions.length + 2 ? (
+                        <Button onClick={taxationStep === 1 ? handleBusinessTypeInput : handleAnswer} colorScheme="blue">다음</Button>
+                    ) : (
+                        <Button onClick={handleDataSubmit} colorScheme="green">정보 저장</Button>
+                    )}
+                </Flex>
+            </VStack>
+        );
     };
 
     return (
@@ -261,4 +241,3 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
 };
 
 export default TaxationChatbot;
-
