@@ -381,7 +381,7 @@ const Chatbot = () => {
         );
         return fontBase64;
     };
-    const downloadAsPDF = async (question, answer) => {
+    const handleDownload = async (question, answer) => {
         const koreanFont = await loadKoreanFont();
 
         const doc = new jsPDF({
@@ -419,8 +419,6 @@ const Chatbot = () => {
 
         doc.save('jiwoo_ai_chat.pdf');
     };
-
-
     const handleQuestionSelect = (question) => {
         setInputMessage(question);
         sendMessage(question);
