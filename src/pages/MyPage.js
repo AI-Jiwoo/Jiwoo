@@ -459,6 +459,21 @@ const MyPage = () => {
                     </ModalBody>
                 </ModalContent>
             </Modal>
+
+            <Modal isOpen={isOpen} onClose={onClose} size="xl">
+                <ModalOverlay/>
+                <ModalContent maxWidth="900px">
+                    <ModalHeader>사업 정보 추가</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        <BusinessInfoForm
+                            onSubmit={handleSubmitBusinessInfo}
+                            onClose={onClose}
+                            categories={categories}
+                        />
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
         </div>
     );
 };
