@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Box, Button, VStack, Text, Input, Select, useToast, Textarea, Progress, Flex } from '@chakra-ui/react';
 import axios from "axios";
-import api from "../apis/api";
+import api, {aiApi} from "../apis/api";
 import { useDropzone } from 'react-dropzone';
 
 const TaxationChatbot = ({ onMessage, onComplete }) => {
@@ -103,7 +103,7 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
             formData.append('businessContent', selectedBusinessContent);
             formData.append('businessType', businessType);
 
-            const response = await axios.post('http://localhost:8000/taxation', formData);
+            const response = await aiApi.post('/taxation', formData);
 
             if (response.data && response.data.message) {
                 onMessage('bot', response.data.message);
@@ -134,7 +134,7 @@ const TaxationChatbot = ({ onMessage, onComplete }) => {
             formData.append('businessId', selectedBusinessId);
             formData.append('user_input', currentAnswer);
 
-            const response = await axios.post('http://localhost:8000/taxation/chat', formData);
+            const response = await aiApi.post('/taxation/chat', formData);
 
             if (response.data && response.data.message) {
                 onMessage('bot', response.data.message);

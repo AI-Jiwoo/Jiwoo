@@ -220,10 +220,10 @@ const Chatbot = () => {
                 const formData = new FormData();
                 formData.append('businessId', selectedBusinessId);
                 formData.append('user_input', message);
-                response = await axios.post('http://localhost:8000/taxation/chat', formData);
+                response = await aiApi.post('/taxation/chat', formData);
             } else {
                 console.log("Calling /chat");
-                response = await axios.post('http://localhost:8000/chat', { message });
+                response = await aiApi.post('/chat', { message });
             }
 
             const parsedResponse = parseResponse(response.data.text_response);
@@ -381,8 +381,7 @@ const Chatbot = () => {
         );
         return fontBase64;
     };
-
-    const handleDownload = async (question, answer) => {
+    const downloadAsPDF = async (question, answer) => {
         const koreanFont = await loadKoreanFont();
 
         const doc = new jsPDF({
@@ -420,6 +419,7 @@ const Chatbot = () => {
 
         doc.save('jiwoo_ai_chat.pdf');
     };
+
 
     const handleQuestionSelect = (question) => {
         setInputMessage(question);
