@@ -87,8 +87,8 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             return;
         }
 
-        setLoading(true);
-        setIsLoading(true);
+        setLoading(true);  // 이 상태는 버튼의 로딩을 담당
+        setIsLoading(true);  // 이 상태는 전체 페이지 로딩 화면을 담당
         setError(null);
 
         const headers = {
@@ -119,15 +119,16 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
 
         try {
             const response = await api.post('/business-model/similar-services', data, { headers });
-            setSimilarServices(response.data);
-            setCurrentStep(2);
+            setSimilarServices(response.data);  // 유사 서비스 설정
+            setCurrentStep(2);  // 다음 단계로 이동
         } catch (error) {
             handleError('유사 서비스 조회에 실패했습니다', error);
         } finally {
-            setLoading(false);
-            setIsLoading(false);
+            setLoading(false);  // 버튼 로딩 해제
+            setIsLoading(false);  // 전체 로딩 화면 해제
         }
     };
+
 
     const analyzeBusinessModels = async () => {
         setLoading(true);
