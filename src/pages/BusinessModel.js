@@ -426,46 +426,46 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
     return (
         <Box ref={businessModelRef} width="70%" margin="auto" pt={24} mb={12} minHeight="1000px">
             <Box mt={8}/>
-            {isLoading ? (
-                <LoadingScreen isLoading={isLoading} messages={businessModelMessages} />
-            ) : (
-                <>
-                    <Flex justifyContent="space-between" alignItems="center" mb={8}>
-                        <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
-                    </Flex>
-                    {renderStepIndicator()}
-                    <VStack spacing={8} align="stretch">
-                        {error && (
-                            <Alert status="error">
-                                <AlertIcon />
-                                {error}
-                            </Alert>
-                        )}
-                        {currentStep === 1 && renderBusinessSelection()}
-                        {currentStep === 2 && renderSimilarServices()}
-                        {currentStep === 3 && renderAnalyzedBusinessModel()}
-                        {currentStep === 4 && renderBusinessProposal()}
-                        {currentStep > 1 && (
-                            <HStack justifyContent="space-between">
-                                <Button
-                                    leftIcon={<Icon as={FaRedo} />}
-                                    onClick={handleNewAnalysis}
-                                >
-                                    새로운 분석 시작
-                                </Button>
-                                <Button
-                                    rightIcon={<Icon as={FaEye} />}
-                                    onClick={() => setIsModalOpen(true)}
-                                    isDisabled={!analyzedBusinessModel || !businessProposal}
-                                >
-                                    전체 결과 보기
-                                </Button>
-                            </HStack>
-                        )}
-                    </VStack>
-                    {renderFullResults()}
-                </>
+            <Flex justifyContent="space-between" alignItems="center" mb={8}>
+                <Heading as="h1" size="2xl" mb={8}>비즈니스 모델👨‍💼</Heading>
+            </Flex>
+            {isLoading && (
+                <Alert status="info" mb={4}>
+                    <AlertIcon />
+                    {loadingMessage || '로딩 중...'}
+                </Alert>
             )}
+            {renderStepIndicator()}
+            <VStack spacing={8} align="stretch">
+                {error && (
+                    <Alert status="error">
+                        <AlertIcon />
+                        {error}
+                    </Alert>
+                )}
+                {currentStep === 1 && renderBusinessSelection()}
+                {currentStep === 2 && renderSimilarServices()}
+                {currentStep === 3 && renderAnalyzedBusinessModel()}
+                {currentStep === 4 && renderBusinessProposal()}
+                {currentStep > 1 && (
+                    <HStack justifyContent="space-between">
+                        <Button
+                            leftIcon={<Icon as={FaRedo} />}
+                            onClick={handleNewAnalysis}
+                        >
+                            새로운 분석 시작
+                        </Button>
+                        <Button
+                            rightIcon={<Icon as={FaEye} />}
+                            onClick={() => setIsModalOpen(true)}
+                            isDisabled={!analyzedBusinessModel || !businessProposal}
+                        >
+                            전체 결과 보기
+                        </Button>
+                    </HStack>
+                )}
+            </VStack>
+            {renderFullResults()}
         </Box>
     );
 };
