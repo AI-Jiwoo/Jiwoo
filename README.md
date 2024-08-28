@@ -1,6 +1,6 @@
 <div align="center">
 <div style="background-color: #232f3e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; max-width: 800px; margin: 0 auto;">
-  <img src="https://raw.githubusercontent.com/AI-Jiwoo/Jiwoo/main/images/jiwoologo.png" alt="Jiwoo AI Logo" width="250" style="margin-bottom: 15px;">
+  <img src="https://raw.githubusercontent.com/AI-Jiwoo/Jiwoo/main/docs/images/jiwoologo.png" alt="Jiwoo AI Logo" width="250" style="margin-bottom: 15px;">
 
   <h1 style="font-family: 'Arial', sans-serif; color: #ffffff; font-weight: bold; margin-bottom: 10px; font-size: 28px;">
     Jiwoo AI - 당신의 창업 여정을 함께하는 AI 파트너 🚀
