@@ -1,0 +1,39 @@
+# 웹 프레임워크 및 ASGI 서버
+fastapi
+uvicorn[standard]
+
+# 벡터 데이터베이스 및 임베딩 모델
+pymilvus
+sentence-transformers
+
+# 환경 변수 및 설정 관리
+python-dotenv
+pydantic
+pydantic-settings
+
+# OpenAI API 및 LangChain
+openai
+langchain
+langchain-core
+langchain-openai
+langchain_community
+
+# HTTP 요청 및 비동기 처리
+aiohttp
+
+# 데이터 시각화
+plotly
+
+# HTML 파싱
+beautifulsoup4
+
+# 로깅
+loguru
+
+# 캐싱
+cachetools
+
+# 개발 도구
+pre-commit
+black
+isort
