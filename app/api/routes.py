@@ -26,7 +26,7 @@ async def insert_company(input: CompanyInput):
         company_info = json.dumps({"businessName": input.businessName, "info": input.info.dict()})
         url = str(input.url) if input.url else ""
         created_at = int(datetime.now().timestamp())
-        data = [[company_info], [url], [embedding], [created_at]]
+        data = [[company_info], [embedding]]
         result = collection.insert(data)
         logger.info(f"회사 정보 삽입 성공: {input.businessName}")
         return {
