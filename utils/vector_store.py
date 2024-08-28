@@ -1,4 +1,5 @@
 import logging
+import json
 from typing import List, Dict, Any
 from datetime import datetime
 from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, utility
@@ -72,15 +73,19 @@ class VectorStore:
 
         created_at = int(datetime.now().timestamp())
         entities = [texts, urls, embeddings, [created_at] * len(texts)]
-        collection.insert(entities)
-        collection.flush()
-        logger.info(f"{len(texts)}개의 텍스트를 컬렉션에 추가함")
+        try:
+            collection.insert(entities)
+            collection.flush()
+            logger.info(f"{len(texts)}개의 텍스트를 컬렉션에 추가함")
+        except Exception as e:
+            logger.error(f"데이터 삽입 중 오류 발생: {str(e)}")
+            raise
 
     def add_company_info(self, company_name: str, info: CompanyInfo):
         # 회사 정보를 벡터 저장소에 추가
         text = f"Company: {company_name}\n{info.json()}"
-        url = f"company:{business_name}"
-        self.add_texts([text], [f"company:{company_name}"])
+        url = f"company:{company_name}"
+        self.add_texts([text], [url])
 
     def add_support_program_info(self, program: SupportProgramInfo):
         # 지원 프로그램 정보를 벡터 저장소에 추가
@@ -88,34 +93,74 @@ class VectorStore:
         self.add_texts([text], [f"program:{program.name}"])
 
     def search_with_similarity_threshold(self, query: str, k: int = 5, threshold: float = 0.7) -> List[Dict[str, Any]]:
-        # 유사도 임계값을 적용한 검색 수행
+        """유사도 임계값을 적용한 검색 수행"""
+        logger.info(f"Received query: {query}")
+
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
 
-        results = collection.search(
-            data=[self.embedding_function(query)],
-            anns_field="embedding",
-            param=search_params,
-            limit=k,
-            output_fields=["content", "url", "created_at"],
-        )
+        if not isinstance(query, str):
+            try:
+                query = json.dumps(query)
+            except:
+                query = str(query)
 
-        if not results or len(results[0]) == 0:
-            logger.info("벡터 저장소에서 결과를 찾지 못함")
-            return []
+        try:
+            results = collection.search(
+                data=[self.embedding_function(query)],
+                anns_field="embedding",
+                param=search_params,
+                limit=k,
+                output_fields=["content", "url", "created_at"],
+            )
+        except Exception as e:
+            logger.error(f"검색 중 오류 발생: {str(e)}")
+            # url 필드가 없는 경우 url을 제외하고 다시 시도
+            results = collection.search(
+                data=[self.embedding_function(query)],
+                anns_field="embedding",
+                param=search_params,
+                limit=k,
+                output_fields=["content", "created_at"],
+            )
 
         hits = []
         for hit in results[0]:
-            distance = hit.distance
-            similarity = 1 - (distance / max(results[0][0].distance, 1))
-            if similarity >= threshold:
-                hits.append(
-                    {"content": hit.entity.get("content"), "url": hit.entity.get("url"), "created_at": hit.entity.get("created_at"), "metadata": {"similarity": similarity}}
-                )
+            try:
+                content_str = hit.entity.get("content", "{}")
+                logger.info(f"Raw content: {content_str}")
 
-        if not hits:
-            logger.info(f"유사도 임계값 {threshold}를 충족하는 결과가 없음")
+                if isinstance(content_str, dict):
+                    content = content_str
+                else:
+                    try:
+                        content = json.loads(content_str)
+                    except json.JSONDecodeError:
+                        content = {"raw_content": content_str}
 
+                distance = hit.distance
+                similarity = 1 - (distance / 2)
+                if similarity >= threshold:
+                    hit_data = {
+                        "content": content,
+                        "created_at": hit.entity.get("created_at"),
+                        "metadata": {"similarity": similarity}
+                    }
+                    if "url" in hit.entity:
+                        hit_data["url"] = hit.entity["url"]
+                    hits.append(hit_data)
+            except Exception as e:
+                logger.error(f"결과 처리 중 오류 발생: {str(e)}")
+                hit_data = {
+                    "content": {"raw_content": hit.entity.get("content")},
+                    "created_at": hit.entity.get("created_at"),
+                    "metadata": {"similarity": 1 - (hit.distance / 2)}
+                }
+                if "url" in hit.entity:
+                    hit_data["url"] = hit.entity["url"]
+                hits.append(hit_data)
+
+        logger.info(f"{len(hits)}개의 유사한 항목을 찾았습니다")
         return hits
 
     def search_by_date_range(self, query: str, start_date: datetime, end_date: datetime, k: int = 5) -> List[Dict[str, Any]]:
@@ -123,14 +168,26 @@ class VectorStore:
         collection = get_collection(self.collection_name)
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
 
-        results = collection.search(
-            data=[self.embedding_function(query)],
-            anns_field="embedding",
-            param=search_params,
-            limit=k,
-            output_fields=["content", "url", "created_at"],
-            expr=f"created_at >= {int(start_date.timestamp())} && created_at <= {int(end_date.timestamp())}",
-        )
+        try:
+            results = collection.search(
+                data=[self.embedding_function(query)],
+                anns_field="embedding",
+                param=search_params,
+                limit=k,
+                output_fields=["content", "url", "created_at"],
+                expr=f"created_at >= {int(start_date.timestamp())} && created_at <= {int(end_date.timestamp())}",
+            )
+        except Exception as e:
+            logger.error(f"날짜 범위 검색 중 오류 발생: {str(e)}")
+            # url 필드가 없는 경우 url을 제외하고 다시 시도
+            results = collection.search(
+                data=[self.embedding_function(query)],
+                anns_field="embedding",
+                param=search_params,
+                limit=k,
+                output_fields=["content", "created_at"],
+                expr=f"created_at >= {int(start_date.timestamp())} && created_at <= {int(end_date.timestamp())}",
+            )
 
         if not results or len(results[0]) == 0:
             logger.info("지정된 날짜 범위에서 결과를 찾지 못함")
@@ -138,13 +195,13 @@ class VectorStore:
 
         hits = []
         for hit in results[0]:
-            hits.append(
-                {
-                    "content": hit.entity.get("content"),
-                    "url": hit.entity.get("url"),
-                    "created_at": datetime.fromtimestamp(hit.entity.get("created_at")),
-                    "metadata": {"distance": hit.distance},
-                }
-            )
+            hit_data = {
+                "content": hit.entity.get("content"),
+                "created_at": datetime.fromtimestamp(hit.entity.get("created_at")),
+                "metadata": {"distance": hit.distance},
+            }
+            if "url" in hit.entity:
+                hit_data["url"] = hit.entity["url"]
+            hits.append(hit_data)
 
         return hits
