@@ -1,0 +1,46 @@
+/* JoinPage.css */
+.container {
+    padding: 40px;
+    max-width: 1400px; /* 최대 너비를 늘림 */
+    margin: 0 auto;
+    width: 100%; /* 화면 너비의 90%를 사용 */
+}
+
+.section {
+    margin-bottom: 40px; /* 섹션 사이의 여백 */
+}
+
+.section-title {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item label {
+    margin-bottom: 5px;
+}
+
+.info-item input,
+.info-item select,
+.date-picker {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}

@@ -1,0 +1,20 @@
+.slick-slide {
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.slick-center {
+    opacity: 1;
+}
+
+.slick-list {
+    overflow: visible !important;
+}
+
+.slick-dots {
+    bottom: -30px;
+}
+
+.slick-dots li button:before {
+    font-size: 8px;
+}
