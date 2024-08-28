@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = Field(default="gpt-3.5-turbo", env="OPENAI_MODEL")
 
     # Milvus 벡터 데이터베이스 설정
-    MILVUS_HOST: str = Field(default="localhost", env="MILVUS_HOST")
+    MILVUS_HOST: str = Field(default="standalone", env="MILVUS_HOST")
     MILVUS_PORT: str = Field(default="19530", env="MILVUS_PORT")
     COLLECTION_NAME: str = "business_info"
 
