@@ -1,0 +1,216 @@
+name: AWS 아키텍처 추천
+
+permissions:
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  analyze_and_recommend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Python 설정
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Graphviz 설치
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y graphviz
+
+    - name: 의존성 설치
+      run: |
+        python -m pip install --upgrade pip
+        pip install diagrams openai>=1.0.0
+
+    - name: OpenAI로 레포지토리 분석
+      id: repo_analysis
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python - <<EOF
+        import os
+        import json
+        from openai import OpenAI
+
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        def get_repo_structure():
+            structure = ""
+            for root, dirs, files in os.walk("."):
+                level = root.replace(".", "").count(os.sep)
+                indent = " " * 4 * (level)
+                structure += f"{indent}{os.path.basename(root)}/\n"
+                subindent = " " * 4 * (level + 1)
+                for f in files:
+                    structure += f"{subindent}{f}\n"
+            return structure
+        
+        repo_structure = get_repo_structure()
+        
+        prompt = f"""
+        Based on the following repository structure, analyze the project and provide the following information:
+        1. Project type (web, mobile, backend)
+        2. Project scale (small, medium, large)
+        3. Technologies used (comma-separated list)
+        4. Estimated monthly budget in USD (provide a number, e.g. 1000)
+        5. Performance requirements (comma-separated list)
+
+        Repository structure:
+        {repo_structure}
+
+        Provide the answer in JSON format.
+        """
+        
+        try:
+            response = client.chat.completions.create(
+              model="gpt-3.5-turbo",
+              messages=[
+                    {"role": "system", "content": "You are a helpful assistant that analyzes software projects."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            
+            # Log the full API response
+            print("Full API Response:")
+            print(json.dumps(response.model_dump(), indent=2))
+            
+            content = response.choices[0].message.content.strip()
+            if not content:
+                raise ValueError("API로부터 빈 응답을 받았습니다")
+            
+            # Log the raw content received from the API
+            print("Raw content received from API:")
+            print(content)
+            
+            analysis = json.loads(content)
+            
+            # Log the parsed JSON
+            print("Parsed JSON:")
+            print(json.dumps(analysis, indent=2))
+            
+            # 기본값 설정 및 출력
+            defaults = {
+                "project_type": "web",
+                "scale": "small",
+                "technologies": "python",
+                "budget": "1000",
+                "performance_requirements": "low_latency"
+            }
+            
+            # Log the final values (after applying defaults if necessary)
+            print("Final values:")
+            for key, default_value in defaults.items():
+                value = analysis.get(key, default_value)
+                if not value:  # 빈 문자열인 경우 기본값 사용
+                    value = default_value
+                print(f"{key}={value}")
+                
+        except json.JSONDecodeError as e:
+            print(f"JSON 디코드 오류: {e}")
+            print(f"받은 내용: {content}")
+        except Exception as e:
+            print(f"오류 발생: {e}")
+        EOF
+
+    - name: 출력 설정
+      id: set_outputs
+      run: |
+        echo "Captured outputs:"
+        cat $GITHUB_STEP_SUMMARY
+        echo "Setting outputs:"
+        while IFS='=' read -r key value; do
+          if [ -n "$value" ]; then
+            echo "$key=$value"
+            echo "$key=$value" >> $GITHUB_OUTPUT
+          else
+            echo "$key=default_value"
+            echo "$key=default_value" >> $GITHUB_OUTPUT
+          fi
+        done < <(cat $GITHUB_STEP_SUMMARY)
+
+    - name: AWS 아키텍처 추천 다이어그램 생성
+      run: |
+        echo "Generating AWS architecture diagram with the following parameters:"
+        echo "Project Type: ${{ steps.set_outputs.outputs.project_type || 'web' }}"
+        echo "Scale: ${{ steps.set_outputs.outputs.scale || 'small' }}"
+        echo "Technologies: ${{ steps.set_outputs.outputs.technologies || 'python' }}"
+        echo "Budget: ${{ steps.set_outputs.outputs.budget || '1000' }}"
+        echo "Performance Requirements: ${{ steps.set_outputs.outputs.performance_requirements || 'low_latency' }}"
+        
+        python generate_aws_architectures.py \
+          --project-type "${{ steps.set_outputs.outputs.project_type || 'web' }}" \
+          --scale "${{ steps.set_outputs.outputs.scale || 'small' }}" \
+          --technologies "${{ steps.set_outputs.outputs.technologies || 'python' }}" \
+          --budget "${{ steps.set_outputs.outputs.budget || '1000' }}" \
+          --performance-requirements "${{ steps.set_outputs.outputs.performance_requirements || 'low_latency' }}"
+        echo "다이어그램 생성 완료. 출력 파일 확인 중..."
+        ls -l aws_architecture_*.png || echo "다이어그램 파일을 찾을 수 없습니다."
+
+    - name: 아키텍처 다이어그램 업로드
+      uses: actions/upload-artifact@v2
+      if: ${{ success() && hashFiles('aws_architecture_*.png') != '' }}
+      with:
+        name: aws-architecture-diagrams
+        path: aws_architecture_*.png
+
+    - name: 디버그 정보
+      run: |
+        echo "저장소: ${{ github.repository }}"
+        echo "이벤트 이름: ${{ github.event_name }}"
+        echo "PR 번호: ${{ github.event.pull_request.number }}"
+        echo "워크플로우 실행 ID: ${{ github.run_id }}"
+        echo "아티팩트 업로드 상태: ${{ steps.upload-artifact.outcome }}"
+
+    - name: PR에 코멘트 추가
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request' && github.event.action != 'closed'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+          
+          console.log('소유자:', owner);
+          console.log('저장소:', repo);
+          console.log('이슈/PR 번호:', issue_number);
+          
+          try {
+            const workflowRunId = context.runId;
+            const artifactName = 'aws-architecture-diagrams';
+            const artifactUploaded = '${{ steps.upload-artifact.outcome }}' === 'success';
+            
+            let commentBody = `AWS 아키텍처 추천 프로세스가 완료되었습니다.`;
+            
+            if (artifactUploaded) {
+              commentBody += `\n\n다이어그램을 확인하려면:
+              1. [Actions 탭](https://github.com/${owner}/${repo}/actions/runs/${workflowRunId})으로 이동하세요.
+              2. "Artifacts" 섹션으로 스크롤하세요.
+              3. "${artifactName}" 아티팩트를 다운로드하세요.
+              4. ZIP 파일을 추출하여 다이어그램을 확인하세요.`;
+            } else {
+              commentBody += `\n\n하지만 다이어그램 생성 또는 업로드 중 문제가 발생했습니다. 자세한 내용은 워크플로우 로그를 확인해 주세요.`;
+            }
+            
+            commentBody += `\n\n질문이 있거나 추가 설명이 필요하면 알려주세요.`;
+
+            await github.rest.issues.createComment({
+              owner: owner,
+              repo: repo,
+              issue_number: issue_number,
+              body: commentBody
+            });
+            console.log('코멘트가 성공적으로 게시되었습니다');
+          } catch (error) {
+            console.error('코멘트 게시 중 오류 발생:', error);
+            console.error('오류 세부 정보:', JSON.stringify(error, null, 2));
+          }
