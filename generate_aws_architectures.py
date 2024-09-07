@@ -6,7 +6,7 @@ from diagrams.aws.database import RDS, Dynamodb, ElastiCache, Redshift, Aurora
 from diagrams.aws.network import ELB, APIGateway, CloudFront, Route53, VPC, DirectConnect
 from diagrams.aws.storage import S3, EFS, FSx
 from diagrams.aws.security import WAF, IAM, KMS, Shield
-from diagrams.aws.integration import SQS, SNS, EventBridge
+from diagrams.aws.integration import SQS, SNS, Eventbridge
 from diagrams.aws.analytics import Athena, EMR, Kinesis
 from diagrams.aws.ml import SageMaker
 from diagrams.aws.devtools import CodePipeline, CodeBuild, CodeDeploy
