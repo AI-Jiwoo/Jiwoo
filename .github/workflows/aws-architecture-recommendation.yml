@@ -82,7 +82,7 @@ jobs:
         """
         
         try:
-            # OpenAI API 호출
+          # OpenAI API 호출
             response = client.chat.completions.create(
               model="gpt-3.5-turbo",
               messages=[
@@ -102,7 +102,7 @@ jobs:
             else:
                 raise ValueError("JSON 형식의 응답을 찾을 수 없습니다")
             
-            # JSON 파싱
+                # JSON 파싱
             analysis = json.loads(json_content)
             
             # 결과 출력 및 GitHub Actions 출력 설정
@@ -118,6 +118,11 @@ jobs:
         except Exception as e:
             print(f"오류 발생: {e}")
         EOF
+        
+        # GitHub Actions 출력 설정
+        while IFS='=' read -r key value; do
+          echo "$key=$value" >> $GITHUB_OUTPUT
+        done <<< "$(python -c "import sys; print(sys.stdin.read())" )"
 
     # AWS 아키텍처 다이어그램 생성
     - name: AWS 아키텍처 추천 다이어그램 생성
