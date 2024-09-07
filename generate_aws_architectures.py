@@ -6,11 +6,12 @@ from diagrams.aws.database import RDS, Dynamodb, ElastiCache, Redshift, Aurora
 from diagrams.aws.network import ELB, APIGateway, CloudFront, Route53, VPC, DirectConnect
 from diagrams.aws.storage import S3, EFS, FSx
 from diagrams.aws.security import WAF, IAM, KMS, Shield
-from diagrams.aws.integration import SQS, SNS, Eventbridge
+from diagrams.aws.integration import SQS, SNS, EventBridge
 from diagrams.aws.analytics import Athena, EMR, Kinesis
-from diagrams.aws.ml import Sagemaker
-from diagrams.aws.devtools import CodePipeline, CodeBuild, CodeDeploy
+from diagrams.aws.ml import SageMaker
+from diagrams.aws.devtools import Codepipeline, Codebuild, Codedeploy
 from diagrams.aws.mobile import Amplify
+from diagrams.aws.management import Cloudwatch, Cloudtrail
 
 def analyze_requirements(project_type, scale, technologies, budget, performance_requirements):
     """
@@ -30,7 +31,7 @@ def analyze_requirements(project_type, scale, technologies, budget, performance_
         if "high security" in performance_requirements:
             arch["components"].extend(["WAF", "Shield", "KMS"])
         if scale != "small":
-            arch["components"].extend(["CloudWatch", "CloudTrail"])
+            arch["components"].extend(["Cloudwatch", "Cloudtrail"])
         arch["components"].extend(["IAM", "VPC"])
         return arch
 
@@ -79,7 +80,7 @@ def analyze_requirements(project_type, scale, technologies, budget, performance_
     if "machine learning" in technologies:
         arch = {
             "name": "머신러닝 아키텍처",
-            "components": ["Sagemaker", "S3", "EC2", "Lambda", "Athena", "EMR"]
+            "components": ["SageMaker", "S3", "EC2", "Lambda", "Athena", "EMR"]
         }
         architectures.append(add_common_components(add_budget_based_components(arch)))
 
@@ -90,11 +91,11 @@ def analyze_requirements(project_type, scale, technologies, budget, performance_
         }
         architectures.append(add_common_components(add_budget_based_components(arch)))
 
-    if "real-time processing" in performance_requirements:
+    if "real-time processing" in performance_requirements or "real-time interaction" in performance_requirements:
         for arch in architectures:
             arch["components"].extend(["Kinesis", "Lambda"])
 
-    if "high availability" in performance_requirements or "scalability" in performance_requirements:
+    if "high availability" in performance_requirements or "high scalability" in performance_requirements:
         for arch in architectures:
             if "RDS" in arch["components"]:
                 arch["components"].remove("RDS")
@@ -118,7 +119,6 @@ def generate_architecture_diagram(architecture, filename):
     :param architecture: 아키텍처 정보를 담은 딕셔너리
     :param filename: 생성될 다이어그램 파일 이름
     """
-    # Graphviz 설정
     os.environ["PATH"] += os.pathsep + '/usr/local/bin'
     os.environ["DIAGRAMS_FONT"] = "Arial"
 
@@ -184,8 +184,8 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = SNS("SNS")
                 elif component == "Kinesis":
                     components[component] = Kinesis("Kinesis")
-                elif component == "Sagemaker":
-                    components[component] = Sagemaker("Sagemaker")
+                elif component == "SageMaker":
+                    components[component] = SageMaker("SageMaker")
                 elif component == "Aurora":
                     components[component] = Aurora("Aurora")
                 elif component == "Amplify":
@@ -198,18 +198,14 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = IAM("IAM")
                 elif component == "VPC":
                     components[component] = VPC("VPC")
-                elif component == "CloudWatch":
-                    components[component] = CloudWatch("CloudWatch")
-                elif component == "CloudTrail":
-                    components[component] = CloudTrail("CloudTrail")
+                elif component == "Cloudwatch":
+                    components[component] = Cloudwatch("Cloudwatch")
+                elif component == "Cloudtrail":
+                    components[component] = Cloudtrail("Cloudtrail")
                 elif component == "Direct Connect":
                     components[component] = DirectConnect("Direct Connect")
-                elif component == "ECR":
-                    components[component] = ECR("ECR")
-                elif component == "Step Functions":
-                    components[component] = StepFunctions("Step Functions")
-                elif component == "Cognito":
-                    components[component] = Cognito("Cognito")
+                elif component == "EventBridge":
+                    components[component] = EventBridge("EventBridge")
                 elif component == "Athena":
                     components[component] = Athena("Athena")
                 elif component == "EMR":
@@ -218,6 +214,12 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = Redshift("Redshift")
                 elif component == "QuickSight":
                     components[component] = QuickSight("QuickSight")
+                elif component == "ECR":
+                    components[component] = ECR("ECR")
+                elif component == "Step Functions":
+                    components[component] = StepFunctions("Step Functions")
+                elif component == "Cognito":
+                    components[component] = Cognito("Cognito")
 
             # 컴포넌트 간 연결 로직
             if "Route53" in components:
@@ -268,10 +270,10 @@ def generate_architecture_diagram(architecture, filename):
                 for target in iam_targets:
                     components["IAM"] >> Edge(color="darkred", style="dashed") >> components[target]
 
-            if "CloudWatch" in components:
+            if "Cloudwatch" in components:
                 cloudwatch_targets = [comp for comp in compute_components + ["RDS Multi-AZ", "DynamoDB", "ElastiCache"] if comp in components]
                 for target in cloudwatch_targets:
-                    components["CloudWatch"] >> Edge(color="darkorange", style="dashed") >> components[target]
+                    components["Cloudwatch"] >> Edge(color="darkorange", style="dashed") >> components[target]
 
             if "SQS" in components:
                 sqs_sources = [comp for comp in compute_components if comp in components]
@@ -290,8 +292,8 @@ def generate_architecture_diagram(architecture, filename):
                 if "Lambda" in components:
                     components["Kinesis"] >> Edge(color="darkgreen") >> components["Lambda"]
 
-            if "Sagemaker" in components and "S3" in components:
-                components["Sagemaker"] >> Edge(color="darkgreen") >> components["S3"]
+            if "SageMaker" in components and "S3" in components:
+                components["SageMaker"] >> Edge(color="darkgreen") >> components["S3"]
 
             if "EMR" in components and "S3" in components:
                 components["EMR"] >> Edge(color="darkgreen") >> components["S3"]
@@ -310,8 +312,8 @@ def generate_architecture_diagram(architecture, filename):
                 for target in kms_targets:
                     components["KMS"] >> Edge(color="darkred", style="dashed") >> components[target]
 
-            if "CloudTrail" in components and "S3" in components:
-                components["CloudTrail"] >> Edge(color="darkorange", style="dashed") >> components["S3"]
+            if "Cloudtrail" in components and "S3" in components:
+                components["Cloudtrail"] >> Edge(color="darkorange", style="dashed") >> components["S3"]
 
             if "Direct Connect" in components and "VPC" in components:
                 components["Direct Connect"] >> Edge(color="darkblue") >> components["VPC"]
