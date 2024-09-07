@@ -9,11 +9,21 @@ from diagrams.aws.security import WAF
 from diagrams.aws.integration import SQS
 
 def analyze_requirements(project_type, scale, technologies, budget, performance_requirements):
+    """
+    프로젝트 요구사항을 분석하고 적절한 AWS 아키텍처를 제안합니다.
+    
+    :param project_type: 프로젝트 유형 (예: web, mobile, backend)
+    :param scale: 프로젝트 규모 (small, medium, large)
+    :param technologies: 사용할 기술 리스트
+    :param budget: 예상 월 예산 (USD)
+    :param performance_requirements: 성능 요구사항 리스트
+    :return: 제안된 아키텍처 리스트
+    """
     architectures = []
     budget = float(budget)
     
     def add_common_components(arch):
-        # 공통 컴포넌트 추가 (보안 및 모니터링)
+        """공통 컴포넌트를 아키텍처에 추가합니다."""
         if "high security" in performance_requirements:
             arch["components"].append("WAF")
         if scale != "small":
@@ -100,6 +110,12 @@ def analyze_requirements(project_type, scale, technologies, budget, performance_
     return architectures
 
 def generate_architecture_diagram(architecture, filename):
+    """
+    주어진 아키텍처에 대한 다이어그램을 생성합니다.
+    
+    :param architecture: 아키텍처 정보를 담은 딕셔너리
+    :param filename: 생성될 다이어그램 파일 이름
+    """
     # Graphviz 설정
     os.environ["PATH"] += os.pathsep + '/usr/local/bin'  # Graphviz 경로 추가
     os.environ["DIAGRAMS_FONT"] = "Arial"  # 시스템에 설치된 폰트 사용
@@ -194,22 +210,36 @@ def generate_architecture_diagram(architecture, filename):
                     sqs_source >> Edge(color="darkgreen", style="dotted") >> components["SQS"]
 
 def main():
+    """
+    메인 함수: 명령줄 인자를 파싱하고 아키텍처 분석 및 다이어그램 생성을 수행합니다.
+    """
     # 명령줄 인자 파싱
     parser = argparse.ArgumentParser(description='AWS 최적화 아키텍처 생성')
     parser.add_argument('--project-type', required=True, help='프로젝트 유형 (예: web, mobile, backend)')
     parser.add_argument('--scale', required=True, help='예상 프로젝트 규모 (small, medium, large)')
     parser.add_argument('--technologies', required=True, help='사용할 주요 기술 (쉼표로 구분)')
-    parser.add_argument('--budget', required=True, type=float, help='예상 월 예산 (USD)')
+    parser.add_argument('--budget', required=True, help='예상 월 예산 (USD)')
     parser.add_argument('--performance-requirements', required=True, help='성능 요구사항 (쉼표로 구분)')
     args = parser.parse_args()
 
+    # 입력값 처리 및 기본값 설정
+    project_type = args.project_type.lower()
+    scale = args.scale.lower()
+    technologies = [tech.strip().lower() for tech in args.technologies.split(',')]
+    try:
+        budget = float(args.budget)
+    except ValueError:
+        print(f"Warning: Invalid budget value '{args.budget}'. Using default value of 1000.")
+        budget = 1000.0
+    performance_requirements = [req.strip().lower() for req in args.performance_requirements.split(',')]
+
     # 요구사항 분석 및 아키텍처 제안
     suggested_architectures = analyze_requirements(
-        args.project_type,
-        args.scale,
-        args.technologies.split(','),
-        args.budget,
-        args.performance_requirements.split(',')
+        project_type,
+        scale,
+        technologies,
+        budget,
+        performance_requirements
     )
 
     # 제안된 아키텍처에 대한 다이어그램 생성

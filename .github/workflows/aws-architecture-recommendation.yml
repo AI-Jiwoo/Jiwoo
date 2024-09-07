@@ -1,37 +1,44 @@
 name: AWS 아키텍처 추천
 
+# 워크플로우에 필요한 권한 설정
 permissions:
   issues: write
   pull-requests: write
 
+# 워크플로우 트리거 설정
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch:  # 수동 실행 옵션
 
 jobs:
   analyze_and_recommend:
     runs-on: ubuntu-latest
     steps:
+    # 저장소 체크아웃
     - uses: actions/checkout@v2
 
+    # Python 환경 설정
     - name: Python 설정
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
 
+    # Graphviz 설치 (다이어그램 생성에 필요)
     - name: Graphviz 설치
       run: |
         sudo apt-get update
         sudo apt-get install -y graphviz
 
+    # 필요한 Python 패키지 설치
     - name: 의존성 설치
       run: |
         python -m pip install --upgrade pip
         pip install diagrams openai>=1.0.0
 
+    # OpenAI API를 사용하여 레포지토리 분석
     - name: OpenAI로 레포지토리 분석
       id: repo_analysis
       env:
@@ -40,10 +47,12 @@ jobs:
         python - <<EOF
         import os
         import json
+        import re
         from openai import OpenAI
 
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
+        # 레포지토리 구조를 문자열로 반환하는 함수
         def get_repo_structure():
             structure = ""
             for root, dirs, files in os.walk("."):
@@ -57,6 +66,7 @@ jobs:
         
         repo_structure = get_repo_structure()
         
+        # OpenAI API에 보낼 프롬프트 생성
         prompt = f"""
         Based on the following repository structure, analyze the project and provide the following information:
         1. Project type (web, mobile, backend)
@@ -72,6 +82,7 @@ jobs:
         """
         
         try:
+            # OpenAI API 호출
             response = client.chat.completions.create(
               model="gpt-3.5-turbo",
               messages=[
@@ -80,41 +91,27 @@ jobs:
                 ]
             )
             
-            # Log the full API response
-            print("Full API Response:")
-            print(json.dumps(response.model_dump(), indent=2))
-            
             content = response.choices[0].message.content.strip()
             if not content:
                 raise ValueError("API로부터 빈 응답을 받았습니다")
             
-            # Log the raw content received from the API
-            print("Raw content received from API:")
-            print(content)
+            # JSON 부분만 추출
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                json_content = json_match.group()
+            else:
+                raise ValueError("JSON 형식의 응답을 찾을 수 없습니다")
             
-            analysis = json.loads(content)
+            # JSON 파싱
+            analysis = json.loads(json_content)
             
-            # Log the parsed JSON
-            print("Parsed JSON:")
-            print(json.dumps(analysis, indent=2))
-            
-            # 기본값 설정 및 출력
-            defaults = {
-                "project_type": "web",
-                "scale": "small",
-                "technologies": "python",
-                "budget": "1000",
-                "performance_requirements": "low_latency"
-            }
-            
-            # Log the final values (after applying defaults if necessary)
-            print("Final values:")
-            for key, default_value in defaults.items():
-                value = analysis.get(key, default_value)
-                if not value:  # 빈 문자열인 경우 기본값 사용
-                    value = default_value
+            # 결과 출력 및 GitHub Actions 출력 설정
+            for key, value in analysis.items():
+                if isinstance(value, list):
+                    value = ','.join(value)
                 print(f"{key}={value}")
-                
+                print(f"{key}={value}" >> $GITHUB_OUTPUT)
+            
         except json.JSONDecodeError as e:
             print(f"JSON 디코드 오류: {e}")
             print(f"받은 내용: {content}")
@@ -122,40 +119,24 @@ jobs:
             print(f"오류 발생: {e}")
         EOF
 
-    - name: 출력 설정
-      id: set_outputs
-      run: |
-        echo "Captured outputs:"
-        cat $GITHUB_STEP_SUMMARY
-        echo "Setting outputs:"
-        while IFS='=' read -r key value; do
-          if [ -n "$value" ]; then
-            echo "$key=$value"
-            echo "$key=$value" >> $GITHUB_OUTPUT
-          else
-            echo "$key=default_value"
-            echo "$key=default_value" >> $GITHUB_OUTPUT
-          fi
-        done < <(cat $GITHUB_STEP_SUMMARY)
-
+    # AWS 아키텍처 다이어그램 생성
     - name: AWS 아키텍처 추천 다이어그램 생성
       run: |
         echo "Generating AWS architecture diagram with the following parameters:"
-        echo "Project Type: ${{ steps.set_outputs.outputs.project_type || 'web' }}"
-        echo "Scale: ${{ steps.set_outputs.outputs.scale || 'small' }}"
-        echo "Technologies: ${{ steps.set_outputs.outputs.technologies || 'python' }}"
-        echo "Budget: ${{ steps.set_outputs.outputs.budget || '1000' }}"
-        echo "Performance Requirements: ${{ steps.set_outputs.outputs.performance_requirements || 'low_latency' }}"
+        echo "Project Type: ${{ steps.repo_analysis.outputs.project_type || 'web' }}"
+        echo "Scale: ${{ steps.repo_analysis.outputs.project_scale || 'small' }}"
+        echo "Technologies: ${{ steps.repo_analysis.outputs.technologies_used || 'python' }}"
+        echo "Budget: ${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}"
+        echo "Performance Requirements: ${{ steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
         
         python generate_aws_architectures.py \
-          --project-type "${{ steps.set_outputs.outputs.project_type || 'web' }}" \
-          --scale "${{ steps.set_outputs.outputs.scale || 'small' }}" \
-          --technologies "${{ steps.set_outputs.outputs.technologies || 'python' }}" \
-          --budget "${{ steps.set_outputs.outputs.budget || '1000' }}" \
-          --performance-requirements "${{ steps.set_outputs.outputs.performance_requirements || 'low_latency' }}"
-        echo "다이어그램 생성 완료. 출력 파일 확인 중..."
-        ls -l aws_architecture_*.png || echo "다이어그램 파일을 찾을 수 없습니다."
+          --project-type "${{ steps.repo_analysis.outputs.project_type || 'web' }}" \
+          --scale "${{ steps.repo_analysis.outputs.project_scale || 'small' }}" \
+          --technologies "${{ steps.repo_analysis.outputs.technologies_used || 'python' }}" \
+          --budget "${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}" \
+          --performance-requirements "${{ steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
 
+    # 생성된 다이어그램 아티팩트로 업로드
     - name: 아키텍처 다이어그램 업로드
       uses: actions/upload-artifact@v2
       if: ${{ success() && hashFiles('aws_architecture_*.png') != '' }}
@@ -163,14 +144,15 @@ jobs:
         name: aws-architecture-diagrams
         path: aws_architecture_*.png
 
+    # 디버그 정보 출력
     - name: 디버그 정보
       run: |
         echo "저장소: ${{ github.repository }}"
         echo "이벤트 이름: ${{ github.event_name }}"
         echo "PR 번호: ${{ github.event.pull_request.number }}"
         echo "워크플로우 실행 ID: ${{ github.run_id }}"
-        echo "아티팩트 업로드 상태: ${{ steps.upload-artifact.outcome }}"
 
+    # PR에 코멘트 추가
     - name: PR에 코멘트 추가
       uses: actions/github-script@v6
       if: github.event_name == 'pull_request' && github.event.action != 'closed'
