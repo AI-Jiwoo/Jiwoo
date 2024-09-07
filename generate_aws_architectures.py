@@ -1,12 +1,16 @@
 import argparse
 import os
 from diagrams import Diagram, Edge, Cluster
-from diagrams.aws.compute import EC2, ECS, Lambda, ElasticBeanstalk
-from diagrams.aws.database import RDS, Dynamodb, ElastiCache
-from diagrams.aws.network import ELB, APIGateway, CloudFront, Route53
-from diagrams.aws.storage import S3
-from diagrams.aws.security import WAF
-from diagrams.aws.integration import SQS
+from diagrams.aws.compute import EC2, ECS, Lambda, ElasticBeanstalk, Fargate, EKS
+from diagrams.aws.database import RDS, Dynamodb, ElastiCache, Redshift, Aurora
+from diagrams.aws.network import ELB, APIGateway, CloudFront, Route53, VPC, DirectConnect
+from diagrams.aws.storage import S3, EFS, FSx
+from diagrams.aws.security import WAF, IAM, KMS, Shield
+from diagrams.aws.integration import SQS, SNS, EventBridge
+from diagrams.aws.analytics import Athena, EMR, Kinesis
+from diagrams.aws.ml import SageMaker
+from diagrams.aws.devtools import CodePipeline, CodeBuild, CodeDeploy
+from diagrams.aws.mobile import Amplify
 
 def analyze_requirements(project_type, scale, technologies, budget, performance_requirements):
     """
@@ -25,87 +29,88 @@ def analyze_requirements(project_type, scale, technologies, budget, performance_
     def add_common_components(arch):
         """공통 컴포넌트를 아키텍처에 추가합니다."""
         if "high security" in performance_requirements:
-            arch["components"].append("WAF")
+            arch["components"].extend(["WAF", "Shield", "KMS"])
         if scale != "small":
-            arch["components"].append("CloudWatch")
+            arch["components"].extend(["CloudWatch", "CloudTrail"])
+        arch["components"].extend(["IAM", "VPC"])
+        return arch
+
+    def add_budget_based_components(arch):
+        """예산에 따라 추가 컴포넌트를 아키텍처에 추가합니다."""
+        if budget > 10000:
+            arch["components"].extend(["Direct Connect", "AWS Global Accelerator"])
+        elif budget > 5000:
+            arch["components"].append("AWS Global Accelerator")
         return arch
 
     # 웹 프로젝트 아키텍처 선택
     if project_type == "web":
-        if "high availability" in performance_requirements:
-            if scale == "large" and budget > 10000:
-                arch = {
-                    "name": "고가용성 다중 AZ 웹 아키텍처",
-                    "components": ["Route53", "CloudFront", "ELB", "EC2 Auto Scaling", "RDS Multi-AZ", "ElastiCache", "S3"]
-                }
-            else:
-                arch = {
-                    "name": "고가용성 웹 아키텍처",
-                    "components": ["ELB", "EC2 Auto Scaling", "RDS"]
-                }
-            architectures.append(add_common_components(arch))
-        
-        if "low latency" in performance_requirements:
-            arch = {
-                "name": "저지연 웹 아키텍처",
-                "components": ["CloudFront", "S3", "Lambda@Edge"]
-            }
-            if "dynamic content" in technologies:
-                arch["components"].extend(["API Gateway", "Lambda"])
-            architectures.append(add_common_components(arch))
-    
+        arch = {
+            "name": "웹 애플리케이션 아키텍처",
+            "components": ["Route53", "CloudFront", "ELB", "EC2 Auto Scaling", "RDS Multi-AZ", "ElastiCache", "S3"]
+        }
+        if "serverless" in technologies:
+            arch["components"].extend(["Lambda", "API Gateway"])
+        if "containers" in technologies:
+            arch["components"].extend(["ECS", "ECR"])
+        if scale == "large":
+            arch["components"].extend(["Aurora", "DynamoDB"])
+        architectures.append(add_common_components(add_budget_based_components(arch)))
+
     # 마이크로서비스 아키텍처 선택
     if "microservices" in technologies:
-        if scale == "large" and budget > 15000:
-            arch = {
-                "name": "대규모 마이크로서비스 아키텍처",
-                "components": ["ECS", "ECR", "API Gateway", "RDS", "ElastiCache", "SQS"]
-            }
-        else:
-            arch = {
-                "name": "마이크로서비스 아키텍처",
-                "components": ["ECS", "ECR", "API Gateway", "RDS"]
-            }
-        architectures.append(add_common_components(arch))
-    
-    # 서버리스 아키텍처 선택
-    if "serverless" in technologies:
-        if "high performance" in performance_requirements and budget > 5000:
-            arch = {
-                "name": "고성능 서버리스 아키텍처",
-                "components": ["API Gateway", "Lambda", "DynamoDB", "ElastiCache", "S3"]
-            }
-        else:
-            arch = {
-                "name": "기본 서버리스 아키텍처",
-                "components": ["API Gateway", "Lambda", "DynamoDB"]
-            }
-        architectures.append(add_common_components(arch))
-    
+        arch = {
+            "name": "마이크로서비스 아키텍처",
+            "components": ["EKS" if budget > 10000 else "ECS", "ECR", "API Gateway", "RDS", "ElastiCache", "SQS", "SNS"]
+        }
+        if "serverless" in technologies:
+            arch["components"].extend(["Lambda", "Step Functions"])
+        architectures.append(add_common_components(add_budget_based_components(arch)))
+
     # 모바일 백엔드 아키텍처 선택
     if project_type == "mobile":
         arch = {
             "name": "모바일 백엔드 아키텍처",
-            "components": ["API Gateway", "Lambda", "DynamoDB", "S3"]
+            "components": ["Amplify", "API Gateway", "Lambda", "DynamoDB", "S3", "Cognito"]
         }
         if "push notifications" in technologies:
             arch["components"].append("SNS")
-        architectures.append(add_common_components(arch))
-    
+        architectures.append(add_common_components(add_budget_based_components(arch)))
+
     # 머신러닝 아키텍처 선택
     if "machine learning" in technologies:
         arch = {
             "name": "머신러닝 아키텍처",
-            "components": ["SageMaker", "S3", "EC2", "Lambda"]
+            "components": ["SageMaker", "S3", "EC2", "Lambda", "Athena", "EMR"]
         }
-        architectures.append(add_common_components(arch))
-    
+        architectures.append(add_common_components(add_budget_based_components(arch)))
+
+    # 빅데이터 아키텍처 선택
+    if "big data" in technologies:
+        arch = {
+            "name": "빅데이터 처리 아키텍처",
+            "components": ["Kinesis", "EMR", "Redshift", "Athena", "S3", "QuickSight"]
+        }
+        architectures.append(add_common_components(add_budget_based_components(arch)))
+
+    # 실시간 처리 요구사항 반영
+    if "real-time processing" in performance_requirements:
+        for arch in architectures:
+            arch["components"].extend(["Kinesis", "Lambda"])
+
+    # 고가용성 요구사항 반영
+    if "high availability" in performance_requirements:
+        for arch in architectures:
+            if "RDS" in arch["components"]:
+                arch["components"].remove("RDS")
+                arch["components"].append("RDS Multi-AZ")
+
     # 기본 웹 아키텍처 (다른 조건에 해당하지 않을 경우)
     if not architectures:
-        architectures.append({
+        architectures.append(add_common_components({
             "name": "기본 웹 아키텍처",
             "components": ["EC2", "RDS"]
-        })
+        }))
     
     return architectures
 
@@ -165,8 +170,8 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = CloudFront("CDN")
                 elif component == "API Gateway":
                     components[component] = APIGateway("API 게이트웨이")
-                elif component == "Lambda" or component == "Lambda@Edge":
-                    components[component] = Lambda("함수")
+                elif component == "Lambda":
+                    components[component] = Lambda("Lambda 함수")
                 elif component == "DynamoDB":
                     components[component] = Dynamodb("NoSQL DB")
                 elif component == "WAF":
@@ -175,39 +180,106 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = Route53("DNS")
                 elif component == "ECS":
                     components[component] = ECS("컨테이너 서비스")
+                elif component == "EKS":
+                    components[component] = EKS("Kubernetes 서비스")
                 elif component == "SQS":
                     components[component] = SQS("메시지 큐")
-            
-            # 컴포넌트 간 연결
-            if "Route53" in components:
-                route53_target = components.get("CloudFront") or components.get("ELB") or next(iter(components.values()))
-                components["Route53"] >> Edge(color="darkgreen") >> route53_target
-            
-            if "CloudFront" in components:
-                cf_target = components.get("S3") or components.get("API Gateway") or next(iter(components.values()))
-                components["CloudFront"] >> Edge(color="darkgreen") >> cf_target
-            
-            if "ELB" in components and "EC2" in components:
-                components["ELB"] >> Edge(color="darkgreen") >> components["EC2"]
-            
-            if "EC2" in components and "RDS" in components:
-                components["EC2"] >> Edge(color="darkgreen") >> components["RDS"]
-            
-            if "API Gateway" in components and "Lambda" in components:
-                components["API Gateway"] >> Edge(color="darkgreen") >> components["Lambda"]
-            
-            if "Lambda" in components and "DynamoDB" in components:
-                components["Lambda"] >> Edge(color="darkgreen") >> components["DynamoDB"]
-            
-            if "ElastiCache" in components:
-                cache_source = components.get("EC2") or components.get("Lambda")
-                if cache_source:
-                    cache_source >> Edge(color="darkgreen") >> components["ElastiCache"]
-            
-            if "SQS" in components:
-                sqs_source = components.get("EC2") or components.get("Lambda")
-                if sqs_source:
-                    sqs_source >> Edge(color="darkgreen", style="dotted") >> components["SQS"]
+                elif component == "SNS":
+                    components[component] = SNS("알림 서비스")
+                elif component == "Kinesis":
+                    components[component] = Kinesis("실시간 데이터 스트리밍")
+                elif component == "SageMaker":
+                    components[component] = SageMaker("기계 학습 플랫폼")
+                # 새로 추가된 서비스들에 대한 객체 생성 로직 추가
+                # ...
+
+            # 컴포넌트 간 연결 로직
+if "Route53" in components:
+    route53_target = components.get("CloudFront") or components.get("ELB") or components.get("API Gateway") or next(iter(components.values()))
+    components["Route53"] >> Edge(color="darkgreen") >> route53_target
+
+if "CloudFront" in components:
+    cf_target = components.get("S3") or components.get("API Gateway") or components.get("ELB") or next(iter(components.values()))
+    components["CloudFront"] >> Edge(color="darkgreen") >> cf_target
+
+if "ELB" in components:
+    elb_targets = [comp for comp in ["EC2", "ECS", "EKS"] if comp in components]
+    for target in elb_targets:
+        components["ELB"] >> Edge(color="darkgreen") >> components[target]
+
+if "API Gateway" in components:
+    api_targets = [comp for comp in ["Lambda", "EC2", "ECS", "EKS"] if comp in components]
+    for target in api_targets:
+        components["API Gateway"] >> Edge(color="darkgreen") >> components[target]
+
+compute_components = ["EC2", "ECS", "EKS", "Lambda"]
+for comp in compute_components:
+    if comp in components:
+        if "RDS" in components:
+            components[comp] >> Edge(color="darkgreen") >> components["RDS"]
+        if "DynamoDB" in components:
+            components[comp] >> Edge(color="darkgreen") >> components["DynamoDB"]
+        if "ElastiCache" in components:
+            components[comp] >> Edge(color="darkgreen") >> components["ElastiCache"]
+        if "S3" in components:
+            components[comp] >> Edge(color="darkgreen") >> components["S3"]
+
+if "SQS" in components:
+    sqs_sources = [comp for comp in compute_components if comp in components]
+    for source in sqs_sources:
+        components[source] >> Edge(color="darkgreen", style="dotted") >> components["SQS"]
+
+if "SNS" in components:
+    sns_sources = [comp for comp in compute_components if comp in components]
+    for source in sns_sources:
+        components[source] >> Edge(color="darkgreen", style="dotted") >> components["SNS"]
+
+if "Kinesis" in components:
+    kinesis_sources = [comp for comp in compute_components if comp in components]
+    for source in kinesis_sources:
+        components[source] >> Edge(color="darkgreen", style="dotted") >> components["Kinesis"]
+    if "Lambda" in components:
+        components["Kinesis"] >> Edge(color="darkgreen") >> components["Lambda"]
+
+if "SageMaker" in components and "S3" in components:
+    components["SageMaker"] >> Edge(color="darkgreen") >> components["S3"]
+
+if "EMR" in components and "S3" in components:
+    components["EMR"] >> Edge(color="darkgreen") >> components["S3"]
+
+if "Redshift" in components:
+    if "S3" in components:
+        components["S3"] >> Edge(color="darkgreen") >> components["Redshift"]
+    if "EMR" in components:
+        components["EMR"] >> Edge(color="darkgreen") >> components["Redshift"]
+
+if "Amplify" in components and "API Gateway" in components:
+    components["Amplify"] >> Edge(color="darkgreen") >> components["API Gateway"]
+
+if "WAF" in components:
+    waf_targets = [comp for comp in ["CloudFront", "API Gateway", "ELB"] if comp in components]
+    for target in waf_targets:
+        components["WAF"] >> Edge(color="red", style="bold") >> components[target]
+
+if "Shield" in components:
+    shield_targets = [comp for comp in ["Route53", "CloudFront", "ELB"] if comp in components]
+    for target in shield_targets:
+        components["Shield"] >> Edge(color="red", style="bold") >> components[target]
+
+if "VPC" in components:
+    vpc_components = [comp for comp in ["EC2", "ECS", "EKS", "RDS", "ElastiCache"] if comp in components]
+    for comp in vpc_components:
+        components["VPC"] - Edge(color="darkblue", style="dashed") - components[comp]
+
+if "IAM" in components:
+    iam_targets = [comp for comp in compute_components + ["S3", "DynamoDB", "RDS"] if comp in components]
+    for target in iam_targets:
+        components["IAM"] >> Edge(color="darkred", style="dashed") >> components[target]
+
+if "CloudWatch" in components:
+    cloudwatch_targets = [comp for comp in compute_components + ["RDS", "DynamoDB", "ElastiCache"] if comp in components]
+    for target in cloudwatch_targets:
+        components["CloudWatch"] >> Edge(color="darkorange", style="dashed") >> components[target]
 
 def main():
     """
@@ -218,19 +290,15 @@ def main():
     parser.add_argument('--project-type', required=True, help='프로젝트 유형 (예: web, mobile, backend)')
     parser.add_argument('--scale', required=True, help='예상 프로젝트 규모 (small, medium, large)')
     parser.add_argument('--technologies', required=True, help='사용할 주요 기술 (쉼표로 구분)')
-    parser.add_argument('--budget', required=True, help='예상 월 예산 (USD)')
+    parser.add_argument('--budget', required=True, type=float, help='예상 월 예산 (USD)')
     parser.add_argument('--performance-requirements', required=True, help='성능 요구사항 (쉼표로 구분)')
     args = parser.parse_args()
 
-    # 입력값 처리 및 기본값 설정
+    # 입력값 처리
     project_type = args.project_type.lower()
     scale = args.scale.lower()
     technologies = [tech.strip().lower() for tech in args.technologies.split(',')]
-    try:
-        budget = float(args.budget)
-    except ValueError:
-        print(f"Warning: Invalid budget value '{args.budget}'. Using default value of 1000.")
-        budget = 1000.0
+    budget = args.budget
     performance_requirements = [req.strip().lower() for req in args.performance_requirements.split(',')]
 
     # 요구사항 분석 및 아키텍처 제안
