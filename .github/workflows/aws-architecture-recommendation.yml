@@ -95,6 +95,10 @@ jobs:
             if not content:
                 raise ValueError("API로부터 빈 응답을 받았습니다")
             
+            # 디버그: API 응답 출력
+            print("OpenAI API 응답:")
+            print(content)
+            
             # JSON 부분만 추출
             json_match = re.search(r'\{.*\}', content, re.DOTALL)
             if json_match:
@@ -105,12 +109,16 @@ jobs:
             # JSON 파싱
             analysis = json.loads(json_content)
             
-            # 결과를 파일에 출력
-            with open('analysis_results.txt', 'w') as f:
-                for key, value in analysis.items():
-                    if isinstance(value, list):
-                        value = ','.join(value)
-                    f.write(f"{key}={value}\n")
+            # 디버그: 파싱된 분석 결과 출력
+            print("파싱된 분석 결과:")
+            print(json.dumps(analysis, indent=2))
+            
+            # GitHub Actions 출력 설정
+            for key, value in analysis.items():
+                if isinstance(value, list):
+                    value = ','.join(value)
+                print(f"{key}={value}")
+                print(f"::set-output name={key}::{value}")
             
         except json.JSONDecodeError as e:
             print(f"JSON 디코드 오류: {e}")
@@ -118,14 +126,6 @@ jobs:
         except Exception as e:
             print(f"오류 발생: {e}")
         EOF
-
-    # GitHub Actions 출력 설정
-    - name: GitHub Actions 출력 설정
-      run: |
-        while IFS='=' read -r key value
-        do
-          echo "$key=$value" >> $GITHUB_OUTPUT
-        done < analysis_results.txt
 
     # AWS 아키텍처 다이어그램 생성
     - name: AWS 아키텍처 추천 다이어그램 생성
@@ -168,8 +168,6 @@ jobs:
         python --version
         echo "OpenAI 라이브러리 버전:"
         pip show openai
-        echo "분석 결과 파일 내용:"
-        cat analysis_results.txt
 
     # PR에 코멘트 추가
     - name: PR에 코멘트 추가
