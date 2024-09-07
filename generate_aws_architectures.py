@@ -6,9 +6,9 @@ from diagrams.aws.database import RDS, Dynamodb, ElastiCache, Redshift, Aurora
 from diagrams.aws.network import ELB, APIGateway, CloudFront, Route53, VPC, DirectConnect
 from diagrams.aws.storage import S3, EFS, FSx
 from diagrams.aws.security import WAF, IAM, KMS, Shield
-from diagrams.aws.integration import SQS, SNS, EventBridge
+from diagrams.aws.integration import SQS, SNS, Eventbridge
 from diagrams.aws.analytics import Athena, EMR, Kinesis
-from diagrams.aws.ml import SageMaker
+from diagrams.aws.ml import Sagemaker
 from diagrams.aws.devtools import Codepipeline, Codebuild, Codedeploy
 from diagrams.aws.mobile import Amplify
 from diagrams.aws.management import Cloudwatch, Cloudtrail
@@ -184,8 +184,8 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = SNS("SNS")
                 elif component == "Kinesis":
                     components[component] = Kinesis("Kinesis")
-                elif component == "SageMaker":
-                    components[component] = SageMaker("SageMaker")
+                elif component == "Sagemaker":
+                    components[component] = Sagemaker("Sagemaker")
                 elif component == "Aurora":
                     components[component] = Aurora("Aurora")
                 elif component == "Amplify":
@@ -204,22 +204,14 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = Cloudtrail("Cloudtrail")
                 elif component == "Direct Connect":
                     components[component] = DirectConnect("Direct Connect")
-                elif component == "EventBridge":
-                    components[component] = EventBridge("EventBridge")
+                elif component == "Eventbridge":
+                    components[component] = Eventbridge("Eventbridge")
                 elif component == "Athena":
                     components[component] = Athena("Athena")
                 elif component == "EMR":
                     components[component] = EMR("EMR")
                 elif component == "Redshift":
                     components[component] = Redshift("Redshift")
-                elif component == "QuickSight":
-                    components[component] = QuickSight("QuickSight")
-                elif component == "ECR":
-                    components[component] = ECR("ECR")
-                elif component == "Step Functions":
-                    components[component] = StepFunctions("Step Functions")
-                elif component == "Cognito":
-                    components[component] = Cognito("Cognito")
 
             # 컴포넌트 간 연결 로직
             if "Route53" in components:
