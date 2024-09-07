@@ -117,9 +117,16 @@ jobs:
             with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
                 for key, value in analysis.items():
                     if isinstance(value, list):
-                        value = ','.join(value)
+                        value = ','.join(map(str, value))
+                    elif not isinstance(value, str):
+                        value = str(value)
                     print(f"{key}={value}")
                     fh.write(f"{key}={value}\n")
+            
+            # 디버그: GITHUB_OUTPUT 파일 내용 출력
+            print("GITHUB_OUTPUT 파일 내용:")
+            with open(os.environ['GITHUB_OUTPUT'], 'r') as fh:
+                print(fh.read())
             
         except json.JSONDecodeError as e:
             print(f"JSON 디코드 오류: {e}")
@@ -131,28 +138,28 @@ jobs:
     # 출력 변수 확인
     - name: 출력 변수 확인
       run: |
-        echo "Project Type: ${{ steps.repo_analysis.outputs.projectType }}"
-        echo "Scale: ${{ steps.repo_analysis.outputs.projectScale }}"
-        echo "Technologies: ${{ steps.repo_analysis.outputs.technologiesUsed }}"
-        echo "Budget: ${{ steps.repo_analysis.outputs.estimatedMonthlyBudget }}"
-        echo "Performance Requirements: ${{ steps.repo_analysis.outputs.performanceRequirements }}"
+        echo "Project Type: ${{ steps.repo_analysis.outputs.project_type }}"
+        echo "Scale: ${{ steps.repo_analysis.outputs.project_scale }}"
+        echo "Technologies: ${{ steps.repo_analysis.outputs.technologies_used }}"
+        echo "Budget: ${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd }}"
+        echo "Performance Requirements: ${{ steps.repo_analysis.outputs.performance_requirements }}"
 
     # AWS 아키텍처 다이어그램 생성
     - name: AWS 아키텍처 추천 다이어그램 생성
       run: |
         echo "Generating AWS architecture diagram with the following parameters:"
-        echo "Project Type: ${{ steps.repo_analysis.outputs.projectType || 'web' }}"
-        echo "Scale: ${{ steps.repo_analysis.outputs.projectScale || 'small' }}"
-        echo "Technologies: ${{ steps.repo_analysis.outputs.technologiesUsed || 'python' }}"
-        echo "Budget: ${{ steps.repo_analysis.outputs.estimatedMonthlyBudget || '1000' }}"
-        echo "Performance Requirements: ${{ steps.repo_analysis.outputs.performanceRequirements || 'low_latency' }}"
+        echo "Project Type: ${{ steps.repo_analysis.outputs.project_type || 'web' }}"
+        echo "Scale: ${{ steps.repo_analysis.outputs.project_scale || 'small' }}"
+        echo "Technologies: ${{ steps.repo_analysis.outputs.technologies_used || 'python' }}"
+        echo "Budget: ${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}"
+        echo "Performance Requirements: ${{ steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
         
         python generate_aws_architectures.py \
-          --project-type "${{ steps.repo_analysis.outputs.projectType || 'web' }}" \
-          --scale "${{ steps.repo_analysis.outputs.projectScale || 'small' }}" \
-          --technologies "${{ steps.repo_analysis.outputs.technologiesUsed || 'python' }}" \
-          --budget "${{ steps.repo_analysis.outputs.estimatedMonthlyBudget || '1000' }}" \
-          --performance-requirements "${{ steps.repo_analysis.outputs.performanceRequirements || 'low_latency' }}"
+          --project-type "${{ steps.repo_analysis.outputs.project_type || 'web' }}" \
+          --scale "${{ steps.repo_analysis.outputs.project_scale || 'small' }}" \
+          --technologies "${{ steps.repo_analysis.outputs.technologies_used || 'python' }}" \
+          --budget "${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}" \
+          --performance-requirements "${{ steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
 
     # 생성된 다이어그램 아티팩트로 업로드
     - name: 아키텍처 다이어그램 업로드
