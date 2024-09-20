@@ -1,14 +1,15 @@
 <div align="center">
 <div style="background-color: #232f3e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; max-width: 800px; margin: 0 auto;">
   <img src="https://raw.githubusercontent.com/AI-Jiwoo/Jiwoo/main/docs/images/jiwoologo.png" alt="Jiwoo AI Logo" width="250" style="margin-bottom: 15px;">
-
   <h1 style="font-family: 'Arial', sans-serif; color: #ffffff; font-weight: bold; margin-bottom: 10px; font-size: 28px;">
     Jiwoo AI - 당신의 창업 여정을 함께하는 AI 파트너 🚀
   </h1>
-
   <p style="font-family: 'Helvetica Neue', sans-serif; color: #f0f0f0; font-size: 18px;">
     당신의 비즈니스를 360도 지원하는 맞춤형 AI 비서 서비스
   </p>
+  <a href="https://drive.google.com/file/d/15eHb82OAbnGxrgLvHSHi7H4bhbTLilWb/view?usp=sharing" style="display: inline-block; background-color: #FF9900; color: #000000; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 15px; transition: background-color 0.3s;">
+    🎥 프로젝트 발표 자료 보기
+  </a>
 </div>
 
 ## 🗓️ 프로젝트 수행기간
