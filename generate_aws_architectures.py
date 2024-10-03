@@ -192,11 +192,17 @@ def generate_architecture_diagram(architecture, filename):
                 iam_targets = [comp for comp in ["EC2 Auto Scaling", "ECS", "EKS", "S3", "DynamoDB", "RDS Multi-AZ"] if comp in components]
                 for target in iam_targets:
                     components["IAM"] >> Edge(color="darkred", style="dashed") >> components[target]
-
-            if "Cloudwatch" in components:
+                    
+             if "Cloudwatch" in components:
                 cloudwatch_targets = [comp for comp in ["EC2 Auto Scaling", "ECS", "EKS", "RDS Multi-AZ", "DynamoDB", "ElastiCache"] if comp in components]
                 for target in cloudwatch_targets:
-                    components["Cloudwatch"] >> Edge(colorHere is the full and updated version of your code that fixes edge and connection issues and ensures all components are properly connected:
+                    components["Cloudwatch"] >> Edge(color="darkorange", style="dashed") >> components[target]
+
+            if "Cloudtrail" in components:
+                cloudtrail_targets = [comp for comp in ["EC2 Auto Scaling", "ECS", "EKS", "S3", "DynamoDB", "RDS Multi-AZ"] if comp in components]
+                for target in cloudtrail_targets:
+                    components["Cloudtrail"] >> Edge(color="darkorange", style="dashed") >> components[target]
+
 def main():
     """
     메인 함수: 명령줄 인자를 파싱하고 아키텍처 분석 및 다이어그램 생성을 수행
