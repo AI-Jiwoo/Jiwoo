@@ -150,20 +150,18 @@ def main():
     args = parser.parse_args()
 
     project_type = args.project_type.lower()
+    scale = args.scale.lower()
     technologies = [tech.strip().lower() for tech in args.technologies.split(',')]
     budget = args.budget
+    performance_requirements = args.performance_requirements
 
     # 요구사항 분석 후 아키텍처 생성
-    suggested_architectures = analyze_requirements(project_type, technologies, budget)
+    suggested_architectures = analyze_requirements(project_type, scale, technologies, budget, performance_requirements)
 
     # 각 아키텍처에 대해 다이어그램 생성
     for i, architecture in enumerate(suggested_architectures):
         generate_architecture_diagram(architecture, f'aws_architecture_{i+1}')
         print(f"{architecture['name']} 다이어그램 생성 완료: aws_architecture_{i+1}.png")
-        if os.path.exists(f'aws_architecture_{i+1}.png'):
-            print(f"다이어그램 파일 존재: aws_architecture_{i+1}.png")
-        else:
-            print(f"다이어그램 파일이 생성되지 않음: aws_architecture_{i+1}.png")
 
 
 if __name__ == '__main__':
