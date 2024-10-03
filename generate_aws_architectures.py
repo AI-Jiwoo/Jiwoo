@@ -46,7 +46,7 @@ def add_budget_based_components(architecture, budget):
         architecture["components"].append("Direct Connect")
 
 # 프로젝트 요구사항을 분석하고 적절한 AWS 아키텍처를 생성하는 함수
-def analyze_requirements(project_type, technologies, budget):
+def analyze_requirements(project_type, scale, technologies, budget, performance_requirements):
     """
     요구사항 분석 및 아키텍처 생성
     """
@@ -63,7 +63,7 @@ def analyze_requirements(project_type, technologies, budget):
         add_budget_based_components(architecture, budget)  # 예산에 따른 추가 컴포넌트 설정
         return architecture
 
-    # 프로젝트 유형이 풀스택인 경우
+    # 프로젝트 유형에 따른 아키텍처 설정
     if project_type == "full-stack":
         base_components = ["Route53", "CloudFront", "EC2", "RDS", "S3"]
         if "containers" in technologies:
