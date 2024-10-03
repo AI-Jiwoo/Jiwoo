@@ -18,11 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     # 저장소 체크아웃
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     # Python 환경 설정
     - name: Python 설정
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
@@ -148,22 +148,22 @@ jobs:
     - name: AWS 아키텍처 추천 다이어그램 생성
       run: |
         echo "Generating AWS architecture diagram with the following parameters:"
-        echo "Project Type: ${{ steps.repo_analysis.outputs.project_type || 'web' }}"
-        echo "Scale: ${{ steps.repo_analysis.outputs.project_scale || 'small' }}"
-        echo "Technologies: ${{ steps.repo_analysis.outputs.technologies_used || 'python' }}"
-        echo "Budget: ${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}"
-        echo "Performance Requirements: ${{ steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
+        echo "Project Type: ${{ steps.repo_analysis.outputs.project_type != '' && steps.repo_analysis.outputs.project_type || 'web' }}"
+        echo "Scale: ${{ steps.repo_analysis.outputs.project_scale != '' && steps.repo_analysis.outputs.project_scale || 'small' }}"
+        echo "Technologies: ${{ steps.repo_analysis.outputs.technologies_used != '' && steps.repo_analysis.outputs.technologies_used || 'python' }}"
+        echo "Budget: ${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd != '' && steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}"
+        echo "Performance Requirements: ${{ steps.repo_analysis.outputs.performance_requirements != '' && steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
         
         python generate_aws_architectures.py \
-          --project-type "${{ steps.repo_analysis.outputs.project_type || 'web' }}" \
-          --scale "${{ steps.repo_analysis.outputs.project_scale || 'small' }}" \
-          --technologies "${{ steps.repo_analysis.outputs.technologies_used || 'python' }}" \
-          --budget "${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}" \
-          --performance-requirements "${{ steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
+          --project-type "${{ steps.repo_analysis.outputs.project_type != '' && steps.repo_analysis.outputs.project_type || 'web' }}" \
+          --scale "${{ steps.repo_analysis.outputs.project_scale != '' && steps.repo_analysis.outputs.project_scale || 'small' }}" \
+          --technologies "${{ steps.repo_analysis.outputs.technologies_used != '' && steps.repo_analysis.outputs.technologies_used || 'python' }}" \
+          --budget "${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd != '' && steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}" \
+          --performance-requirements "${{ steps.repo_analysis.outputs.performance_requirements != '' && steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
 
     # 생성된 다이어그램 아티팩트로 업로드
     - name: 아키텍처 다이어그램 업로드
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: ${{ success() && hashFiles('aws_architecture_*.png') != '' }}
       with:
         name: aws-architecture-diagrams
