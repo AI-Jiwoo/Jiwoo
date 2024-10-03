@@ -10,7 +10,6 @@ from diagrams.aws.management import Cloudwatch, Cloudtrail
 from diagrams.onprem.ci import GithubActions
 from diagrams.onprem.vcs import Github
 from diagrams.onprem.client import User
-from diagrams.saas.ci_cd import Vercel
 from diagrams.generic.database import SQL
 
 # 공통 컴포넌트 정의
@@ -23,8 +22,8 @@ COMMON_COMPONENTS = {
 TECHNOLOGY_COMPONENTS = {
     "serverless": ["Lambda", "APIGateway"],  # 서버리스 아키텍처
     "containers": ["ECS"],  # 컨테이너 서비스
-    "react": ["S3", "CloudFront", "Vercel"],  # React 기반 프론트엔드 서비스
-    "flutter": ["Vercel"],  # Flutter 프론트엔드 서비스
+    "react": ["S3", "CloudFront"],  # React 기반 프론트엔드 서비스
+    "flutter": ["CloudFront"],  # Flutter 프론트엔드 서비스
     "milvus": ["Milvus"],  # Milvus 벡터 데이터베이스
     "microservices": ["ECS", "APIGateway", "RDS", "ElastiCache", "SQS", "SNS"],  # 마이크로서비스 아키텍처
     "database": ["RDS", "MariaDB"]  # 데이터베이스 서비스
@@ -111,8 +110,6 @@ def generate_architecture_diagram(architecture, filename):
                     components[component] = CloudFront("CloudFront")
                 elif component == "Route53":
                     components[component] = Route53("Route53")
-                elif component == "Vercel":
-                    components[component] = Vercel("Vercel")
                 elif component == "Docker":
                     components[component] = SQL("Docker")
                 elif component == "Milvus":
@@ -126,7 +123,7 @@ def generate_architecture_diagram(architecture, filename):
 
             # 서비스 간 연결 설정
             components["Route53"] >> Edge(color="darkgreen") >> components["CloudFront"] >> Edge(color="darkgreen") >> components["S3"]
-            components["CloudFront"] >> Edge(color="darkgreen") >> components["Vercel"]
+            components["CloudFront"] >> Edge(color="darkgreen") >> components["EC2"]
             components["EC2"] >> Edge(color="darkgreen") >> components["RDS"]
             components["EC2"] >> Edge(color="darkgreen") >> components["Milvus"]
             components["EC2"] >> Edge(color="darkgreen") >> components["MariaDB"]
@@ -138,7 +135,6 @@ def generate_architecture_diagram(architecture, filename):
                 developer = User("Developer")
                 
                 developer >> github >> actions >> components["EC2"]
-                components["Vercel"] >> Edge(color="darkgreen") >> actions
 
 # 메인 함수
 def main():
