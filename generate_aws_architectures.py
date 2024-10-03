@@ -160,6 +160,11 @@ def main():
     for i, architecture in enumerate(suggested_architectures):
         generate_architecture_diagram(architecture, f'aws_architecture_{i+1}')
         print(f"{architecture['name']} 다이어그램 생성 완료: aws_architecture_{i+1}.png")
+        if os.path.exists(f'aws_architecture_{i+1}.png'):
+            print(f"다이어그램 파일 존재: aws_architecture_{i+1}.png")
+        else:
+            print(f"다이어그램 파일이 생성되지 않음: aws_architecture_{i+1}.png")
+
 
 if __name__ == '__main__':
     main()
