@@ -143,8 +143,10 @@ def main():
     """
     parser = argparse.ArgumentParser(description='AWS 아키텍처 생성')
     parser.add_argument('--project-type', required=True, help='프로젝트 유형')
+    parser.add_argument('--scale', required=True, help='예상 프로젝트 규모 (small, medium, large)')
     parser.add_argument('--technologies', required=True, help='사용할 주요 기술 (쉼표로 구분)')
     parser.add_argument('--budget', required=True, type=float, help='예상 월 예산 (USD)')
+    parser.add_argument('--performance-requirements', required=True, help='성능 요구사항 (쉼표로 구분)')
     args = parser.parse_args()
 
     project_type = args.project_type.lower()
