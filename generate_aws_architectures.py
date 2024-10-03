@@ -193,7 +193,7 @@ def generate_architecture_diagram(architecture, filename):
                 for target in iam_targets:
                     components["IAM"] >> Edge(color="darkred", style="dashed") >> components[target]
                     
-             if "Cloudwatch" in components:
+            if "Cloudwatch" in components:
                 cloudwatch_targets = [comp for comp in ["EC2 Auto Scaling", "ECS", "EKS", "RDS Multi-AZ", "DynamoDB", "ElastiCache"] if comp in components]
                 for target in cloudwatch_targets:
                     components["Cloudwatch"] >> Edge(color="darkorange", style="dashed") >> components[target]
