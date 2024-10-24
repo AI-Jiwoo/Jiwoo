@@ -1,0 +1,192 @@
+name: AWS 아키텍처 추천
+
+# 워크플로우에 필요한 권한 설정
+permissions:
+  issues: write
+  pull-requests: write
+
+# 워크플로우 트리거 설정
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 수동 실행 옵션
+
+jobs:
+  analyze_and_recommend:
+    runs-on: ubuntu-latest
+    steps:
+    # 저장소 체크아웃
+    - uses: actions/checkout@v3
+
+    # Python 환경 설정
+    - name: Python 설정
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    # Graphviz 설치 (다이어그램 생성에 필요)
+    - name: Graphviz 설치
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y graphviz
+
+    # 필요한 Python 패키지 설치
+    - name: 의존성 설치
+      run: |
+        python -m pip install --upgrade pip
+        pip install diagrams openai>=1.0.0
+
+    # OpenAI API를 사용하여 레포지토리 분석
+    - name: OpenAI로 레포지토리 분석
+      id: repo_analysis
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python - <<EOF
+        import os
+        import json
+        import re
+        from openai import OpenAI
+
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        # 레포지토리 구조를 문자열로 반환하는 함수
+        def get_repo_structure():
+            structure = ""
+            for root, dirs, files in os.walk("."):
+                level = root.replace(".", "").count(os.sep)
+                indent = " " * 4 * (level)
+                structure += f"{indent}{os.path.basename(root)}/\n"
+                subindent = " " * 4 * (level + 1)
+                for f in files:
+                    structure += f"{subindent}{f}\n"
+            return structure
+        
+        repo_structure = get_repo_structure()
+        
+        # OpenAI API에 보낼 프롬프트 생성
+        prompt = f"""
+        Based on the following repository structure, analyze the project and provide the following information:
+        1. Project type (web, mobile, backend)
+        2. Project scale (small, medium, large)
+        3. Technologies used (comma-separated list)
+        4. Estimated monthly budget in USD (provide a number, e.g. 1000)
+        5. Performance requirements (comma-separated list)
+
+        Repository structure:
+        {repo_structure}
+        
+        Provide the answer in JSON format.
+        """
+        
+        response = client.chat.completions.create(
+          model="gpt-3.5-turbo",
+          messages=[
+            {"role": "system", "content": "You are a helpful assistant that analyzes software projects."},
+            {"role": "user", "content": prompt}
+          ]
+        )
+        
+        content = response.choices[0].message.content.strip()
+        if not content:
+                raise ValueError("API로부터 빈 응답을 받았습니다")
+            
+        # 디버그: API 응답 출력
+        print("OpenAI API 응답:")
+        print(content)
+            
+        # JSON 부분만 추출
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        json_content = json_match.group() if json_match else ""
+
+        analysis = json.loads(json_content)
+        
+        # 디버그: 파싱된 분석 결과 출력
+        print("파싱된 분석 결과:")
+        print(json.dumps(analysis, indent=2))
+        
+        # GitHub Actions 출력 설정
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+          for key, value in analysis.items():
+            value = ','.join(value) if isinstance(value, list) else str(value)
+            fh.write(f"{key}={value}\n")
+        EOF
+
+    # 출력 변수 확인
+    - name: 출력 변수 확인
+      run: |
+        echo "프로젝트 유형: ${{ steps.repo_analysis.outputs.project_type }}"
+        echo "규모: ${{ steps.repo_analysis.outputs.project_scale }}"
+        echo "사용된 기술: ${{ steps.repo_analysis.outputs.technologies_used }}"
+        echo "예상 예산: ${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd }}"
+        echo "성능 요구사항: ${{ steps.repo_analysis.outputs.performance_requirements }}"
+
+    # AWS 아키텍처 다이어그램 생성
+    - name: AWS 아키텍처 다이어그램 생성
+      run: |
+        python generate_aws_architectures.py \
+          --project-type "${{ steps.repo_analysis.outputs.project_type || 'web' }}" \
+          --scale "${{ steps.repo_analysis.outputs.project_scale || 'small' }}" \
+          --technologies "${{ steps.repo_analysis.outputs.technologies_used || 'python' }}" \
+          --budget "${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd || '1000' }}" \
+          --performance-requirements "${{ steps.repo_analysis.outputs.performance_requirements || 'low_latency' }}"
+
+    # 다이어그램 파일 생성 확인
+    - name: 다이어그램 파일 생성 확인
+      run: |
+        ls -al aws_architecture_*.png
+
+    # 생성된 다이어그램을 아티팩트로 업로드
+    - name: 아키텍처 다이어그램 업로드
+      id: upload-artifact
+      uses: actions/upload-artifact@v3
+      if: ${{ success() && hashFiles('aws_architecture_*.png') != '' }}
+      with:
+        name: aws-architecture-diagrams
+        path: aws_architecture_*.png
+
+    # 디버그 정보 출력
+    - name: 디버그 정보
+      run: |
+        echo "저장소: ${{ github.repository }}"
+        echo "이벤트 이름: ${{ github.event_name }}"
+        echo "PR 번호: ${{ github.event.pull_request.number }}"
+        echo "워크플로우 실행 ID: ${{ github.run_id }}"
+
+    # 추가 디버그 정보 출력 (실패 시)
+    - name: 추가 디버그 정보 출력
+      if: failure()
+      run: |
+        python --version
+        pip show openai
+
+    # PR에 코멘트 추가
+    - name: PR에 코멘트 추가
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request' && github.event.action != 'closed'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+          const artifactName = 'aws-architecture-diagrams';
+          const artifactUploaded = '${{ steps.upload-artifact.outcome }}' === 'success';
+          
+          let commentBody = `AWS 아키텍처 추천이 완료되었습니다.`;
+          if (artifactUploaded) {
+            commentBody += `\n\n다이어그램을 확인하려면:
+            1. [Actions 탭](https://github.com/${owner}/${repo}/actions/runs/${context.runId})으로 이동하세요.
+            2. "Artifacts" 섹션으로 스크롤하세요.
+            3. "${artifactName}" 아티팩트를 다운로드하세요.`;
+          } else {
+            commentBody += `\n\n다이어그램 생성 중 문제가 발생했습니다. 자세한 내용은 워크플로우 로그를 확인하세요.`;
+            console.error('Artifact upload failed. Check if the diagram was generated.');
+          }
+          await github.rest.issues.createComment({
+            owner: owner,
+            repo: repo,
+            issue_number: issue_number,
+            body: commentBody
+          });
