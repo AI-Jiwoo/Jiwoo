@@ -140,6 +140,7 @@ jobs:
 
     # 생성된 다이어그램을 아티팩트로 업로드
     - name: 아키텍처 다이어그램 업로드
+      id: upload-artifact
       uses: actions/upload-artifact@v3
       if: ${{ success() && hashFiles('aws_architecture_*.png') != '' }}
       with:
@@ -172,6 +173,7 @@ jobs:
           const issue_number = context.issue.number;
           const artifactName = 'aws-architecture-diagrams';
           const artifactUploaded = '${{ steps.upload-artifact.outcome }}' === 'success';
+          
           let commentBody = `AWS 아키텍처 추천이 완료되었습니다.`;
           if (artifactUploaded) {
             commentBody += `\n\n다이어그램을 확인하려면:
