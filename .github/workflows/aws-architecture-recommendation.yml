@@ -68,37 +68,71 @@ jobs:
         
         # OpenAI API에 보낼 프롬프트 생성
         prompt = f"""
-        다음 레포지토리 구조를 바탕으로 프로젝트를 분석하고 다음 정보를 제공하세요:
-        1. 프로젝트 유형 (웹, 모바일, 백엔드)
-        2. 프로젝트 규모 (작음, 중간, 큼)
-        3. 사용된 기술 목록 (쉼표로 구분된 리스트)
-        4. 예상 월간 예산 (USD, 예: 1000)
-        5. 성능 요구사항 (쉼표로 구분된 리스트)
+        Based on the following repository structure, analyze the project and provide the following information:
+        1. Project type (web, mobile, backend)
+        2. Project scale (small, medium, large)
+        3. Technologies used (comma-separated list)
+        4. Estimated monthly budget in USD (provide a number, e.g. 1000)
+        5. Performance requirements (comma-separated list)
 
-        레포지토리 구조:
+        Repository structure:
         {repo_structure}
-
-        JSON 형식으로 답변을 제공하세요.
+        
+        Provide the answer in JSON format.
         """
         
-        response = client.chat.completions.create(
-          model="gpt-3.5-turbo",
-          messages=[
-            {"role": "system", "content": "당신은 소프트웨어 프로젝트 분석을 돕는 AI입니다."},
-            {"role": "user", "content": prompt}
-          ]
-        )
-        
-        content = response.choices[0].message.content.strip()
-        json_match = re.search(r'\{.*\}', content, re.DOTALL)
-        json_content = json_match.group() if json_match else ""
-        
-        analysis = json.loads(json_content)
-        
-        with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
-          for key, value in analysis.items():
-            value = ','.join(value) if isinstance(value, list) else str(value)
-            fh.write(f"{key}={value}\n")
+        try:
+            # OpenAI API 호출
+            response = client.chat.completions.create(
+              model="gpt-3.5-turbo",
+              messages=[
+                    {"role": "system", "content": "You are a helpful assistant that analyzes software projects."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            
+            content = response.choices[0].message.content.strip()
+            if not content:
+                raise ValueError("API로부터 빈 응답을 받았습니다")
+            
+            # 디버그: API 응답 출력
+            print("OpenAI API 응답:")
+            print(content)
+            
+            # JSON 부분만 추출
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                json_content = json_match.group()
+            else:
+                raise ValueError("JSON 형식의 응답을 찾을 수 없습니다")
+            
+            # JSON 파싱
+            analysis = json.loads(json_content)
+            
+            # 디버그: 파싱된 분석 결과 출력
+            print("파싱된 분석 결과:")
+            print(json.dumps(analysis, indent=2))
+            
+            # GitHub Actions 출력 설정
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+                for key, value in analysis.items():
+                    if isinstance(value, list):
+                        value = ','.join(map(str, value))
+                    elif not isinstance(value, str):
+                        value = str(value)
+                    print(f"{key}={value}")
+                    fh.write(f"{key}={value}\n")
+            
+            # 디버그: GITHUB_OUTPUT 파일 내용 출력
+            print("GITHUB_OUTPUT 파일 내용:")
+            with open(os.environ['GITHUB_OUTPUT'], 'r') as fh:
+                print(fh.read())
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON 디코드 오류: {e}")
+            print(f"받은 내용: {content}")
+        except Exception as e:
+            print(f"오류 발생: {e}")
         EOF
 
     # 출력 변수 확인
