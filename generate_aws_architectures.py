@@ -204,9 +204,10 @@ def generate_architecture_diagram(architecture, filename):
                     components["API Gateway"] >> Edge(color="darkgreen") >> components[target]
 
             if "VPC" in components:
-                vpc_components = [comp for comp in ["EC2 Auto Scaling", "ECS", "EKS", "RDS Multi-AZ", "ElastiCache"] if comp in components]
-                for comp in vpc_components:
-                    components["VPC"] - Edge(color="darkblue", style="dashed") - components[comp]
+                with Cluster("VPC 네트워크"):
+                    vpc_components = [comp for comp in ["EC2 Auto Scaling", "ECS", "EKS", "RDS Multi-AZ", "ElastiCache"] if comp in components]
+                    for comp in vpc_components:
+                        components["VPC"] - Edge(color="darkblue", style="dashed") - components[comp]
 
             if "IAM" in components:
                 iam_targets = [comp for comp in ["EC2 Auto Scaling", "ECS", "EKS", "S3", "DynamoDB", "RDS Multi-AZ"] if comp in components]
