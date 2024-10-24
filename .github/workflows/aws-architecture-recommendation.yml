@@ -81,58 +81,37 @@ jobs:
         Provide the answer in JSON format.
         """
         
-        try:
-            # OpenAI API 호출
-            response = client.chat.completions.create(
-              model="gpt-3.5-turbo",
-              messages=[
-                    {"role": "system", "content": "You are a helpful assistant that analyzes software projects."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            
-            content = response.choices[0].message.content.strip()
-            if not content:
+        response = client.chat.completions.create(
+          model="gpt-3.5-turbo",
+          messages=[
+            {"role": "system", "content": "You are a helpful assistant that analyzes software projects."},
+            {"role": "user", "content": prompt}
+          ]
+        )
+        
+        content = response.choices[0].message.content.strip()
+        if not content:
                 raise ValueError("API로부터 빈 응답을 받았습니다")
             
-            # 디버그: API 응답 출력
-            print("OpenAI API 응답:")
-            print(content)
+        # 디버그: API 응답 출력
+        print("OpenAI API 응답:")
+        print(content)
             
-            # JSON 부분만 추출
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                json_content = json_match.group()
-            else:
-                raise ValueError("JSON 형식의 응답을 찾을 수 없습니다")
-            
-            # JSON 파싱
-            analysis = json.loads(json_content)
-            
-            # 디버그: 파싱된 분석 결과 출력
-            print("파싱된 분석 결과:")
-            print(json.dumps(analysis, indent=2))
-            
-            # GitHub Actions 출력 설정
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
-                for key, value in analysis.items():
-                    if isinstance(value, list):
-                        value = ','.join(map(str, value))
-                    elif not isinstance(value, str):
-                        value = str(value)
-                    print(f"{key}={value}")
-                    fh.write(f"{key}={value}\n")
-            
-            # 디버그: GITHUB_OUTPUT 파일 내용 출력
-            print("GITHUB_OUTPUT 파일 내용:")
-            with open(os.environ['GITHUB_OUTPUT'], 'r') as fh:
-                print(fh.read())
-            
-        except json.JSONDecodeError as e:
-            print(f"JSON 디코드 오류: {e}")
-            print(f"받은 내용: {content}")
-        except Exception as e:
-            print(f"오류 발생: {e}")
+        # JSON 부분만 추출
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        json_content = json_match.group() if json_match else ""
+
+        analysis = json.loads(json_content)
+        
+        # 디버그: 파싱된 분석 결과 출력
+        print("파싱된 분석 결과:")
+        print(json.dumps(analysis, indent=2))
+        
+        # GitHub Actions 출력 설정
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+          for key, value in analysis.items():
+            value = ','.join(value) if isinstance(value, list) else str(value)
+            fh.write(f"{key}={value}\n")
         EOF
 
     # 출력 변수 확인
@@ -143,6 +122,11 @@ jobs:
         echo "사용된 기술: ${{ steps.repo_analysis.outputs.technologies_used }}"
         echo "예상 예산: ${{ steps.repo_analysis.outputs.estimated_monthly_budget_usd }}"
         echo "성능 요구사항: ${{ steps.repo_analysis.outputs.performance_requirements }}"
+
+    # 다이어그램 파일 생성 확인
+    - name: 다이어그램 파일 생성 확인
+      run: |
+        ls -al aws_architecture_*.png
 
     # AWS 아키텍처 다이어그램 생성
     - name: AWS 아키텍처 다이어그램 생성
@@ -196,6 +180,7 @@ jobs:
             3. "${artifactName}" 아티팩트를 다운로드하세요.`;
           } else {
             commentBody += `\n\n다이어그램 생성 중 문제가 발생했습니다. 자세한 내용은 워크플로우 로그를 확인하세요.`;
+            console.error('Artifact upload failed. Check if the diagram was generated.');
           }
           await github.rest.issues.createComment({
             owner: owner,
